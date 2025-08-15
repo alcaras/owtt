@@ -552,7 +552,7 @@
             <div class="tech-tree" id="techTree"></div>
             
             <div class="bonus-tech-section">
-                <h3>💎 Bonus Cards</h3>
+                <h3>🎁 Bonus Cards</h3>
                 <div class="bonus-tech-grid" id="bonusTechGrid"></div>
             </div>
         </div>
@@ -1488,7 +1488,14 @@
             if (bonusTech.id && bonusTech.id.includes('RESOURCE_')) {
                 bonusEmoji = '💎';
             }
-            // All other bonuses use the present icon unless luxury
+            // Use person icon for courtiers
+            else if (bonusTech.name.includes('Minister') || 
+                     bonusTech.name.includes('Scientist') || 
+                     bonusTech.name.includes('Court Soldier') ||
+                     bonusTech.name.includes('Merchant')) {
+                bonusEmoji = '👤';
+            }
+            // All other bonuses use the present icon
             
             tooltip.innerHTML = `
                 <h3>${bonusTech.name}</h3>
