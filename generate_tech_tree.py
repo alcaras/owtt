@@ -678,23 +678,35 @@ class OldWorldParser:
             print(f"Warning: {file_path} not found")
             return
             
-        tree = ET.parse(file_path)
-        root = tree.getroot()
-        
-        tech_improvements = {}
-        for imp in root.findall(".//Entry"):
-            imp_type = imp.find("zType")
-            tech_prereq = imp.find("TechPrereq")
-            if imp_type is not None and imp_type.text and tech_prereq is not None and tech_prereq.text:
-                tech_id = tech_prereq.text
-                imp_name = self.format_name(imp_type.text, "IMPROVEMENT_")
-                if tech_id not in tech_improvements:
-                    tech_improvements[tech_id] = []
-                tech_improvements[tech_id].append(imp_name)
+        # Improvements don't have direct tech prereqs in the XML
+        # I need to manually map based on the original data
+        manual_improvement_mapping = {
+            "TECH_STONECUTTING": ["Fort", "Quarry"],
+            "TECH_TRAPPING": ["Camp"],
+            "TECH_DIVINATION": ["Shrine"],
+            "TECH_ADMINISTRATION": ["Granary"],
+            "TECH_HUSBANDRY": ["Pasture"],
+            "TECH_DRAMA": ["Odeon"],
+            "TECH_POLIS": ["Hamlet"],
+            "TECH_MILITARY_DRILL": ["Barracks"],
+            "TECH_ARISTOCRACY": ["Kushite Pyramids"],
+            "TECH_FORESTRY": ["Lumbermill"],
+            "TECH_COINAGE": ["Market"],
+            "TECH_CITIZENSHIP": ["Courthouse"],
+            "TECH_ARCHITECTURE": ["Baths"],
+            "TECH_LAND_CONSOLIDATION": ["Grove"],
+            "TECH_COMPOSITE_BOW": ["Range"],
+            "TECH_MONASTICISM": ["Monastery"],
+            "TECH_SCHOLARSHIP": ["Library"],
+            "TECH_VAULTING": ["Cathedral"],
+            "TECH_DOCTRINE": ["Temple"],
+            "TECH_HYDRAULICS": ["Mill"],
+            "TECH_CARTOGRAPHY": ["Harbor"]
+        }
         
         for tech in self.techs:
-            if tech["id"] in tech_improvements:
-                tech["unlocks"]["improvements"] = tech_improvements[tech["id"]]
+            if tech["id"] in manual_improvement_mapping:
+                tech["unlocks"]["improvements"] = manual_improvement_mapping[tech["id"]]
     
     def parse_law_unlocks(self):
         """Parse law.xml to find what laws each tech unlocks"""
