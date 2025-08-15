@@ -55,7 +55,9 @@ const nationData = {
 
 ## Architecture
 
-- **Single File**: Everything is contained in `index.html` for easy deployment
+- **Template System**: Uses `template.html` with `{{TECH_DATA}}` and `{{NATION_DATA}}` placeholders
+- **Single Output File**: Everything is generated into `index.html` for easy deployment
+- **localStorage Persistence**: Tech tree state persists across page reloads
 - **No Dependencies**: Uses only vanilla JavaScript and CSS
 - **Leader Line Library**: External CDN library for drawing prerequisite connections
 - **Responsive Design**: CSS Grid with media queries for mobile support
@@ -82,6 +84,12 @@ const nationData = {
 - Compact representation using tech array indices
 - Full state restoration from URL parameters
 
+### State Persistence
+- localStorage automatically saves tech selections, nation choice, and research order
+- State is restored on page reload unless URL parameters are present
+- URL parameters take priority over localStorage for sharing links
+- Starting techs are properly maintained during nation selection and page reloads
+
 ## Data Accuracy
 
 All data was extracted directly from game files to ensure accuracy:
@@ -95,10 +103,10 @@ All data was extracted directly from game files to ensure accuracy:
 When Old World receives updates:
 
 1. **Access Game Files**: Locate your Old World installation directory
-2. **Extract Updated Data**: Use similar grep/XML parsing methods on updated files
-3. **Update Embedded Data**: Modify the JavaScript objects in index.html
+2. **Run Parser**: Execute `python3 generate_tech_tree.py --xml-dir XML/Infos` to regenerate
+3. **Verify Output**: Check that `index.html` was updated with new data
 4. **Test Thoroughly**: Verify prerequisites, costs, and unlocks are correct
-5. **Check Nations**: Ensure starting techs and bonuses haven't changed
+5. **Deploy**: Commit and push changes to update the live site
 
 ## Common Patterns for Data Extraction
 
@@ -134,10 +142,13 @@ The project was developed using:
 
 ```
 /
-├── index.html          # Complete application
-├── README.md          # User documentation  
-├── CLAUDE.md          # This development guide
-└── .gitignore         # Excludes game files
+├── template.html          # Template with {{TECH_DATA}} and {{NATION_DATA}} placeholders
+├── index.html             # Generated application (output of parser)
+├── generate_tech_tree.py  # Parser that converts XML files to HTML
+├── README.md              # User documentation  
+├── CLAUDE.md              # This development guide
+├── XML/Infos/             # Old World game files (not included in repo)
+└── .gitignore             # Excludes game files and temp files
 ```
 
 ## Deployment
@@ -155,10 +166,34 @@ This project contains only the web application code. It does NOT include any cop
 
 ## Technical Decisions
 
+- **Template System**: Uses simple placeholder replacement instead of complex regex patterns for maintainability
+- **localStorage Persistence**: Provides seamless user experience across sessions while respecting URL sharing
+- **Single Output File**: Keeps deployment simple and ensures all dependencies are contained
 - **Embedded Data**: Chose to embed extracted data rather than include game files to avoid copyright issues
-- **Single File**: Keeps deployment simple and ensures all dependencies are contained
 - **Vanilla JS**: Avoids build complexity and framework dependencies
 - **CSS Grid**: Provides precise positioning for the tech tree layout
 - **Leader Line**: External library was necessary for drawing clean prerequisite connections
+
+## Parser Implementation Details
+
+The parser uses a clean template system:
+
+1. **Template Structure**: `template.html` contains complete HTML with placeholder markers
+2. **Data Injection**: Parser replaces `{{TECH_DATA}}` and `{{NATION_DATA}}` with generated JavaScript
+3. **Manual Mappings**: Laws and improvements require manual mapping since XML doesn't contain direct tech prerequisites
+4. **Icon Logic**: Different emojis for units (⚔️), improvements (🏗️), laws (⚖️), projects (🏛️), and bonus cards (🎁💎👤)
+
+### Usage Examples:
+
+```bash
+# Basic usage with XML files in XML/Infos/
+python3 generate_tech_tree.py --xml-dir XML/Infos
+
+# Custom template and output
+python3 generate_tech_tree.py --xml-dir /path/to/oldworld/XML/Infos --template my_template.html --output my_output.html
+
+# Export raw data for debugging
+python3 generate_tech_tree.py --xml-dir XML/Infos --export-json debug.json
+```
 
 This approach ensures the project can be easily maintained and deployed while respecting the game's intellectual property.
