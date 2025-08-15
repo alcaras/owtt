@@ -192,20 +192,6 @@
             color: #999;
         }
 
-        .shared-url {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid #8b6914;
-            border-radius: 5px;
-            padding: 10px;
-            margin-top: 10px;
-            word-break: break-all;
-            font-size: 0.85em;
-            display: none;
-        }
-
-        .shared-url.show {
-            display: block;
-        }
 
         .tech-tree-wrapper {
             position: relative;
@@ -574,7 +560,6 @@
     <div class="sidebar">
         <div class="share-section">
             <button class="share-button" onclick="shareBuild()">Share Build</button>
-            <div class="shared-url" id="sharedUrl"></div>
         </div>
         
         <div class="nation-section">
@@ -1173,15 +1158,34 @@
             const toRemove = new Set([techId]);
             let changed = true;
             
+            // Get starting techs for current nation - these should never be removed
+            const startingTechs = selectedNation && nationData.startingTechs[selectedNation] 
+                ? new Set(nationData.startingTechs[selectedNation]) 
+                : new Set();
+            
             // Keep finding techs that depend on techs we're removing
             while (changed) {
                 changed = false;
                 researchedTechs.forEach(id => {
-                    if (!toRemove.has(id)) {
+                    if (!toRemove.has(id) && !startingTechs.has(id)) { // Never remove starting techs
                         const tech = techData.techs.find(t => t.id === id);
                         if (tech && tech.prereqs.some(prereq => toRemove.has(prereq))) {
-                            toRemove.add(id);
-                            changed = true;
+                            // Check if this tech has alternative paths through starting techs
+                            const hasAlternativePath = tech.prereqs.some(prereq => {
+                                // If this prerequisite is being removed, check if we can reach this tech through starting techs
+                                if (toRemove.has(prereq)) {
+                                    return startingTechs.size > 0 && Array.from(startingTechs).some(startingTech => {
+                                        return canReachTech(startingTech, id, new Set());
+                                    });
+                                }
+                                return true; // This prerequisite is not being removed
+                            });
+                            
+                            // Only remove if no alternative path exists
+                            if (!hasAlternativePath) {
+                                toRemove.add(id);
+                                changed = true;
+                            }
                         }
                     }
                 });
@@ -1447,17 +1451,11 @@
                 shareButton.textContent = 'Copied!';
                 shareButton.style.background = 'linear-gradient(135deg, #4a8a4a, #6ab36a)';
                 
-                // Also show URL temporarily
-                const sharedUrl = document.getElementById('sharedUrl');
-                sharedUrl.textContent = url;
-                sharedUrl.classList.add('show');
-                
-                // Reset after 3 seconds
+                // Reset after 2 seconds
                 setTimeout(() => {
                     shareButton.textContent = originalText;
                     shareButton.style.background = 'linear-gradient(135deg, #8b6914, #b4a037)';
-                    sharedUrl.classList.remove('show');
-                }, 3000);
+                }, 2000);
             }).catch(() => {
                 // Fallback if clipboard API fails
                 shareButton.textContent = 'Copy Failed';
