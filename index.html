@@ -1245,26 +1245,36 @@
                 }
                 
                 // Count laws from this tech
-                if (tech.unlocks && tech.unlocks.laws) {
+                const hasLaws = tech.unlocks && tech.unlocks.laws && tech.unlocks.laws.length > 0;
+                if (hasLaws) {
                     totalLaws += tech.unlocks.laws.length;
                 }
                 
                 const item = document.createElement('div');
                 item.className = 'tech-order-item';
+                item.setAttribute('data-tech-id', techId);
+                item.style.cursor = 'pointer';
+                
+                // Add law icon if this tech unlocks laws
+                const lawIcon = hasLaws ? ' ⚖️' : '';
                 
                 if (isStartingTech) {
                     item.innerHTML = `
                         <span class="tech-order-number">${itemIndex}.</span>
-                        <span class="tech-order-name">${tech.name}</span>
+                        <span class="tech-order-name">${tech.name}${lawIcon}</span>
                         <span class="tech-order-cost"><span style="text-decoration: line-through; color: #888;">${tech.cost}</span> <strong style="color: #5a8a3a;">FREE</strong></span>
                     `;
                 } else {
                     item.innerHTML = `
                         <span class="tech-order-number">${itemIndex}.</span>
-                        <span class="tech-order-name">${tech.name}</span>
+                        <span class="tech-order-name">${tech.name}${lawIcon}</span>
                         <span class="tech-order-cost">${tech.cost}</span>
                     `;
                 }
+                
+                // Add hover events for tooltip
+                item.addEventListener('mouseenter', (e) => showTooltip(e, tech));
+                item.addEventListener('mouseleave', hideTooltip);
                 
                 list.appendChild(item);
                 itemIndex++;
@@ -1276,12 +1286,19 @@
                 totalCost += bonusTech.cost;
                 const item = document.createElement('div');
                 item.className = 'tech-order-item';
+                item.setAttribute('data-bonus-tech-id', bonusTechId);
                 item.style.backgroundColor = 'rgba(180, 160, 55, 0.2)'; // Highlight bonus techs
+                item.style.cursor = 'pointer';
                 item.innerHTML = `
                     <span class="tech-order-number">${itemIndex}.</span>
                     <span class="tech-order-name">💎 ${bonusTech.name}</span>
                     <span class="tech-order-cost">${bonusTech.cost}</span>
                 `;
+                
+                // Add hover events for bonus tech tooltip
+                item.addEventListener('mouseenter', (e) => showBonusTooltip(e, bonusTech));
+                item.addEventListener('mouseleave', hideTooltip);
+                
                 list.appendChild(item);
                 itemIndex++;
             });
@@ -1356,28 +1373,28 @@
                 unlocksList = '<div class="unlocks-list"><h4>Unlocks:</h4><ul>';
                 if (tech.unlocks.units?.length > 0) {
                     tech.unlocks.units.forEach(unit => {
-                        unlocksList += `<li>Unit: ${unit}</li>`;
+                        unlocksList += `<li>⚔️ ${unit}</li>`;
                     });
                 }
                 if (tech.unlocks.improvements?.length > 0) {
                     tech.unlocks.improvements.forEach(improvement => {
-                        unlocksList += `<li>Improvement: ${improvement}</li>`;
+                        unlocksList += `<li>🏗️ ${improvement}</li>`;
                     });
                 }
                 if (tech.unlocks.laws?.length > 0) {
                     tech.unlocks.laws.forEach(law => {
-                        unlocksList += `<li>Law: ${law}</li>`;
+                        unlocksList += `<li>⚖️ ${law}</li>`;
                     });
                 }
                 if (tech.unlocks.projects?.length > 0) {
                     tech.unlocks.projects.forEach(project => {
-                        unlocksList += `<li>Project: ${project}</li>`;
+                        unlocksList += `<li>🏛️ ${project}</li>`;
                     });
                 }
                 if (hasBonusTechs) {
                     const bonusTechs = techData.bonusTechs.filter(bonus => bonus.parent === tech.id);
                     bonusTechs.forEach(bonusTech => {
-                        unlocksList += `<li>Bonus Tech: ${bonusTech.name}</li>`;
+                        unlocksList += `<li>💎 ${bonusTech.name}</li>`;
                     });
                 }
                 unlocksList += '</ul></div>';
@@ -1404,6 +1421,46 @@
         function hideTooltip() {
             const tooltip = document.getElementById('tooltip');
             tooltip.classList.remove('show');
+        }
+
+        function showBonusTooltip(event, bonusTech) {
+            const tooltip = document.getElementById('tooltip');
+            
+            // Find parent tech
+            const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
+            const parentName = parentTech ? parentTech.name : bonusTech.parent;
+            
+            // Determine the appropriate emoji based on bonus content
+            let bonusEmoji = '💎';
+            if (bonusTech.bonus.includes('Stone') || bonusTech.bonus.includes('Iron') || bonusTech.bonus.includes('Food')) {
+                bonusEmoji = '📦'; // Resources
+            } else if (bonusTech.bonus.includes('Worker') || bonusTech.bonus.includes('Science')) {
+                bonusEmoji = '🔬'; // Science/Workers
+            } else if (bonusTech.bonus.includes('Courtier') || bonusTech.bonus.includes('General') || 
+                      bonusTech.bonus.includes('Governor') || bonusTech.bonus.includes('Spymaster')) {
+                bonusEmoji = '👤'; // Courtiers
+            } else if (bonusTech.bonus.includes('+1') || bonusTech.bonus.includes('+2')) {
+                bonusEmoji = '⚔️'; // Units
+            }
+            
+            tooltip.innerHTML = `
+                <h3>${bonusTech.name}</h3>
+                <p><strong>Cost:</strong> ${bonusTech.cost} 🧪</p>
+                <p><strong>Parent Tech:</strong> ${parentName}</p>
+                <div class="unlocks-list">
+                    <h4>Bonus:</h4>
+                    <ul><li>${bonusEmoji} ${bonusTech.bonus}</li></ul>
+                </div>
+            `;
+            
+            // Position tooltip accounting for scroll
+            const rect = event.target.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            
+            tooltip.style.left = rect.right + scrollLeft + 10 + 'px';
+            tooltip.style.top = rect.top + scrollTop + 'px';
+            tooltip.classList.add('show');
         }
 
         function shareBuild() {
