@@ -1111,14 +1111,31 @@
             // Add main techs
             researchedTechs.forEach((techId) => {
                 const tech = techData.techs.find(t => t.id === techId);
-                totalCost += tech.cost;
+                const isStartingTech = selectedNation && 
+                    nationData.startingTechs[selectedNation] && 
+                    nationData.startingTechs[selectedNation].includes(techId);
+                
+                if (!isStartingTech) {
+                    totalCost += tech.cost;
+                }
+                
                 const item = document.createElement('div');
                 item.className = 'tech-order-item';
-                item.innerHTML = `
-                    <span class="tech-order-number">${itemIndex}.</span>
-                    <span class="tech-order-name">${tech.name}</span>
-                    <span class="tech-order-cost">${tech.cost}</span>
-                `;
+                
+                if (isStartingTech) {
+                    item.innerHTML = `
+                        <span class="tech-order-number">${itemIndex}.</span>
+                        <span class="tech-order-name">${tech.name}</span>
+                        <span class="tech-order-cost"><span style="text-decoration: line-through; color: #888;">${tech.cost}</span> <strong style="color: #5a8a3a;">FREE</strong></span>
+                    `;
+                } else {
+                    item.innerHTML = `
+                        <span class="tech-order-number">${itemIndex}.</span>
+                        <span class="tech-order-name">${tech.name}</span>
+                        <span class="tech-order-cost">${tech.cost}</span>
+                    `;
+                }
+                
                 list.appendChild(item);
                 itemIndex++;
             });
@@ -1259,18 +1276,34 @@
         }
 
         function shareBuild() {
-            if (researchedTechs.length === 0) {
-                alert('No technologies researched to share!');
+            if (researchedTechs.length === 0 && !selectedNation) {
+                alert('No technologies researched or nation selected to share!');
                 return;
             }
             
-            // Create compact numeric representation for URL
-            const techNumbers = researchedTechs.map(techId => {
-                return techData.techs.findIndex(t => t.id === techId);
-            }).filter(index => index !== -1);
-            
             const params = new URLSearchParams();
-            params.set('techs', techNumbers.join(','));
+            
+            // Add nation if selected
+            if (selectedNation) {
+                params.set('nation', selectedNation);
+            }
+            
+            // Add techs if any are researched
+            if (researchedTechs.length > 0) {
+                // Create compact numeric representation for URL
+                const techNumbers = researchedTechs.map(techId => {
+                    return techData.techs.findIndex(t => t.id === techId);
+                }).filter(index => index !== -1);
+                params.set('techs', techNumbers.join(','));
+            }
+            
+            // Add bonus techs if any are researched
+            if (researchedBonusTechs.length > 0) {
+                const bonusNumbers = researchedBonusTechs.map(bonusTechId => {
+                    return techData.bonusTechs.findIndex(t => t.id === bonusTechId);
+                }).filter(index => index !== -1);
+                params.set('bonus', bonusNumbers.join(','));
+            }
             
             const url = `https://alcaras.github.io/owtt/?${params.toString()}`;
             
@@ -1305,8 +1338,28 @@
 
         function loadFromUrl() {
             const params = new URLSearchParams(window.location.search);
-            const techsParam = params.get('techs');
             
+            // Load nation first
+            const nationParam = params.get('nation');
+            if (nationParam) {
+                selectedNation = nationParam;
+                const select = document.getElementById('nationSelect');
+                select.value = selectedNation;
+                
+                // Add starting techs
+                if (nationData.startingTechs[selectedNation]) {
+                    const startingTechs = nationData.startingTechs[selectedNation];
+                    startingTechs.forEach(techId => {
+                        if (!researchedTechs.includes(techId)) {
+                            researchedTechs.push(techId);
+                            researchOrder.push(Date.now());
+                        }
+                    });
+                }
+            }
+            
+            // Load main techs
+            const techsParam = params.get('techs');
             if (techsParam) {
                 const techNumbers = techsParam.split(',').map(n => parseInt(n)).filter(n => !isNaN(n));
                 
@@ -1332,9 +1385,26 @@
                         }
                     }
                 });
-                
-                updateOrderList();
             }
+            
+            // Load bonus techs
+            const bonusParam = params.get('bonus');
+            if (bonusParam) {
+                const bonusNumbers = bonusParam.split(',').map(n => parseInt(n)).filter(n => !isNaN(n));
+                
+                bonusNumbers.forEach(bonusIndex => {
+                    if (bonusIndex >= 0 && bonusIndex < techData.bonusTechs.length) {
+                        const bonusTechId = techData.bonusTechs[bonusIndex].id;
+                        if (!researchedBonusTechs.includes(bonusTechId)) {
+                            researchedBonusTechs.push(bonusTechId);
+                        }
+                    }
+                });
+            }
+            
+            // Update displays
+            initializeBonusTechs();
+            updateOrderList();
         }
 
         function clearBuild() {
@@ -1346,6 +1416,13 @@
             researchedTechs = [];
             researchOrder = [];
             researchedBonusTechs = [];
+            selectedNation = '';
+            
+            // Reset nation selector
+            const select = document.getElementById('nationSelect');
+            select.value = '';
+            
+            initializeBonusTechs();
             updateTechStates();
             updateBonusTechStates();
             updateOrderList();
