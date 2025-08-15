@@ -1,6 +1,10 @@
 # Old World Tech Tree
 
-An interactive web-based tech tree for the strategy game Old World by Mohawk Games.
+An interactive web-based tech tree for the strategy game [Old World](https://store.steampowered.com/app/597180/Old_World/) by Mohawk Games.
+
+## Live Demo
+
+Visit [https://alcaras.github.io/owtt/](https://alcaras.github.io/owtt/) to use the interactive tech tree.
 
 ## Features
 
@@ -37,7 +41,3 @@ An interactive web-based tech tree for the strategy game Old World by Mohawk Gam
 ## Data Source
 
 All technology data, prerequisites, unlocks, and nation information is extracted directly from the official Old World game files to ensure accuracy.
-
-## Live Demo
-
-Visit [https://alcaras.github.io/owtt/](https://alcaras.github.io/owtt/) to use the interactive tech tree.

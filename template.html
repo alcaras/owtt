@@ -6,6 +6,31 @@
     <title>Old World Tech Tree</title>
     <script src="https://cdn.jsdelivr.net/npm/leader-line@1.0.7/leader-line.min.js"></script>
     <style>
+        :root {
+            /* Consistent Color Palette */
+            --primary-gold: #d4af37;
+            --light-gold: #f4e27a;
+            --dark-gold: #8b6914;
+            
+            --primary-blue: #2980b9;
+            --light-blue: #3498db;
+            
+            --primary-green: #27ae60;
+            --light-green: #2ecc71;
+            
+            --primary-red: #c0392b;
+            --light-red: #e74c3c;
+            
+            --text-light: #f4e4c1;
+            --text-dark: #2c1810;
+            --text-muted: #a09080;
+            
+            --bg-dark: #2c1810;
+            --bg-medium: #4a3426;
+            --bg-light: rgba(50, 40, 30, 0.8);
+            --bg-overlay: rgba(0, 0, 0, 0.5);
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -14,8 +39,8 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #2c1810 0%, #4a3426 100%);
-            color: #f4e4c1;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-medium) 100%);
+            color: var(--text-light);
             display: flex;
             min-height: 100vh;
             overflow-x: hidden;
@@ -190,6 +215,193 @@
             cursor: not-allowed;
             background: rgba(139, 30, 30, 0.2);
             color: #999;
+        }
+
+        .simulate-button {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            font-size: 1em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .simulate-button:hover {
+            background: linear-gradient(135deg, #2980b9, #1f618d);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .simulation-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20, 15, 10, 0.95);
+            border: 2px solid #8b6914;
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 1000px;
+            max-width: 1200px;
+            height: 550px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+            z-index: 10001;
+            display: none;
+        }
+
+        .simulation-panel h3 {
+            color: #d4af37;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.3em;
+        }
+
+        .simulation-options {
+            margin-bottom: 20px;
+        }
+
+        .simulation-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 1em;
+        }
+
+        .simulation-option input[type="checkbox"] {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .simulation-option label {
+            cursor: pointer;
+        }
+
+        .simulation-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .sim-run-button, .sim-close-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sim-run-button {
+            background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+            color: white;
+        }
+
+        .sim-run-button:hover {
+            background: linear-gradient(135deg, var(--light-green), var(--primary-green));
+        }
+
+        .sim-close-button {
+            background: linear-gradient(135deg, var(--text-muted), var(--primary-gold));
+            color: var(--text-dark);
+        }
+
+        .sim-close-button:hover {
+            background: linear-gradient(135deg, var(--primary-gold), var(--light-gold));
+        }
+
+        .simulation-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(139, 105, 20, 0.2);
+            border-radius: 5px;
+            border: 1px solid #8b6914;
+            display: none;
+        }
+
+        .simulation-results h4 {
+            color: #d4af37;
+            margin-bottom: 10px;
+        }
+
+        .sim-result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .sim-result-label {
+            color: #f4e4c1;
+        }
+
+        .sim-result-value {
+            color: #d4af37;
+            font-weight: bold;
+        }
+
+        .simulation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10000;
+            display: none;
+        }
+
+        .simulation-comparison {
+            margin-top: 20px;
+            min-height: 200px;
+            width: 100%;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+            display: table !important;
+            min-height: 100px;
+            table-layout: fixed;
+        }
+
+        .comparison-table th, .comparison-table td {
+            border: 1px solid #8b6914;
+            padding: 8px;
+            text-align: center;
+            min-height: 25px;
+            height: auto;
+        }
+
+        .comparison-table th {
+            background: rgba(139, 105, 20, 0.3);
+            color: #d4af37;
+            font-weight: bold;
+        }
+
+        .comparison-table td {
+            color: #f4e4c1;
+        }
+
+        .comparison-variant {
+            font-weight: bold;
+            color: #d4af37;
+        }
+
+        .comparison-loading {
+            text-align: center;
+            color: #d4af37;
+            font-style: italic;
+            padding: 20px;
         }
 
 
@@ -581,6 +793,7 @@
         </div>
         
         <h2>Research Order</h2>
+        <button class="simulate-button" onclick="openSimulationPanel()">🎲 Simulate Research</button>
         <div class="total-cost" id="totalCost">Total Cost: 0</div>
         <div class="total-laws" id="totalLaws">Laws Available: 0</div>
         <div class="tech-order-list" id="techOrderList"></div>
@@ -589,6 +802,41 @@
     </div>
 
     <div class="tooltip" id="tooltip"></div>
+
+    <!-- Simulation Panel -->
+    <div class="simulation-overlay" id="simulationOverlay" onclick="closeSimulationPanel()"></div>
+    <div class="simulation-panel" id="simulationPanel">
+        <button onclick="closeSimulationPanel()" style="position: absolute; top: 10px; right: 15px; background: none; border: none; color: var(--primary-gold); font-size: 24px; cursor: pointer; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.2s;" onmouseover="this.style.background='rgba(212, 175, 55, 0.2)'" onmouseout="this.style.background='none'">×</button>
+        
+        <h3>🎲 Research Simulation Comparison</h3>
+        <p style="color: #f4e4c1; margin-bottom: 15px; text-align: center; font-size: 0.9em;">
+            Running 1000 simulations for each Scholar/Oracle combination to compare variance in research costs.
+        </p>
+        
+        <div class="simulation-buttons" style="margin-bottom: 15px; text-align: center;">
+            <button class="sim-run-button" onclick="runSimulation()">Run All Simulations</button>
+        </div>
+        
+        <div class="simulation-comparison" id="simulationResults">
+            <div class="comparison-loading" id="simulationLoading" style="display: none;">
+                🔄 Running simulations... This may take a few moments.
+            </div>
+            <table class="comparison-table" id="comparisonTable">
+                <thead>
+                    <tr>
+                        <th>Configuration</th>
+                        <th>Min Cost</th>
+                        <th>Max Cost</th>
+                        <th>Average Cost</th>
+                        <th>Std Dev</th>
+                        <th>Expected Range</th>
+                    </tr>
+                </thead>
+                <tbody id="comparisonResults">
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <script>
         // Complete tech tree data from game files with correct prerequisites and unlocks
@@ -752,6 +1000,7 @@
             }
             
             updateTechStates();
+            updateOrderList();
             drawConnections();
         }
 
@@ -829,18 +1078,21 @@
             } else {
                 // Add the parent tech and all its prerequisites first
                 if (!researchedTechs.includes(bonusTech.parent)) {
-                    // Add prerequisites of the parent tech
+                    // Add prerequisites of the parent tech using proper insertion order
                     const prereqsToAdd = getAllPrerequisites(bonusTech.parent);
                     prereqsToAdd.forEach(prereqId => {
                         if (!researchedTechs.includes(prereqId)) {
-                            researchedTechs.push(prereqId);
-                            researchOrder.push(Date.now());
+                            // Find the correct insertion point to maintain tech tree order
+                            const insertIndex = findInsertionIndex(prereqId);
+                            researchedTechs.splice(insertIndex, 0, prereqId);
+                            researchOrder.splice(insertIndex, 0, Date.now() - (prereqsToAdd.length - prereqsToAdd.indexOf(prereqId)) * 1000);
                         }
                     });
                     
-                    // Add the parent tech itself
-                    researchedTechs.push(bonusTech.parent);
-                    researchOrder.push(Date.now());
+                    // Add the parent tech itself in the correct position
+                    const parentInsertIndex = findInsertionIndex(bonusTech.parent);
+                    researchedTechs.splice(parentInsertIndex, 0, bonusTech.parent);
+                    researchOrder.splice(parentInsertIndex, 0, Date.now() - 500);
                 }
                 
                 // Now add the bonus tech
@@ -1013,6 +1265,25 @@
             return result;
         }
         
+        function findInsertionIndex(techId) {
+            // Find the correct position to insert a tech to maintain tech tree order
+            // Insert after all prerequisites but before any techs that depend on this one
+            
+            const tech = techData.techs.find(t => t.id === techId);
+            if (!tech) return researchedTechs.length;
+            
+            // Find latest prerequisite position
+            let latestPrereqIndex = -1;
+            tech.prereqs.forEach(prereqId => {
+                const prereqIndex = researchedTechs.indexOf(prereqId);
+                if (prereqIndex > latestPrereqIndex) {
+                    latestPrereqIndex = prereqIndex;
+                }
+            });
+            
+            // Insert after the latest prerequisite
+            return latestPrereqIndex + 1;
+        }
 
         function getTechsToRemove(techId) {
             const toRemove = new Set([techId]);
@@ -1093,8 +1364,26 @@
             let totalLaws = 0;
             let itemIndex = 1;
             
-            // Add main techs
+            // Create unified ordering: combine main techs with their associated bonus techs
+            const unifiedOrder = [];
+            
+            // Add main techs in order
             researchedTechs.forEach((techId) => {
+                unifiedOrder.push({ type: 'main', id: techId });
+                
+                // Add any bonus techs that belong to this main tech
+                researchedBonusTechs.forEach((bonusTechId) => {
+                    const bonusTech = techData.bonusTechs.find(t => t.id === bonusTechId);
+                    if (bonusTech && bonusTech.parent === techId) {
+                        unifiedOrder.push({ type: 'bonus', id: bonusTechId });
+                    }
+                });
+            });
+            
+            // Process the unified order
+            unifiedOrder.forEach((item) => {
+                if (item.type === 'main') {
+                    const techId = item.id;
                 const tech = techData.techs.find(t => t.id === techId);
                 const isStartingTech = selectedNation && 
                     nationData.startingTechs[selectedNation] && 
@@ -1110,22 +1399,22 @@
                     totalLaws += tech.unlocks.laws.length;
                 }
                 
-                const item = document.createElement('div');
-                item.className = 'tech-order-item';
-                item.setAttribute('data-tech-id', techId);
-                item.style.cursor = 'pointer';
+                const listItem = document.createElement('div');
+                listItem.className = 'tech-order-item';
+                listItem.setAttribute('data-tech-id', techId);
+                listItem.style.cursor = 'pointer';
                 
                 // Add law icon at the front if this tech unlocks laws
                 const lawIcon = hasLaws ? '⚖️ ' : '';
                 
                 if (isStartingTech) {
-                    item.innerHTML = `
+                    listItem.innerHTML = `
                         <span class="tech-order-number">${itemIndex}.</span>
                         <span class="tech-order-name">${lawIcon}${tech.name}</span>
                         <span class="tech-order-cost"><span style="text-decoration: line-through; color: #888;">${tech.cost}</span> <strong style="color: #5a8a3a;">FREE</strong></span>
                     `;
                 } else {
-                    item.innerHTML = `
+                    listItem.innerHTML = `
                         <span class="tech-order-number">${itemIndex}.</span>
                         <span class="tech-order-name">${lawIcon}${tech.name}</span>
                         <span class="tech-order-cost">${tech.cost}</span>
@@ -1133,40 +1422,40 @@
                 }
                 
                 // Add hover events for tooltip
-                item.addEventListener('mouseenter', (e) => {
+                listItem.addEventListener('mouseenter', (e) => {
                     console.log('Tech tooltip triggered for:', tech.name);
                     showTooltip(e, tech);
                 });
-                item.addEventListener('mouseleave', hideTooltip);
+                listItem.addEventListener('mouseleave', hideTooltip);
                 
-                list.appendChild(item);
+                list.appendChild(listItem);
                 itemIndex++;
-            });
-            
-            // Add bonus techs
-            researchedBonusTechs.forEach((bonusTechId) => {
-                const bonusTech = techData.bonusTechs.find(t => t.id === bonusTechId);
-                totalCost += bonusTech.cost;
-                const item = document.createElement('div');
-                item.className = 'tech-order-item';
-                item.setAttribute('data-bonus-tech-id', bonusTechId);
-                item.style.backgroundColor = 'rgba(180, 160, 55, 0.2)'; // Highlight bonus techs
-                item.style.cursor = 'pointer';
-                item.innerHTML = `
-                    <span class="tech-order-number">${itemIndex}.</span>
-                    <span class="tech-order-name">💎 ${bonusTech.name}</span>
-                    <span class="tech-order-cost">${bonusTech.cost}</span>
-                `;
-                
-                // Add hover events for bonus tech tooltip
-                item.addEventListener('mouseenter', (e) => {
-                    console.log('Bonus tooltip triggered for:', bonusTech.name);
-                    showBonusTooltip(e, bonusTech);
-                });
-                item.addEventListener('mouseleave', hideTooltip);
-                
-                list.appendChild(item);
-                itemIndex++;
+                } else if (item.type === 'bonus') {
+                    const bonusTechId = item.id;
+                    const bonusTech = techData.bonusTechs.find(t => t.id === bonusTechId);
+                    totalCost += bonusTech.cost;
+                    
+                    const listItem = document.createElement('div');
+                    listItem.className = 'tech-order-item';
+                    listItem.setAttribute('data-bonus-tech-id', bonusTechId);
+                    listItem.style.backgroundColor = 'rgba(180, 160, 55, 0.2)'; // Highlight bonus techs
+                    listItem.style.cursor = 'pointer';
+                    listItem.innerHTML = `
+                        <span class="tech-order-number">${itemIndex}.</span>
+                        <span class="tech-order-name">💎 ${bonusTech.name}</span>
+                        <span class="tech-order-cost">${bonusTech.cost}</span>
+                    `;
+                    
+                    // Add hover events for bonus tech tooltip
+                    listItem.addEventListener('mouseenter', (e) => {
+                        console.log('Bonus tooltip triggered for:', bonusTech.name);
+                        showBonusTooltip(e, bonusTech);
+                    });
+                    listItem.addEventListener('mouseleave', hideTooltip);
+                    
+                    list.appendChild(listItem);
+                    itemIndex++;
+                }
             });
             
             totalCostElement.textContent = `Total Cost: ${totalCost}`;
@@ -1589,6 +1878,581 @@
             updateOrderList();
             drawConnections();
             saveToLocalStorage(); // Save state after nation change
+        }
+
+        // Simulation functions
+        function openSimulationPanel() {
+            if (researchedTechs.length === 0) {
+                alert('Please select some technologies to research first!');
+                return;
+            }
+            
+            document.getElementById('simulationOverlay').style.display = 'block';
+            document.getElementById('simulationPanel').style.display = 'block';
+            document.getElementById('simulationResults').style.display = 'none';
+        }
+
+        function closeSimulationPanel() {
+            document.getElementById('simulationOverlay').style.display = 'none';
+            document.getElementById('simulationPanel').style.display = 'none';
+        }
+
+        function runSimulation() {
+            // Show loading state
+            const runButton = document.querySelector('.sim-run-button');
+            const originalText = runButton.textContent;
+            runButton.textContent = 'Running...';
+            runButton.disabled = true;
+            
+            const loadingElement = document.getElementById('simulationLoading');
+            const tableElement = document.getElementById('comparisonTable');
+            if (loadingElement) loadingElement.style.display = 'block';
+            if (tableElement) tableElement.style.display = 'none';
+            
+            // Run simulation after short delay to show loading state
+            setTimeout(() => {
+                const variants = [
+                    { scholar: false, oracle: false, name: "Base" },
+                    { scholar: true, oracle: false, name: "Scholar Only" },
+                    { scholar: false, oracle: true, name: "Oracle Only" },
+                    { scholar: true, oracle: true, name: "Scholar + Oracle" }
+                ];
+                
+                const allResults = [];
+                
+                for (const variant of variants) {
+                    console.log(`🚀 Starting variant: ${variant.name} (Scholar=${variant.scholar}, Oracle=${variant.oracle})`);
+                    const results = simulateResearchPath(variant.scholar, variant.oracle, 1000);
+                    console.log(`✅ Completed variant: ${variant.name}`, results);
+                    allResults.push({
+                        name: variant.name,
+                        results: results
+                    });
+                }
+                
+                console.log('All simulation results:', allResults);
+                displayComparisonResults(allResults);
+                
+                const loading = document.getElementById('simulationLoading');
+                const panel = document.getElementById('simulationPanel');
+                const overlay = document.getElementById('simulationOverlay');
+                
+                console.log('Elements found:');
+                console.log('- loading element:', !!loading);
+                console.log('- simulation panel:', !!panel);
+                console.log('- simulation overlay:', !!overlay);
+                
+                if (panel) {
+                    console.log('Panel display style:', panel.style.display);
+                    console.log('Panel visibility:', panel.style.visibility);
+                    console.log('Panel dimensions:', panel.offsetWidth, 'x', panel.offsetHeight);
+                }
+                
+                if (loading) loading.style.display = 'none';
+                console.log('Results should now be visible using div layout');
+                
+                runButton.textContent = originalText;
+                runButton.disabled = false;
+            }, 100);
+        }
+
+        function simulateResearchPath(hasScholar, hasOracle, numSimulations) {
+            const results = [];
+            
+            // Build research path from current selections
+            const researchPath = [...researchedTechs];
+            
+            // Enable detailed debugging for first run only
+            window.debugSimulation = true;
+            
+            for (let sim = 0; sim < numSimulations; sim++) {
+                if (sim === 1) {
+                    window.debugSimulation = false; // Turn off debugging after first run
+                }
+                const result = simulateSingleRun(researchPath, hasScholar, hasOracle);
+                if (result.failed) {
+                    results.push({ failed: true, reason: result.reason });
+                } else {
+                    results.push(result.cost);
+                }
+            }
+            
+            // Separate successful and failed runs
+            const successfulRuns = results.filter(r => typeof r === 'number');
+            const failedRuns = results.filter(r => typeof r === 'object' && r.failed);
+            
+            if (successfulRuns.length === 0) {
+                return { 
+                    min: 0, max: 0, avg: 0, stdDev: 0, 
+                    successRate: 0, 
+                    failureReasons: failedRuns.reduce((acc, fail) => {
+                        acc[fail.reason] = (acc[fail.reason] || 0) + 1;
+                        return acc;
+                    }, {}),
+                    results: results 
+                };
+            }
+            
+            // Calculate statistics for successful runs
+            const sortedResults = successfulRuns.sort((a, b) => a - b);
+            const min = sortedResults[0];
+            const max = sortedResults[sortedResults.length - 1];
+            const avg = successfulRuns.reduce((sum, cost) => sum + cost, 0) / successfulRuns.length;
+            
+            // Calculate standard deviation
+            const variance = successfulRuns.reduce((sum, cost) => sum + Math.pow(cost - avg, 2), 0) / successfulRuns.length;
+            const stdDev = Math.sqrt(variance);
+            
+            const successRate = successfulRuns.length / results.length;
+            const failureReasons = failedRuns.reduce((acc, fail) => {
+                acc[fail.reason] = (acc[fail.reason] || 0) + 1;
+                return acc;
+            }, {});
+            
+            return { min, max, avg, stdDev, successRate, failureReasons, results };
+        }
+
+        function isStartingTech(techId) {
+            return selectedNation && 
+                   nationData.startingTechs[selectedNation] && 
+                   nationData.startingTechs[selectedNation].includes(techId);
+        }
+
+        function simulateSingleRun(researchPath, hasScholar, hasOracle) {
+            let completedTechs = new Set();
+            let removedBonusCards = new Set(); // Track permanently removed bonus cards
+            let totalCost = 0;
+            let turnCount = 0;
+            
+            if (window.debugSimulation) {
+                console.log(`🎲 Starting simulation: Scholar=${hasScholar}, Oracle=${hasOracle}`);
+                console.log(`🎯 Target techs: ${researchPath.map(id => {
+                    const mainTech = techData.techs.find(t => t.id === id);
+                    const bonusTech = techData.bonusTechs.find(t => t.id === id);
+                    return (mainTech || bonusTech)?.name || id;
+                }).join(', ')}`);
+            }
+            
+            // Add starting techs as already completed
+            if (selectedNation && nationData.startingTechs[selectedNation]) {
+                nationData.startingTechs[selectedNation].forEach(techId => {
+                    completedTechs.add(techId);
+                });
+                if (window.debugSimulation) {
+                    console.log(`🏛️ Starting techs: ${Array.from(completedTechs).map(id => {
+                        const tech = techData.techs.find(t => t.id === id);
+                        return tech?.name || id;
+                    }).join(', ')}`);
+                }
+            }
+            
+            // Separate main techs and bonus cards in research path
+            const targetMainTechs = researchPath.filter(id => techData.techs.some(t => t.id === id));
+            const targetBonusCards = researchPath.filter(id => techData.bonusTechs.some(t => t.id === id));
+            const targetTechSet = new Set(researchPath);
+            
+            if (window.debugSimulation && targetBonusCards.length > 0) {
+                console.log(`🎁 Target bonus cards: ${targetBonusCards.map(id => {
+                    const bonus = techData.bonusTechs.find(t => t.id === id);
+                    return bonus?.name || id;
+                }).join(', ')}`);
+            }
+            
+            // Keep researching until all target techs are completed
+            while (!isSubset(targetTechSet, completedTechs) && turnCount < 500) {
+                turnCount++;
+                
+                // Check if any required bonus cards have been permanently removed
+                const missedBonusCards = targetBonusCards.filter(id => removedBonusCards.has(id));
+                if (missedBonusCards.length > 0) {
+                    if (window.debugSimulation) {
+                        console.warn(`💔 Failed: Required bonus cards permanently lost: ${missedBonusCards.map(id => {
+                            const bonus = techData.bonusTechs.find(t => t.id === id);
+                            return bonus?.name || id;
+                        }).join(', ')}`);
+                    }
+                    return { cost: -1, failed: true, reason: 'missed_bonus_cards', missedCards: missedBonusCards };
+                }
+                
+                // Get currently available techs (prerequisites met, not completed, not removed)
+                const availableTechs = getAvailableTechs(completedTechs, removedBonusCards);
+                const drawPile = [...availableTechs];
+                const discardPile = [];
+                shuffleArray(drawPile);
+                
+                if (window.debugSimulation && turnCount === 1) {
+                    const mainCount = availableTechs.filter(t => !t.isBonus).length;
+                    const bonusCount = availableTechs.filter(t => t.isBonus).length;
+                    console.log(`📚 Available techs: ${mainCount} main + ${bonusCount} bonus = ${availableTechs.length} total`);
+                }
+                
+                // Research one tech this turn
+                const result = researchOneTurn(targetTechSet, drawPile, discardPile, completedTechs, hasScholar, hasOracle, turnCount, removedBonusCards);
+                if (result.cost >= 0) {
+                    totalCost += result.cost;
+                    if (result.removedBonusCards) {
+                        result.removedBonusCards.forEach(id => removedBonusCards.add(id));
+                    }
+                } else {
+                    if (window.debugSimulation) {
+                        console.warn('⚠️ No progress made this turn, ending simulation');
+                    }
+                    break;
+                }
+            }
+            
+            // Check final success/failure
+            const success = isSubset(targetTechSet, completedTechs);
+            
+            if (window.debugSimulation) {
+                console.log(`🏁 Simulation ${success ? 'SUCCESS' : 'FAILED'} after ${turnCount} turns, total cost: ${totalCost}`);
+                if (!success) {
+                    const remaining = Array.from(targetTechSet).filter(id => !completedTechs.has(id));
+                    console.log(`❌ Missing techs: ${remaining.join(', ')}`);
+                }
+            }
+            
+            return success ? { cost: totalCost, failed: false } : { cost: -1, failed: true, reason: 'incomplete', totalCost };
+        }
+
+        function isSubset(subset, superset) {
+            for (const item of subset) {
+                if (!superset.has(item)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function getAvailableTechs(completedTechs, removedBonusCards = new Set()) {
+            const availableMainTechs = techData.techs.filter(tech => {
+                // Skip if already completed or is a starting tech
+                if (completedTechs.has(tech.id) || isStartingTech(tech.id)) {
+                    return false;
+                }
+                
+                // Check if all prerequisites are met
+                return (tech.prereqs || []).every(prereqId => completedTechs.has(prereqId));
+            });
+            
+            const availableBonusCards = techData.bonusTechs.filter(bonus => {
+                // Skip if already completed or permanently removed
+                if (completedTechs.has(bonus.id) || removedBonusCards.has(bonus.id)) {
+                    return false;
+                }
+                
+                // Filter by nation - same logic as initializeBonusTechs
+                if (bonus.nation && (!selectedNation || bonus.nation !== selectedNation)) {
+                    return false;
+                }
+                
+                // Check if prerequisite main tech is completed
+                return (bonus.prereqs || []).every(prereqId => completedTechs.has(prereqId));
+            });
+            
+            // Mark bonus cards so we can identify them later
+            availableBonusCards.forEach(bonus => {
+                bonus.isBonus = true;
+            });
+            
+            return [...availableMainTechs, ...availableBonusCards];
+        }
+
+        function researchOneTurn(targetTechSet, drawPile, discardPile, completedTechs, hasScholar, hasOracle, turnCount, removedBonusCards) {
+            if (window.debugSimulation) {
+                console.log(`\n--- Turn ${turnCount} ---`);
+                console.log(`📊 Available techs: ${drawPile.length}, Completed: ${completedTechs.size}`);
+                console.log(`🔮 Oracle: ${hasOracle ? 'YES (+1 card)' : 'NO'}, 📜 Scholar: ${hasScholar ? 'YES (redraw available)' : 'NO'}`);
+            }
+            
+            // Draw hand from available techs
+            const handSize = hasOracle ? 5 : 4;
+            const hand = drawHand(drawPile, discardPile, handSize);
+            
+            if (hand.length === 0) {
+                if (window.debugSimulation) {
+                    console.warn('⚠️ No techs available to draw');
+                }
+                return { cost: 0 };
+            }
+            
+            if (window.debugSimulation) {
+                console.log(`✋ Hand (${hand.length}/${handSize}): ${hand.map(t => `${t.name}(${t.cost})`).join(', ')}`);
+            }
+            
+            // Look for target techs in hand
+            const targetsInHand = hand.filter(tech => targetTechSet.has(tech.id));
+            const bonusTargetsInHand = targetsInHand.filter(tech => tech.isBonus);
+            
+            let bestChoice = null;
+            
+            if (targetsInHand.length > 0) {
+                // Handle multiple bonus cards dilemma
+                if (bonusTargetsInHand.length > 1) {
+                    if (window.debugSimulation) {
+                        console.warn(`⚠️ Multiple target bonus cards in hand! Can only choose one:`);
+                        bonusTargetsInHand.forEach(bonus => {
+                            console.warn(`   - ${bonus.name}`);
+                        });
+                    }
+                    // Choose the most expensive bonus card (arbitrary strategy)
+                    bestChoice = bonusTargetsInHand.reduce((mostExpensive, bonus) => 
+                        bonus.cost > mostExpensive.cost ? bonus : mostExpensive
+                    );
+                    if (window.debugSimulation) {
+                        console.log(`🎯 Choosing most expensive bonus: ${bestChoice.name} (${bestChoice.cost} 🧪)`);
+                    }
+                } else {
+                    // Single target or main tech - select it
+                    bestChoice = targetsInHand[0];
+                    if (window.debugSimulation) {
+                        const techType = bestChoice.isBonus ? '🎁 bonus card' : '🔬 main tech';
+                        console.log(`✅ Found target ${techType}! Selecting: ${bestChoice.name}`);
+                    }
+                }
+            } else {
+                // No target tech in hand - consider Scholar redraw
+                if (hasScholar && shouldRedrawForTargets(hand, targetTechSet, drawPile, discardPile)) {
+                    if (window.debugSimulation) {
+                        console.log(`📜 Scholar redraw: Looking for target techs...`);
+                    }
+                    
+                    // Discard current hand and redraw
+                    discardPile.push(...hand);
+                    const newHand = drawHand(drawPile, discardPile, handSize);
+                    const newTargetInHand = newHand.find(tech => targetTechSet.has(tech.id));
+                    
+                    if (window.debugSimulation) {
+                        console.log(`✋ New hand (${newHand.length}): ${newHand.map(t => `${t.name}(${t.cost})`).join(', ')}`);
+                    }
+                    
+                    if (newTargetInHand) {
+                        bestChoice = newTargetInHand;
+                        if (window.debugSimulation) {
+                            console.log(`✅ Found target in redraw! Selecting: ${newTargetInHand.name}`);
+                        }
+                    } else if (newHand.length > 0) {
+                        // Pick cheapest from new hand
+                        bestChoice = newHand.reduce((cheapest, tech) => 
+                            tech.cost < cheapest.cost ? tech : cheapest
+                        );
+                        if (window.debugSimulation) {
+                            console.log(`💰 No target in redraw, picking cheapest: ${bestChoice.name} (${bestChoice.cost} 🧪)`);
+                        }
+                    }
+                } else {
+                    // No redraw - pick cheapest to advance deck
+                    bestChoice = hand.reduce((cheapest, tech) => 
+                        tech.cost < cheapest.cost ? tech : cheapest
+                    );
+                    if (window.debugSimulation) {
+                        console.log(`💰 No target, picking cheapest: ${bestChoice.name} (${bestChoice.cost} 🧪)`);
+                    }
+                }
+            }
+            
+            if (bestChoice) {
+                completedTechs.add(bestChoice.id);
+                
+                // Handle discarded cards - bonus cards are permanently removed
+                const removedThisTurn = [];
+                hand.forEach(tech => {
+                    if (tech.id !== bestChoice.id && tech.isBonus) {
+                        removedBonusCards.add(tech.id);
+                        removedThisTurn.push(tech.id);
+                        if (window.debugSimulation) {
+                            console.log(`💔 Bonus card permanently removed: ${tech.name}`);
+                        }
+                    } else if (tech.id !== bestChoice.id) {
+                        // Main techs go to discard pile (handled by drawHand reshuffling)
+                        discardPile.push(tech);
+                    }
+                });
+                
+                if (window.debugSimulation) {
+                    const techType = bestChoice.isBonus ? '🎁 BONUS' : '🔬 MAIN';
+                    console.log(`${techType} Researched: ${bestChoice.name} - now completed!`);
+                }
+                
+                return { 
+                    cost: bestChoice.cost, 
+                    removedBonusCards: removedThisTurn.length > 0 ? removedThisTurn : null 
+                };
+            }
+            
+            return { cost: 0 };
+        }
+
+        function drawHand(drawPile, discardPile, handSize) {
+            const hand = [];
+            
+            for (let i = 0; i < handSize; i++) {
+                // Reshuffle if draw pile is empty
+                if (drawPile.length === 0 && discardPile.length > 0) {
+                    if (window.debugSimulation) {
+                        console.log(`🔄 Reshuffling: Moving ${discardPile.length} cards from discard to draw pile`);
+                    }
+                    drawPile.push(...discardPile);
+                    discardPile.length = 0;
+                    shuffleArray(drawPile);
+                    if (window.debugSimulation) {
+                        console.log(`🃏 Draw pile shuffled, now has ${drawPile.length} cards`);
+                    }
+                }
+                
+                // Draw from pile if available
+                if (drawPile.length > 0) {
+                    hand.push(drawPile.pop());
+                }
+            }
+            
+            return hand;
+        }
+
+        function shouldRedrawForTargets(hand, targetTechSet, drawPile, discardPile) {
+            // Smart Scholar redraw logic based on expected value
+            const allAvailableCards = [...drawPile, ...discardPile];
+            const targetStillAvailable = allAvailableCards.some(tech => targetTechSet.has(tech.id));
+            
+            if (!targetStillAvailable) return false;
+            
+            // Calculate current hand stats
+            const avgHandCost = hand.reduce((sum, tech) => sum + tech.cost, 0) / hand.length;
+            const cheapestInHand = Math.min(...hand.map(tech => tech.cost));
+            
+            // Calculate expected stats of available deck
+            const avgDeckCost = allAvailableCards.reduce((sum, tech) => sum + tech.cost, 0) / allAvailableCards.length;
+            const targetProbability = allAvailableCards.filter(tech => targetTechSet.has(tech.id)).length / allAvailableCards.length;
+            
+            // Expected value calculation:
+            // If we find target: we get target tech (good!)
+            // If we don't find target: we get average deck cost
+            const expectedRedrawCost = (targetProbability * 0) + ((1 - targetProbability) * avgDeckCost);
+            
+            // Redraw if:
+            // 1. Current hand is worse than expected redraw outcome
+            // 2. Target probability is reasonable (> 10%)
+            // 3. Current hand is significantly above deck average (> 1.2x)
+            const handVsDeckRatio = avgHandCost / avgDeckCost;
+            const shouldRedraw = (cheapestInHand > expectedRedrawCost) && 
+                               (targetProbability > 0.10) && 
+                               (handVsDeckRatio > 1.2);
+            
+            if (window.debugSimulation) {
+                console.log(`📜 Scholar analysis: handAvg=${Math.round(avgHandCost)}, deckAvg=${Math.round(avgDeckCost)}, ratio=${handVsDeckRatio.toFixed(2)}, targetProb=${Math.round(targetProbability*100)}%, redraw=${shouldRedraw ? 'YES' : 'NO'}`);
+            }
+            
+            return shouldRedraw;
+        }
+
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function displayComparisonResults(allResults) {
+            console.log('displayComparisonResults called with:', allResults);
+            
+            // Try a different approach - replace the entire table with a simple div
+            const container = document.getElementById('simulationResults');
+            if (!container) {
+                console.error('Could not find simulationResults container');
+                console.log('Available elements with IDs:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
+                return;
+            }
+            
+            console.log('Container found:', container);
+            console.log('Container current content:', container.innerHTML);
+            console.log('Container parent:', container.parentElement?.tagName, container.parentElement?.id);
+            
+            // Find min/max values for scaling
+            const allMins = allResults.map(r => r.results.min);
+            const allMaxs = allResults.map(r => r.results.max);
+            const allAvgs = allResults.map(r => r.results.avg);
+            const globalMin = Math.min(...allMins);
+            const globalMax = Math.max(...allMaxs);
+            const range = globalMax - globalMin;
+            
+            let html = `
+                <div style="color: #d4af37; font-size: 1.1em; margin-bottom: 15px; text-align: center;">
+                    📊 Research Cost Comparison (1000 runs each)
+                </div>
+                <div style="background: rgba(139, 105, 20, 0.15); padding: 15px; border-radius: 8px; border: 1px solid #8b6914;">
+            `;
+            
+            for (const variant of allResults) {
+                console.log(`Processing variant: ${variant.name}`, variant.results);
+                const results = variant.results;
+                const rangeMin = Math.round(results.avg - results.stdDev);
+                const rangeMax = Math.round(results.avg + results.stdDev);
+                
+                // Calculate bar widths as percentages
+                const minPercent = ((results.min - globalMin) / range) * 100;
+                const maxPercent = ((results.max - globalMin) / range) * 100;
+                const avgPercent = ((results.avg - globalMin) / range) * 100;
+                const stdDevLeftPercent = ((rangeMin - globalMin) / range) * 100;
+                const stdDevRightPercent = ((rangeMax - globalMin) / range) * 100;
+                
+                html += `
+                    <div style="margin-bottom: 8px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                        <div style="color: #d4af37; font-weight: bold; margin-bottom: 4px; font-size: 0.95em; display: flex; justify-content: space-between;">
+                            <span>${variant.name}</span>
+                            <span style="color: ${results.successRate >= 0.95 ? 'var(--primary-green)' : results.successRate >= 0.8 ? 'var(--primary-gold)' : 'var(--light-red)'};">
+                                ${Math.round(results.successRate * 100)}% success
+                            </span>
+                        </div>
+                        
+                        <!-- Bar chart container -->
+                        <div style="position: relative; height: 20px; background: rgba(0,0,0,0.5); border-radius: 10px; margin: 6px 0; border: 1px solid #444;">
+                            <!-- Min-Max range bar (light gray) -->
+                            <div style="position: absolute; top: 8px; left: ${minPercent}%; width: ${maxPercent - minPercent}%; height: 8px; background: rgba(128,128,128,0.4); border-radius: 4px;"></div>
+                            
+                            <!-- StdDev range bar (gold) -->
+                            <div style="position: absolute; top: 8px; left: ${stdDevLeftPercent}%; width: ${stdDevRightPercent - stdDevLeftPercent}%; height: 14px; background: var(--primary-gold); opacity: 0.6; border-radius: 7px;"></div>
+                            
+                            <!-- Average line (blue) -->
+                            <div style="position: absolute; top: 5px; left: ${avgPercent}%; width: 3px; height: 20px; background: var(--light-blue); border-radius: 1px;"></div>
+                            
+                            <!-- Min marker (green) -->
+                            <div style="position: absolute; top: 3px; left: ${minPercent}%; width: 2px; height: 24px; background: var(--primary-green);"></div>
+                            
+                            <!-- Max marker (red) -->
+                            <div style="position: absolute; top: 3px; left: ${maxPercent}%; width: 2px; height: 24px; background: var(--light-red);"></div>
+                        </div>
+                        
+                        <!-- Legend -->
+                        <div style="color: var(--text-light); font-size: 0.85em; display: flex; justify-content: space-between; margin-top: 5px;">
+                            <span>Min: <span style="color: var(--primary-green);">${results.min}</span></span>
+                            <span>Avg: <span style="color: var(--light-blue);">${Math.round(results.avg)}</span></span>
+                            <span>Max: <span style="color: var(--light-red);">${results.max}</span></span>
+                            <span>±σ: <span style="color: var(--primary-gold);">${Math.round(results.stdDev)}</span></span>
+                        </div>
+                        
+                    </div>
+                `;
+            }
+            
+            html += `
+                <div style="margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 5px; font-size: 0.75em; color: var(--text-muted); text-align: center;">
+                    <strong>Legend:</strong> 
+                    <span style="color: var(--primary-green);">Green</span> = Min | 
+                    <span style="color: var(--light-blue);">Blue</span> = Average | 
+                    <span style="color: var(--light-red);">Red</span> = Max | 
+                    <span style="color: var(--primary-gold);">Gold bar</span> = ±1 Standard Deviation
+                </div>
+            `;
+            container.innerHTML = html;
+            
+            // CRITICAL: Make sure the container itself is visible!
+            container.style.display = 'block';
+            container.style.visibility = 'visible';
+            container.style.opacity = '1';
+            
+            console.log('Results displayed using div layout instead of table');
+            console.log('Container display set to:', container.style.display);
         }
 
         // Handle window resize
