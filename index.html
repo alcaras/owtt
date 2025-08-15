@@ -594,67 +594,52 @@
         // Complete tech tree data from game files with correct prerequisites and unlocks
         const techData = {
             techs: [
-                // Column 0
                 { id: "TECH_IRONWORKING", name: "Ironworking", cost: 80, column: 0, row: 2, prereqs: [], unlocks: { units: ["Warrior"], improvements: [], laws: [], projects: [] } },
-                { id: "TECH_STONECUTTING", name: "Stonecutting", cost: 80, column: 0, row: 5, prereqs: [], unlocks: { units: [], improvements: ["Fort", "Quarry"], laws: [], projects: [] } },
-                { id: "TECH_TRAPPING", name: "Trapping", cost: 80, column: 0, row: 7, prereqs: [], unlocks: { units: ["Slinger"], improvements: ["Camp"], laws: [], projects: [] } },
-                { id: "TECH_DIVINATION", name: "Divination", cost: 80, column: 0, row: 8, prereqs: [], unlocks: { units: [], improvements: ["Shrine"], laws: [], projects: [] } },
-                { id: "TECH_ADMINISTRATION", name: "Administration", cost: 80, column: 0, row: 10, prereqs: [], unlocks: { units: [], improvements: ["Granary"], laws: [], projects: ["Treasury"] } },
-                
-                // Column 1
+                { id: "TECH_STONECUTTING", name: "Stonecutting", cost: 80, column: 0, row: 5, prereqs: [], unlocks: { units: [], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_TRAPPING", name: "Trapping", cost: 80, column: 0, row: 7, prereqs: [], unlocks: { units: ["Slinger"], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_DIVINATION", name: "Divination", cost: 80, column: 0, row: 8, prereqs: [], unlocks: { units: [], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_ADMINISTRATION", name: "Administration", cost: 80, column: 0, row: 10, prereqs: [], unlocks: { units: [], improvements: [], laws: [], projects: ["Treasury"] } },
                 { id: "TECH_LABOR_FORCE", name: "Labor Force", cost: 120, column: 1, row: 1, prereqs: ["TECH_IRONWORKING"], unlocks: { units: [], improvements: [], laws: ["Slavery/Freedom"], projects: [] } },
-                { id: "TECH_HUSBANDRY", name: "Husbandry", cost: 120, column: 1, row: 3, prereqs: ["TECH_IRONWORKING"], unlocks: { units: [], improvements: ["Pasture"], laws: [], projects: [] } },
-                { id: "TECH_DRAMA", name: "Drama", cost: 120, column: 1, row: 4, prereqs: ["TECH_STONECUTTING"], unlocks: { units: [], improvements: ["Odeon"], laws: [], projects: [] } },
-                { id: "TECH_POLIS", name: "Polis", cost: 120, column: 1, row: 5, prereqs: ["TECH_STONECUTTING"], unlocks: { units: [], improvements: ["Hamlet"], laws: [], projects: ["Walls"] } },
-                { id: "TECH_MILITARY_DRILL", name: "Military Drill", cost: 120, column: 1, row: 7, prereqs: ["TECH_TRAPPING"], unlocks: { units: [], improvements: ["Barracks"], laws: [], projects: [] } },
-                { id: "TECH_ARISTOCRACY", name: "Aristocracy", cost: 120, column: 1, row: 8, prereqs: ["TECH_DIVINATION"], unlocks: { units: [], improvements: ["Kushite Pyramids"], laws: ["Centralization/Vassalage"], projects: [] } },
+                { id: "TECH_HUSBANDRY", name: "Husbandry", cost: 120, column: 1, row: 3, prereqs: ["TECH_IRONWORKING"], unlocks: { units: [], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_DRAMA", name: "Drama", cost: 120, column: 1, row: 4, prereqs: ["TECH_STONECUTTING"], unlocks: { units: [], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_POLIS", name: "Polis", cost: 120, column: 1, row: 5, prereqs: ["TECH_STONECUTTING"], unlocks: { units: [], improvements: [], laws: [], projects: ["Walls"] } },
+                { id: "TECH_MILITARY_DRILL", name: "Military Drill", cost: 120, column: 1, row: 7, prereqs: ["TECH_TRAPPING"], unlocks: { units: [], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_ARISTOCRACY", name: "Aristocracy", cost: 120, column: 1, row: 8, prereqs: ["TECH_DIVINATION"], unlocks: { units: [], improvements: [], laws: ["Centralization/Vassalage"], projects: [] } },
                 { id: "TECH_RHETORIC", name: "Rhetoric", cost: 120, column: 1, row: 10, prereqs: ["TECH_ADMINISTRATION"], unlocks: { units: [], improvements: [], laws: ["Epics/Exploration"], projects: ["Forum"] } },
-                
-                // Column 2
                 { id: "TECH_NAVIGATION", name: "Navigation", cost: 200, column: 2, row: 0, prereqs: ["TECH_LABOR_FORCE"], unlocks: { units: ["Bireme"], improvements: [], laws: ["Colonies/Serfdom"], projects: [] } },
                 { id: "TECH_PHALANX", name: "Phalanx", cost: 200, column: 2, row: 2, prereqs: ["TECH_LABOR_FORCE"], unlocks: { units: ["Spearman"], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_SPOKED_WHEEL", name: "Spoked Wheel", cost: 200, column: 2, row: 3, prereqs: ["TECH_HUSBANDRY"], unlocks: { units: ["Chariot"], improvements: [], laws: [], projects: [] } },
-                { id: "TECH_FORESTRY", name: "Forestry", cost: 200, column: 2, row: 5, prereqs: ["TECH_POLIS"], unlocks: { units: [], improvements: ["Lumbermill"], laws: [], projects: [] } },
+                { id: "TECH_FORESTRY", name: "Forestry", cost: 200, column: 2, row: 5, prereqs: ["TECH_POLIS"], unlocks: { units: [], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_STEEL", name: "Steel", cost: 200, column: 2, row: 7, prereqs: ["TECH_IRONWORKING", "TECH_MILITARY_DRILL"], unlocks: { units: ["Axeman"], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_SOVEREIGNTY", name: "Sovereignty", cost: 200, column: 2, row: 9, prereqs: ["TECH_ARISTOCRACY", "TECH_RHETORIC"], unlocks: { units: [], improvements: [], laws: ["Tyranny/Constitution"], projects: [] } },
                 { id: "TECH_METAPHYSICS", name: "Metaphysics", cost: 200, column: 2, row: 10, prereqs: ["TECH_RHETORIC"], unlocks: { units: [], improvements: [], laws: [], projects: ["Archive"] } },
-                
-                // Column 3
-                { id: "TECH_COINAGE", name: "Coinage", cost: 400, column: 3, row: 0, prereqs: ["TECH_NAVIGATION"], unlocks: { units: [], improvements: ["Market"], laws: [], projects: [] } },
-                { id: "TECH_CITIZENSHIP", name: "Citizenship", cost: 400, column: 3, row: 2, prereqs: ["TECH_PHALANX"], unlocks: { units: [], improvements: ["Courthouse"], laws: ["Divine Rule/Legal Code"], projects: [] } },
+                { id: "TECH_COINAGE", name: "Coinage", cost: 400, column: 3, row: 0, prereqs: ["TECH_NAVIGATION"], unlocks: { units: [], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_CITIZENSHIP", name: "Citizenship", cost: 400, column: 3, row: 2, prereqs: ["TECH_PHALANX"], unlocks: { units: [], improvements: [], laws: ["Divine Rule/Legal Code"], projects: [] } },
                 { id: "TECH_PORTCULLIS", name: "Portcullis", cost: 400, column: 3, row: 3, prereqs: ["TECH_SPOKED_WHEEL"], unlocks: { units: [], improvements: [], laws: [], projects: ["Moat"] } },
-                { id: "TECH_ARCHITECTURE", name: "Architecture", cost: 400, column: 3, row: 4, prereqs: ["TECH_DRAMA"], unlocks: { units: [], improvements: ["Baths"], laws: ["Philosophy/Engineering"], projects: [] } },
-                { id: "TECH_LAND_CONSOLIDATION", name: "Land Consolidation", cost: 400, column: 3, row: 5, prereqs: ["TECH_FORESTRY"], unlocks: { units: ["Camel Archer"], improvements: ["Grove"], laws: [], projects: [] } },
-                { id: "TECH_COMPOSITE_BOW", name: "Composite Bow", cost: 400, column: 3, row: 6, prereqs: ["TECH_MILITARY_DRILL"], unlocks: { units: [], improvements: ["Range"], laws: [], projects: [] } },
-                { id: "TECH_MONASTICISM", name: "Monasticism", cost: 400, column: 3, row: 8, prereqs: ["TECH_ARISTOCRACY"], unlocks: { units: [], improvements: ["Monastery"], laws: ["Monotheism/Polytheism"], projects: [] } },
+                { id: "TECH_LAND_CONSOLIDATION", name: "Land Consolidation", cost: 400, column: 3, row: 5, prereqs: ["TECH_FORESTRY"], unlocks: { units: ["Camel Archer", "War Elephant"], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_COMPOSITE_BOW", name: "Composite Bow", cost: 400, column: 3, row: 6, prereqs: ["TECH_MILITARY_DRILL"], unlocks: { units: ["Archer"], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_MONASTICISM", name: "Monasticism", cost: 400, column: 3, row: 8, prereqs: ["TECH_ARISTOCRACY"], unlocks: { units: [], improvements: [], laws: ["Monotheism/Polytheism"], projects: [] } },
                 { id: "TECH_MACHINERY", name: "Machinery", cost: 400, column: 3, row: 9, prereqs: ["TECH_SOVEREIGNTY"], unlocks: { units: ["Onager"], improvements: [], laws: [], projects: [] } },
-                
-                // Column 4
-                { id: "TECH_SCHOLARSHIP", name: "Scholarship", cost: 600, column: 4, row: 1, prereqs: ["TECH_CITIZENSHIP"], unlocks: { units: [], improvements: ["Library"], laws: [], projects: [] } },
+                { id: "TECH_SCHOLARSHIP", name: "Scholarship", cost: 600, column: 4, row: 1, prereqs: ["TECH_CITIZENSHIP"], unlocks: { units: [], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_STIRRUPS", name: "Stirrups", cost: 600, column: 4, row: 3, prereqs: ["TECH_PORTCULLIS"], unlocks: { units: ["Horseman", "Horse Archer"], improvements: [], laws: [], projects: [] } },
-                { id: "TECH_VAULTING", name: "Vaulting", cost: 600, column: 4, row: 4, prereqs: ["TECH_ARCHITECTURE"], unlocks: { units: [], improvements: ["Cathedral"], laws: ["Iconography/Calligraphy"], projects: [] } },
+                { id: "TECH_ARCHITECTURE", name: "Architecture", cost: 400, column: 3, row: 4, prereqs: ["TECH_DRAMA"], unlocks: { units: [], improvements: [], laws: ["Philosophy/Engineering"], projects: [] } },
                 { id: "TECH_MANOR", name: "Manor", cost: 600, column: 4, row: 5, prereqs: ["TECH_LAND_CONSOLIDATION", "TECH_COMPOSITE_BOW"], unlocks: { units: ["Conscript"], improvements: [], laws: ["Professional Army/Volunteers"], projects: [] } },
-                { id: "TECH_BATTLELINE", name: "Battle Line", cost: 600, column: 4, row: 7, prereqs: ["TECH_PHALANX", "TECH_STEEL"], unlocks: { units: ["Maceman"], improvements: [], laws: [], projects: [] } },
-                { id: "TECH_DOCTRINE", name: "Doctrine", cost: 600, column: 4, row: 8, prereqs: ["TECH_MONASTICISM"], unlocks: { units: [], improvements: ["Temple"], laws: ["Tolerance/Orthodoxy"], projects: [] } },
-                { id: "TECH_HYDRAULICS", name: "Hydraulics", cost: 600, column: 4, row: 9, prereqs: ["TECH_MACHINERY"], unlocks: { units: ["Ballista"], improvements: ["Mill"], laws: [], projects: [] } },
-                { id: "TECH_CARTOGRAPHY", name: "Cartography", cost: 600, column: 4, row: 10, prereqs: ["TECH_NAVIGATION", "TECH_METAPHYSICS"], unlocks: { units: [], improvements: ["Harbor"], laws: [], projects: [] } },
-                
-                // Column 5
+                { id: "TECH_BATTLELINE", name: "Battleline", cost: 600, column: 4, row: 7, prereqs: ["TECH_PHALANX", "TECH_STEEL"], unlocks: { units: ["Maceman"], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_DOCTRINE", name: "Doctrine", cost: 600, column: 4, row: 8, prereqs: ["TECH_MONASTICISM"], unlocks: { units: [], improvements: [], laws: ["Tolerance/Orthodoxy"], projects: [] } },
+                { id: "TECH_HYDRAULICS", name: "Hydraulics", cost: 600, column: 4, row: 9, prereqs: ["TECH_MACHINERY"], unlocks: { units: ["Ballista"], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_CARTOGRAPHY", name: "Cartography", cost: 600, column: 4, row: 10, prereqs: ["TECH_NAVIGATION", "TECH_METAPHYSICS"], unlocks: { units: ["Trireme"], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_LATEEN_SAIL", name: "Lateen Sail", cost: 1000, column: 5, row: 0, prereqs: ["TECH_COINAGE", "TECH_CARTOGRAPHY"], unlocks: { units: ["Dromon"], improvements: [], laws: ["Autarky/Trade League"], projects: [] } },
                 { id: "TECH_JURISPRUDENCE", name: "Jurisprudence", cost: 1000, column: 5, row: 1, prereqs: ["TECH_SCHOLARSHIP"], unlocks: { units: [], improvements: [], laws: ["Guilds/Elites"], projects: [] } },
                 { id: "TECH_MARTIAL_CODE", name: "Martial Code", cost: 1000, column: 5, row: 2, prereqs: ["TECH_STIRRUPS", "TECH_CITIZENSHIP"], unlocks: { units: [], improvements: [], laws: ["Pilgrimage/Holy War"], projects: ["Towers"] } },
+                { id: "TECH_VAULTING", name: "Vaulting", cost: 600, column: 4, row: 4, prereqs: ["TECH_ARCHITECTURE"], unlocks: { units: [], improvements: [], laws: ["Iconography/Calligraphy"], projects: [] } },
                 { id: "TECH_BODKIN_ARROW", name: "Bodkin Arrow", cost: 1000, column: 5, row: 5, prereqs: ["TECH_MANOR"], unlocks: { units: ["Longbowman"], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_WINDLASS", name: "Windlass", cost: 1000, column: 5, row: 9, prereqs: ["TECH_MANOR", "TECH_HYDRAULICS"], unlocks: { units: ["Crossbowman"], improvements: [], laws: [], projects: [] } },
-                
-                // Column 6
                 { id: "TECH_FISCAL_POLICY", name: "Fiscal Policy", cost: 1600, column: 6, row: 1, prereqs: ["TECH_LATEEN_SAIL", "TECH_JURISPRUDENCE"], unlocks: { units: [], improvements: [], laws: ["Coin Debasement/Monetary Reform"], projects: [] } },
                 { id: "TECH_BARDING", name: "Barding", cost: 1600, column: 6, row: 2, prereqs: ["TECH_BATTLELINE", "TECH_MARTIAL_CODE"], unlocks: { units: ["Cataphract"], improvements: [], laws: [], projects: [] } },
-                { id: "TECH_COHORTS", name: "Cohorts", cost: 1600, column: 6, row: 6, prereqs: ["TECH_MANOR", "TECH_BATTLELINE"], unlocks: { units: ["Swordsman"], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_INFANTRY_SQUARE", name: "Infantry Square", cost: 1600, column: 6, row: 7, prereqs: ["TECH_BATTLELINE"], unlocks: { units: ["Pikeman"], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_COHORTS", name: "Cohorts", cost: 1600, column: 6, row: 6, prereqs: ["TECH_MANOR", "TECH_BATTLELINE"], unlocks: { units: ["Swordsman"], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_CHAIN_DRIVE", name: "Chain Drive", cost: 1600, column: 6, row: 9, prereqs: ["TECH_WINDLASS"], unlocks: { units: ["Polybolos"], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_BALLISTICS", name: "Ballistics", cost: 1600, column: 6, row: 10, prereqs: ["TECH_CARTOGRAPHY", "TECH_HYDRAULICS"], unlocks: { units: ["Mangonel"], improvements: [], laws: [], projects: [] } },
-                
-                // Column 7 - Victory Techs
                 { id: "TECH_ECONOMIC_REFORM", name: "Economic Reform", cost: 2000, column: 7, row: 1, prereqs: ["TECH_FISCAL_POLICY"], unlocks: { units: [], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_MILITARY_PRESTIGE", name: "Military Prestige", cost: 2000, column: 7, row: 5, prereqs: ["TECH_BARDING", "TECH_BODKIN_ARROW", "TECH_COHORTS"], unlocks: { units: [], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_INDUSTRIAL_PROGRESS", name: "Industrial Progress", cost: 2000, column: 7, row: 9, prereqs: ["TECH_CHAIN_DRIVE", "TECH_BALLISTICS"], unlocks: { units: [], improvements: [], laws: [], projects: [] } }
@@ -666,33 +651,31 @@
                 { id: "TECH_DRAMA_BONUS_SETTLER", name: "Free Settler", cost: 60, parent: "TECH_DRAMA", bonus: "+1 Settler" },
                 { id: "TECH_ARISTOCRACY_BONUS_BORDERS", name: "Border Boost", cost: 60, parent: "TECH_ARISTOCRACY", bonus: "Border Growth" },
                 { id: "TECH_NAVIGATION_BONUS_BIREME", name: "Free Bireme", cost: 100, parent: "TECH_STEEL", bonus: "+1 Bireme" },
-                { id: "TECH_STEEL_BONUS_TRAINING", name: "Training Boost", cost: 100, parent: "TECH_STEEL", bonus: "Unit Training" },
                 { id: "TECH_PHALANX_BONUS_ORDERS", name: "Orders Boost", cost: 100, parent: "TECH_PHALANX", bonus: "+20 Orders" },
                 { id: "TECH_SPOKED_WHEEL_BONUS_CHARIOT", name: "Free Chariot", cost: 100, parent: "TECH_SOVEREIGNTY", bonus: "+1 Chariot" },
-                { id: "TECH_SOVEREIGNITY_BONUS_CIVICS", name: "Civics Boost", cost: 100, parent: "TECH_SOVEREIGNTY", bonus: "Civic Points" },
                 { id: "TECH_FORESTRY_BONUS_SCIENTIST", name: "Free Scientist", cost: 100, parent: "TECH_METAPHYSICS", bonus: "Free Scientist" },
+                { id: "TECH_STEEL_BONUS_TRAINING", name: "Training Boost", cost: 100, parent: "TECH_STEEL", bonus: "Unit Training" },
+                { id: "TECH_SOVEREIGNITY_BONUS_CIVICS", name: "Civics Boost", cost: 100, parent: "TECH_SOVEREIGNTY", bonus: "Civic Points" },
                 { id: "TECH_COINAGE_BONUS_MONEY", name: "Money Boost", cost: 200, parent: "TECH_COINAGE", bonus: "+200 Money" },
                 { id: "TECH_CITIZENSHIP_BONUS_MINISTER", name: "Free Minister", cost: 200, parent: "TECH_CITIZENSHIP", bonus: "+1 Minister" },
                 { id: "TECH_PORTCULLIS_BONUS_MACEMAN", name: "Free Maceman", cost: 200, parent: "TECH_PORTCULLIS", bonus: "+1 Maceman" },
-                { id: "TECH_MACHINERY_BONUS_ONAGER", name: "Free Onager", cost: 200, parent: "TECH_PORTCULLIS", bonus: "Free Onager" },
-                { id: "TECH_LAND_CONSOLIDATION_BONUS_CAMEL_ARCHER", name: "Free Camel Archer", cost: 200, parent: "TECH_MONASTICISM", bonus: "Free Camel Archer" },
-                { id: "TECH_LAND_CONSOLIDATION_BONUS_WAR_ELEPHANT", name: "Free War Elephant", cost: 200, parent: "TECH_MACHINERY", bonus: "Free War Elephant" },
-                { id: "TECH_MANOR_BONUS_GOODS", name: "Goods Bonus", cost: 200, parent: "TECH_MACHINERY", bonus: "Luxury Goods" },
+                { id: "TECH_LAND_CONSOLIDATION_BONUS_CAMEL_ARCHER", name: "Free Camel Archer", cost: 200, parent: "TECH_MONASTICISM", bonus: "+1 Camel Archer" },
+                { id: "TECH_LAND_CONSOLIDATION_BONUS_WAR_ELEPHANT", name: "Free War Elephant", cost: 200, parent: "TECH_MACHINERY", bonus: "+1 War Elephant" },
                 { id: "TECH_COMPOSITE_BOW_BONUS_ARCHER", name: "Free Archer", cost: 100, parent: "TECH_FORESTRY", bonus: "+1 Archer" },
+                { id: "TECH_MACHINERY_BONUS_ONAGER", name: "Free Onager", cost: 200, parent: "TECH_PORTCULLIS", bonus: "+1 Onager" },
                 { id: "TECH_SCHOLARSHIP_BONUS_SCIENTIST", name: "Free Scientist", cost: 400, parent: "TECH_SCHOLARSHIP", bonus: "Free Scientist" },
-                { id: "TECH_STIRRUPS_BONUS_HORSEMAN", name: "Free Horseman", cost: 200, parent: "TECH_LAND_CONSOLIDATION", bonus: "Free Horseman" },
-                { id: "TECH_STIRRUPS_BONUS_HORSE_ARCHER", name: "Free Horse Archer", cost: 200, parent: "TECH_LAND_CONSOLIDATION", bonus: "Free Horse Archer" },
+                { id: "TECH_STIRRUPS_BONUS_HORSEMAN", name: "Free Horseman", cost: 200, parent: "TECH_LAND_CONSOLIDATION", bonus: "+1 Horseman" },
+                { id: "TECH_STIRRUPS_BONUS_HORSE_ARCHER", name: "Free Horse Archer", cost: 200, parent: "TECH_LAND_CONSOLIDATION", bonus: "+1 Horse Archer" },
+                { id: "TECH_MANOR_BONUS_GOODS", name: "Goods Bonus", cost: 200, parent: "TECH_MACHINERY", bonus: "Luxury Goods" },
                 { id: "TECH_BATTLELINE_BONUS_SOLDIER", name: "Free Court Soldier", cost: 400, parent: "TECH_BATTLELINE", bonus: "Free Court Soldier" },
-                { id: "TECH_HYDRAULICS_BONUS_BALLISTA", name: "Free Ballista", cost: 200, parent: "TECH_COMPOSITE_BOW", bonus: "Free Ballista" },
-                { id: "TECH_JURISPRUDENCE_BONUS_MINISTER", name: "Free Minister", cost: 600, parent: "TECH_JURISPRUDENCE", bonus: "Free Minister" },
+                { id: "TECH_HYDRAULICS_BONUS_BALLISTA", name: "Free Ballista", cost: 200, parent: "TECH_COMPOSITE_BOW", bonus: "+1 Ballista" },
+                { id: "TECH_JURISPRUDENCE_BONUS_MINISTER", name: "Free Minister", cost: 600, parent: "TECH_JURISPRUDENCE", bonus: "+1 Minister" },
                 { id: "TECH_VAULTING_BONUS_HAPPINESS", name: "Happiness Boost", cost: 400, parent: "TECH_VAULTING", bonus: "Happiness Boost" },
                 { id: "TECH_BODKIN_ARROW_BONUS_LONGBOWMAN", name: "Free Longbowman", cost: 400, parent: "TECH_MANOR", bonus: "+2 Longbowman" },
                 { id: "TECH_WINDLASS_BONUS_CROSSBOWMAN", name: "Free Crossbowman", cost: 400, parent: "TECH_HYDRAULICS", bonus: "+2 Crossbowman" },
                 { id: "TECH_FISCAL_POLICY_BONUS_MERCHANT", name: "Free Merchant", cost: 1000, parent: "TECH_FISCAL_POLICY", bonus: "Free Merchant" },
                 { id: "TECH_INFANTRY_SQUARE_BONUS_SOLDIER", name: "Free Court Soldier", cost: 1000, parent: "TECH_INFANTRY_SQUARE", bonus: "Free Court Soldier" },
                 { id: "TECH_CHAIN_DRIVE_BONUS_MERCHANT", name: "Free Merchant", cost: 1000, parent: "TECH_CHAIN_DRIVE", bonus: "Free Merchant" },
-                
-                // Nation-specific bonus techs
                 { id: "TECH_BATTERING_RAM_BONUS", name: "Free Battering Ram", cost: 100, parent: "TECH_SPOKED_WHEEL", bonus: "+1 Battering Ram", nation: "NATION_ASSYRIA" },
                 { id: "TECH_SIEGE_TOWER_BONUS", name: "Free Siege Tower", cost: 600, parent: "TECH_WINDLASS", bonus: "+2 Siege Tower", nation: "NATION_ASSYRIA" },
                 { id: "TECH_AKKADIAN_ARCHER_BONUS", name: "Free Akkadian Archer", cost: 100, parent: "TECH_FORESTRY", bonus: "+1 Akkadian Archer", nation: "NATION_BABYLONIA" },
@@ -703,16 +686,21 @@
                 { id: "TECH_MOUNTED_LANCER_BONUS", name: "Free Mounted Lancer", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Mounted Lancer", nation: "NATION_EGYPT" },
                 { id: "TECH_HOPLITE_BONUS", name: "Free Hoplite", cost: 100, parent: "TECH_PHALANX", bonus: "+1 Hoplite", nation: "NATION_GREECE" },
                 { id: "TECH_PHALANGITE_BONUS", name: "Free Phalangite", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Phalangite", nation: "NATION_GREECE" },
-                { id: "TECH_HITTITE_CHARIOT_1_BONUS", name: "Free Hittite Chariot", cost: 100, parent: "TECH_SPOKED_WHEEL", bonus: "+1 Hittite Chariot", nation: "NATION_HITTITE" },
-                { id: "TECH_HITTITE_CHARIOT_2_BONUS", name: "Free Three-Man Chariot", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Three-Man Chariot", nation: "NATION_HITTITE" },
-                { id: "TECH_MEDJAY_ARCHER_BONUS", name: "Free Medjay Archer", cost: 100, parent: "TECH_FORESTRY", bonus: "+1 Medjay Archer", nation: "NATION_KUSH" },
-                { id: "TECH_BEJA_ARCHER_BONUS", name: "Free Beja Archer", cost: 600, parent: "TECH_BODKIN_ARROW", bonus: "+2 Beja Archer", nation: "NATION_KUSH" },
                 { id: "TECH_PALTON_CAVALRY_BONUS", name: "Free Palton Cavalry", cost: 100, parent: "TECH_FORESTRY", bonus: "+1 Palton Cavalry", nation: "NATION_PERSIA" },
                 { id: "TECH_CATAPHRACT_ARCHER_BONUS", name: "Free Cataphract Archer", cost: 600, parent: "TECH_WINDLASS", bonus: "+2 Cataphract Archer", nation: "NATION_PERSIA" },
                 { id: "TECH_HASTATUS_BONUS", name: "Free Hastatus", cost: 100, parent: "TECH_STEEL", bonus: "+1 Hastatus", nation: "NATION_ROME" },
                 { id: "TECH_LEGIONARY_BONUS", name: "Free Legionary", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Legionary", nation: "NATION_ROME" },
+                { id: "TECH_HITTITE_CHARIOT_1_BONUS", name: "Free Hittite Chariot", cost: 100, parent: "TECH_SPOKED_WHEEL", bonus: "+1 Hittite Chariot", nation: "NATION_HITTITE" },
+                { id: "TECH_HITTITE_CHARIOT_2_BONUS", name: "Free Hittite Chariot", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Hittite Chariot", nation: "NATION_HITTITE" },
+                { id: "TECH_MEDJAY_ARCHER_BONUS", name: "Free Medjay", cost: 100, parent: "TECH_FORESTRY", bonus: "+1 Medjay", nation: "NATION_KUSH" },
+                { id: "TECH_BEJA_ARCHER_BONUS", name: "Free Beja Archer", cost: 600, parent: "TECH_BODKIN_ARROW", bonus: "+2 Beja Archer", nation: "NATION_KUSH" },
                 { id: "TECH_DMT_WARRIOR_BONUS", name: "Free Dmt Warrior", cost: 100, parent: "TECH_STEEL", bonus: "+1 Dmt Warrior", nation: "NATION_AKSUM" },
-                { id: "TECH_SHOTELAI_BONUS", name: "Free Shotelai", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Shotelai", nation: "NATION_AKSUM" }
+                { id: "TECH_SHOTELAI_BONUS", name: "Free Shotelai", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Shotelai", nation: "NATION_AKSUM" },
+                { id: "TECH_RESOURCE_SILK_BONUS", name: "Silk", cost: 200, parent: "TECH_COINAGE", bonus: "Silk" },
+                { id: "TECH_RESOURCE_PORCELAIN_BONUS", name: "Porcelain", cost: 600, parent: "TECH_LATEEN_SAIL", bonus: "Porcelain" },
+                { id: "TECH_RESOURCE_EXOTIC_FUR_BONUS", name: "Exotic Furs", cost: 100, parent: "TECH_SPOKED_WHEEL", bonus: "Exotic Furs" },
+                { id: "TECH_RESOURCE_EBONY_BONUS", name: "Ebony", cost: 100, parent: "TECH_FORESTRY", bonus: "Ebony" },
+                { id: "TECH_RESOURCE_PERFUME_BONUS", name: "Perfume", cost: 200, parent: "TECH_ARCHITECTURE", bonus: "Perfume" }
             ]
         };
 
@@ -887,7 +875,13 @@
                                          bonusTech.name.includes('Scientist') || 
                                          bonusTech.name.includes('Court Soldier') ||
                                          bonusTech.name.includes('Merchant');
-                        const emoji = isCourtier ? '👤' : '💎';
+                        // Use different icons for different bonus types
+                        let emoji = '🎁'; // Default present icon
+                        if (isCourtier) {
+                            emoji = '👤';
+                        } else if (bonusTech.id && bonusTech.id.includes('RESOURCE_')) {
+                            emoji = '💎'; // Luxury resources get gem icon
+                        }
                         allUnlocks.push(`<span class="unlock-item">${emoji}${bonusTech.name}</span>`);
                     });
                 }
@@ -1315,7 +1309,7 @@
                 item.style.cursor = 'pointer';
                 item.innerHTML = `
                     <span class="tech-order-number">${itemIndex}.</span>
-                    <span class="tech-order-name">💎 ${bonusTech.name}</span>
+                    <span class="tech-order-name">${bonusTech.id && bonusTech.id.includes('RESOURCE_') ? '💎' : '🎁'} ${bonusTech.name}</span>
                     <span class="tech-order-cost">${bonusTech.cost}</span>
                 `;
                 
@@ -1435,7 +1429,8 @@
                         return true;
                     });
                     bonusTechs.forEach(bonusTech => {
-                        unlocksList += `<li>💎 ${bonusTech.name}</li>`;
+                        const bonusIcon = bonusTech.id && bonusTech.id.includes('RESOURCE_') ? '💎' : '🎁';
+                        unlocksList += `<li>${bonusIcon} ${bonusTech.name}</li>`;
                     });
                 }
                 unlocksList += '</ul></div>';
@@ -1486,17 +1481,14 @@
             const parentName = parentTech ? parentTech.name : bonusTech.parent;
             
             // Determine the appropriate emoji based on bonus content
-            let bonusEmoji = '💎';
-            if (bonusTech.bonus.includes('Stone') || bonusTech.bonus.includes('Iron') || bonusTech.bonus.includes('Food')) {
-                bonusEmoji = '📦'; // Resources
-            } else if (bonusTech.bonus.includes('Worker') || bonusTech.bonus.includes('Science')) {
-                bonusEmoji = '🔬'; // Science/Workers
-            } else if (bonusTech.bonus.includes('Courtier') || bonusTech.bonus.includes('General') || 
-                      bonusTech.bonus.includes('Governor') || bonusTech.bonus.includes('Spymaster')) {
-                bonusEmoji = '👤'; // Courtiers
-            } else if (bonusTech.bonus.includes('+1') || bonusTech.bonus.includes('+2')) {
-                bonusEmoji = '⚔️'; // Units
+            // Use different icons for different bonus types
+            let bonusEmoji = '🎁'; // Default present icon for regular bonuses
+            
+            // Use gem icon for luxury resources
+            if (bonusTech.id && bonusTech.id.includes('RESOURCE_')) {
+                bonusEmoji = '💎';
             }
+            // All other bonuses use the present icon unless luxury
             
             tooltip.innerHTML = `
                 <h3>${bonusTech.name}</h3>

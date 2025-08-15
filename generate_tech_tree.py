@@ -156,7 +156,15 @@ class OldWorldParser:
         if text.startswith(prefix):
             text = text[len(prefix):]
         # Convert underscore to spaces and title case
-        return text.replace("_", " ").title()
+        result = text.replace("_", " ").title()
+        
+        # Remove upgrade numbers from project names
+        if prefix == "PROJECT_":
+            # Remove " 1", " 2", etc. from the end
+            import re
+            result = re.sub(r'\s+\d+$', '', result)
+        
+        return result
     
     def clean_text(self, text: str) -> str:
         """Clean game text by removing formatting tags"""
@@ -371,53 +379,243 @@ class OldWorldParser:
                 parent = tech["prereqs"][0] if tech.get("prereqs") else None
                 
                 # Determine bonus description
-                bonus_text = tech.get("name", "")
-                if "Stone" in tech["id"]:
+                tech_id_upper = tech["id"].upper()
+                bonus_text = ""
+                if "STONE" in tech_id_upper and "STONECUTTING" in tech_id_upper:
                     bonus_text = "+200 Stone"
-                elif "Worker" in tech["id"]:
+                elif "WORKER" in tech_id_upper:
                     bonus_text = "+1 Worker"
-                elif "Food" in tech["id"]:
+                elif "FOOD" in tech_id_upper:
                     bonus_text = "+200 Food"
-                elif "Settler" in tech["id"]:
+                elif "SETTLER" in tech_id_upper:
                     bonus_text = "+1 Settler"
-                elif "Borders" in tech["id"]:
+                elif "BORDERS" in tech_id_upper:
                     bonus_text = "Border Growth"
-                elif "Orders" in tech["id"]:
+                elif "ORDERS" in tech_id_upper:
                     bonus_text = "+20 Orders"
-                elif "Money" in tech["id"]:
+                elif "MONEY" in tech_id_upper:
                     bonus_text = "+200 Money"
-                elif "Minister" in tech["id"]:
+                elif "MINISTER" in tech_id_upper:
                     bonus_text = "+1 Minister"
-                elif "Scientist" in tech["id"]:
+                elif "SCIENTIST" in tech_id_upper:
                     bonus_text = "Free Scientist"
-                elif "Civics" in tech["id"]:
+                elif "CIVICS" in tech_id_upper:
                     bonus_text = "Civic Points"
-                elif "Training" in tech["id"]:
+                elif "TRAINING" in tech_id_upper:
                     bonus_text = "Unit Training"
-                elif "Happiness" in tech["id"]:
+                elif "HAPPINESS" in tech_id_upper:
                     bonus_text = "Happiness Boost"
-                elif "Goods" in tech["id"]:
+                elif "GOODS" in tech_id_upper:
                     bonus_text = "Luxury Goods"
-                elif "Merchant" in tech["id"]:
+                elif "MERCHANT" in tech_id_upper:
                     bonus_text = "Free Merchant"
-                elif "Soldier" in tech["id"]:
+                elif "SOLDIER" in tech_id_upper:
                     bonus_text = "Free Court Soldier"
-                # Unit bonuses
-                elif any(unit in tech["id"] for unit in ["Bireme", "Chariot", "Maceman", "Onager", "Archer", 
-                         "Horseman", "Horse_Archer", "Ballista", "Longbowman", "Crossbowman",
-                         "Battering_Ram", "Siege_Tower", "Akkadian", "Cimmerian", "Elephant",
-                         "Light_Chariot", "Mounted_Lancer", "Hoplite", "Phalangite", "Hittite",
-                         "Medjay", "Beja", "Palton", "Cataphract", "Hastatus", "Legionary",
-                         "DMT", "Shotelai"]):
-                    # Extract unit name and format
-                    if "Longbowman" in tech["id"] or "Crossbowman" in tech["id"] or "Siege_Tower" in tech["id"]:
-                        bonus_text = f"+2 {tech['name'].replace('Bonus', '').strip()}"
+                # Luxury resources
+                elif "RESOURCE_" in tech["id"]:
+                    # Extract resource name from ID
+                    resource_name = tech["id"].replace("TECH_RESOURCE_", "").replace("_BONUS", "")
+                    resource_name = resource_name.replace("_", " ").title()
+                    # Map to proper names
+                    resource_map = {
+                        "Silk": "Silk",
+                        "Porcelain": "Porcelain", 
+                        "Exotic Fur": "Exotic Furs",
+                        "Perfume": "Perfume",
+                        "Exotic Leather": "Exotic Leather",
+                        "Ebony": "Ebony",
+                        "Ivory": "Ivory",
+                        "Lavender": "Lavender",
+                        "Spices": "Spices",
+                        "Wine": "Wine",
+                        "Incense": "Incense",
+                        "Gems": "Gems",
+                        "Pearl": "Pearls",
+                        "Olive": "Olives",
+                        "Dye": "Dye",
+                        "Fur": "Furs",
+                        "Honey": "Honey",
+                        "Salt": "Salt"
+                    }
+                    bonus_text = resource_map.get(resource_name, resource_name)
+                # Unit bonuses - specific patterns
+                elif "BIREME" in tech_id_upper:
+                    bonus_text = "+1 Bireme"
+                elif "CHARIOT" in tech_id_upper and not any(n in tech_id_upper for n in ["LIGHT", "HITTITE"]):
+                    bonus_text = "+1 Chariot"
+                elif "MACEMAN" in tech_id_upper:
+                    bonus_text = "+1 Maceman"
+                elif "ONAGER" in tech_id_upper:
+                    bonus_text = "+1 Onager"
+                elif "ARCHER" in tech_id_upper and not any(s in tech_id_upper for s in ["CAMEL", "HORSE", "AKKADIAN", "CIMMERIAN", "MEDJAY", "BEJA", "CATAPHRACT"]):
+                    bonus_text = "+1 Archer"
+                elif "HORSEMAN" in tech_id_upper and "HORSE_ARCHER" not in tech_id_upper:
+                    bonus_text = "+1 Horseman"
+                elif "HORSE_ARCHER" in tech_id_upper:
+                    bonus_text = "+1 Horse Archer"
+                elif "CAMEL_ARCHER" in tech_id_upper:
+                    bonus_text = "+1 Camel Archer"
+                elif "WAR_ELEPHANT" in tech_id_upper:
+                    bonus_text = "+1 War Elephant"
+                elif "BALLISTA" in tech_id_upper:
+                    bonus_text = "+1 Ballista"
+                elif "LONGBOWMAN" in tech_id_upper:
+                    bonus_text = "+2 Longbowman"
+                elif "CROSSBOWMAN" in tech_id_upper:
+                    bonus_text = "+2 Crossbowman"
+                # Nation-specific units
+                elif "BATTERING_RAM" in tech_id_upper:
+                    bonus_text = "+1 Battering Ram"
+                elif "SIEGE_TOWER" in tech_id_upper:
+                    bonus_text = "+2 Siege Tower"
+                elif "AKKADIAN" in tech_id_upper:
+                    bonus_text = "+1 Akkadian Archer"
+                elif "CIMMERIAN" in tech_id_upper:
+                    bonus_text = "+2 Cimmerian Archer"
+                elif "AFRICAN_ELEPHANT" in tech_id_upper:
+                    bonus_text = "+1 African Elephant"
+                elif "TURRETED_ELEPHANT" in tech_id_upper:
+                    bonus_text = "+2 Turreted Elephant"
+                elif "LIGHT_CHARIOT" in tech_id_upper:
+                    bonus_text = "+1 Light Chariot"
+                elif "MOUNTED_LANCER" in tech_id_upper:
+                    bonus_text = "+2 Mounted Lancer"
+                elif "HOPLITE" in tech_id_upper:
+                    bonus_text = "+1 Hoplite"
+                elif "PHALANGITE" in tech_id_upper:
+                    bonus_text = "+2 Phalangite"
+                elif "HITTITE_CHARIOT" in tech_id_upper:
+                    if "1" in tech_id_upper:
+                        bonus_text = "+1 Hittite Chariot"
                     else:
-                        bonus_text = f"+1 {tech['name'].replace('Bonus', '').strip()}"
+                        bonus_text = "+2 Hittite Chariot"
+                elif "MEDJAY" in tech_id_upper:
+                    bonus_text = "+1 Medjay"
+                elif "BEJA" in tech_id_upper:
+                    bonus_text = "+2 Beja Archer"
+                elif "PALTON" in tech_id_upper:
+                    bonus_text = "+1 Palton Cavalry"
+                elif "CATAPHRACT" in tech_id_upper:
+                    bonus_text = "+2 Cataphract Archer"
+                elif "HASTATUS" in tech_id_upper:
+                    bonus_text = "+1 Hastatus"
+                elif "LEGIONARY" in tech_id_upper:
+                    bonus_text = "+2 Legionary"
+                elif "DMT" in tech_id_upper:
+                    bonus_text = "+1 Dmt Warrior"
+                elif "SHOTELAI" in tech_id_upper:
+                    bonus_text = "+2 Shotelai"
+                
+                # Fallback if no pattern matched
+                if not bonus_text:
+                    bonus_text = tech.get("name", "Bonus")
+                
+                # Determine cleaner name for bonus card
+                bonus_name = ""
+                if "STONE" in tech_id_upper and "STONECUTTING" in tech_id_upper:
+                    bonus_name = "Stone Boost"
+                elif "WORKER" in tech_id_upper:
+                    bonus_name = "Free Worker"
+                elif "FOOD" in tech_id_upper:
+                    bonus_name = "Food Boost"
+                elif "SETTLER" in tech_id_upper:
+                    bonus_name = "Free Settler"
+                elif "BORDERS" in tech_id_upper:
+                    bonus_name = "Border Boost"
+                elif "ORDERS" in tech_id_upper:
+                    bonus_name = "Orders Boost"
+                elif "MONEY" in tech_id_upper:
+                    bonus_name = "Money Boost"
+                elif "MINISTER" in tech_id_upper:
+                    bonus_name = "Free Minister"
+                elif "SCIENTIST" in tech_id_upper:
+                    bonus_name = "Free Scientist"
+                elif "CIVICS" in tech_id_upper:
+                    bonus_name = "Civics Boost"
+                elif "TRAINING" in tech_id_upper:
+                    bonus_name = "Training Boost"
+                elif "HAPPINESS" in tech_id_upper:
+                    bonus_name = "Happiness Boost"
+                elif "GOODS" in tech_id_upper:
+                    bonus_name = "Goods Bonus"
+                elif "MERCHANT" in tech_id_upper:
+                    bonus_name = "Free Merchant"
+                elif "SOLDIER" in tech_id_upper:
+                    bonus_name = "Free Court Soldier"
+                # Unit bonuses
+                elif "BIREME" in tech_id_upper:
+                    bonus_name = "Free Bireme"
+                elif "CHARIOT" in tech_id_upper and not any(nation in tech_id_upper for nation in ["LIGHT", "HITTITE"]):
+                    bonus_name = "Free Chariot"
+                elif "MACEMAN" in tech_id_upper:
+                    bonus_name = "Free Maceman"
+                elif "ONAGER" in tech_id_upper:
+                    bonus_name = "Free Onager"
+                elif "ARCHER" in tech_id_upper and not any(special in tech_id_upper for special in ["CAMEL", "HORSE", "AKKADIAN", "CIMMERIAN", "MEDJAY", "BEJA", "CATAPHRACT"]):
+                    bonus_name = "Free Archer"
+                elif "CAMEL_ARCHER" in tech_id_upper:
+                    bonus_name = "Free Camel Archer"
+                elif "WAR_ELEPHANT" in tech_id_upper:
+                    bonus_name = "Free War Elephant"
+                elif "HORSEMAN" in tech_id_upper and "HORSE_ARCHER" not in tech_id_upper:
+                    bonus_name = "Free Horseman"
+                elif "HORSE_ARCHER" in tech_id_upper:
+                    bonus_name = "Free Horse Archer"
+                elif "BALLISTA" in tech_id_upper:
+                    bonus_name = "Free Ballista"
+                elif "LONGBOWMAN" in tech_id_upper:
+                    bonus_name = "Free Longbowman"
+                elif "CROSSBOWMAN" in tech_id_upper:
+                    bonus_name = "Free Crossbowman"
+                # Nation-specific units
+                elif "BATTERING_RAM" in tech_id_upper:
+                    bonus_name = "Free Battering Ram"
+                elif "SIEGE_TOWER" in tech_id_upper:
+                    bonus_name = "Free Siege Tower"
+                elif "AKKADIAN" in tech_id_upper:
+                    bonus_name = "Free Akkadian Archer"
+                elif "CIMMERIAN" in tech_id_upper:
+                    bonus_name = "Free Cimmerian Archer"
+                elif "AFRICAN_ELEPHANT" in tech_id_upper:
+                    bonus_name = "Free African Elephant"
+                elif "TURRETED_ELEPHANT" in tech_id_upper:
+                    bonus_name = "Free Turreted Elephant"
+                elif "LIGHT_CHARIOT" in tech_id_upper:
+                    bonus_name = "Free Light Chariot"
+                elif "MOUNTED_LANCER" in tech_id_upper:
+                    bonus_name = "Free Mounted Lancer"
+                elif "HOPLITE" in tech_id_upper:
+                    bonus_name = "Free Hoplite"
+                elif "PHALANGITE" in tech_id_upper:
+                    bonus_name = "Free Phalangite"
+                elif "HITTITE_CHARIOT" in tech_id_upper:
+                    bonus_name = "Free Hittite Chariot"
+                elif "MEDJAY" in tech_id_upper:
+                    bonus_name = "Free Medjay"
+                elif "BEJA" in tech_id_upper:
+                    bonus_name = "Free Beja Archer"
+                elif "PALTON" in tech_id_upper:
+                    bonus_name = "Free Palton Cavalry"
+                elif "CATAPHRACT" in tech_id_upper:
+                    bonus_name = "Free Cataphract Archer"
+                elif "HASTATUS" in tech_id_upper:
+                    bonus_name = "Free Hastatus"
+                elif "LEGIONARY" in tech_id_upper:
+                    bonus_name = "Free Legionary"
+                elif "DMT" in tech_id_upper:
+                    bonus_name = "Free Dmt Warrior"
+                elif "SHOTELAI" in tech_id_upper:
+                    bonus_name = "Free Shotelai"
+                # Resource bonuses  
+                elif "RESOURCE_" in tech["id"]:
+                    bonus_name = bonus_text  # Use the luxury name directly
+                else:
+                    # Fallback to tech name
+                    bonus_name = tech.get("name", "Bonus")
                 
                 bonus_tech = {
                     "id": tech["id"],
-                    "name": tech.get("name", "Bonus"),
+                    "name": bonus_name,
                     "cost": tech["cost"],
                     "parent": parent,
                     "bonus": bonus_text
@@ -508,26 +706,29 @@ class OldWorldParser:
         tree = ET.parse(file_path)
         root = tree.getroot()
         
-        tech_laws = {}
-        for law in root.findall(".//Entry"):
-            law_type = law.find("zType")
-            tech_prereq = law.find("TechPrereq")
-            if law_type is not None and law_type.text and tech_prereq is not None and tech_prereq.text:
-                tech_id = tech_prereq.text
-                law_name = self.format_name(law_type.text, "LAW_")
-                if tech_id not in tech_laws:
-                    tech_laws[tech_id] = []
-                tech_laws[tech_id].append(law_name)
-        
-        # Group opposing laws with "/"
-        for tech_id, laws in tech_laws.items():
-            if len(laws) == 2:
-                # Assume they're opposing choices
-                tech_laws[tech_id] = [f"{laws[0]}/{laws[1]}"]
+        # Laws don't have direct tech prereqs, they're unlocked by law classes
+        # I need to manually map based on the original data
+        manual_law_mapping = {
+            "TECH_LABOR_FORCE": ["Slavery/Freedom"],
+            "TECH_ARISTOCRACY": ["Centralization/Vassalage"],
+            "TECH_RHETORIC": ["Epics/Exploration"],
+            "TECH_NAVIGATION": ["Colonies/Serfdom"],
+            "TECH_SOVEREIGNTY": ["Tyranny/Constitution"],
+            "TECH_CITIZENSHIP": ["Divine Rule/Legal Code"],
+            "TECH_ARCHITECTURE": ["Philosophy/Engineering"],
+            "TECH_MONASTICISM": ["Monotheism/Polytheism"],
+            "TECH_VAULTING": ["Iconography/Calligraphy"],
+            "TECH_MANOR": ["Professional Army/Volunteers"],
+            "TECH_DOCTRINE": ["Tolerance/Orthodoxy"],
+            "TECH_LATEEN_SAIL": ["Autarky/Trade League"],
+            "TECH_JURISPRUDENCE": ["Guilds/Elites"],
+            "TECH_MARTIAL_CODE": ["Pilgrimage/Holy War"],
+            "TECH_FISCAL_POLICY": ["Coin Debasement/Monetary Reform"]
+        }
         
         for tech in self.techs:
-            if tech["id"] in tech_laws:
-                tech["unlocks"]["laws"] = tech_laws[tech["id"]]
+            if tech["id"] in manual_law_mapping:
+                tech["unlocks"]["laws"] = manual_law_mapping[tech["id"]]
     
     def parse_project_unlocks(self):
         """Parse project.xml to find what projects each tech unlocks"""
@@ -697,7 +898,7 @@ def generate_html(data: Dict, template_path: str = None, output_path: str = "ind
     bonus_js = ",\n".join(bonus_entries)
     
     # Replace tech data in template
-    pattern = r'const techData = \{[^}]*techs:\s*\[[^\]]*\][^}]*bonusTechs:\s*\[[^\]]*\][^}]*\};'
+    pattern = r'const techData = \{.*?techs:\s*\[.*?\],.*?bonusTechs:\s*\[.*?\]\s*\};'
     replacement = f"""const techData = {{
             techs: [
 {techs_js}
