@@ -552,7 +552,7 @@
             <div class="tech-tree" id="techTree"></div>
             
             <div class="bonus-tech-section">
-                <h3>🎁 Bonus Cards</h3>
+                <h3>💎 Bonus Cards</h3>
                 <div class="bonus-tech-grid" id="bonusTechGrid"></div>
             </div>
         </div>
@@ -1540,11 +1540,6 @@
                 bonusEmoji = '👤'; // Courtiers
             } else if (bonusTech.bonus.includes('+1') || bonusTech.bonus.includes('+2')) {
                 bonusEmoji = '⚔️'; // Units
-            } else if (bonusTech.name.includes('Minister') || 
-                     bonusTech.name.includes('Scientist') || 
-                     bonusTech.name.includes('Court Soldier') ||
-                     bonusTech.name.includes('Merchant')) {
-                bonusEmoji = '👤'; // Additional courtier check by name
             }
             
             tooltip.innerHTML = `

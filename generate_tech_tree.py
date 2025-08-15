@@ -881,9 +881,9 @@ def generate_html(data: Dict, template_path: str = None, output_path: str = "ind
         with open(template_path, 'r') as f:
             html_template = f.read()
     else:
-        # Use index_working.html as template
-        if Path("index_working.html").exists():
-            with open("index_working.html", 'r') as f:
+        # Use template.html as template
+        if Path("template.html").exists():
+            with open("template.html", 'r') as f:
                 html_template = f.read()
         else:
             print("Error: No template found")
@@ -952,7 +952,7 @@ def main():
     )
     parser.add_argument(
         "--template",
-        help="HTML template file (uses index_working.html if not specified)"
+        help="HTML template file (uses template.html if not specified)"
     )
     parser.add_argument(
         "--export-json",
