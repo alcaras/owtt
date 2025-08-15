@@ -1255,19 +1255,19 @@
                 item.setAttribute('data-tech-id', techId);
                 item.style.cursor = 'pointer';
                 
-                // Add law icon if this tech unlocks laws
-                const lawIcon = hasLaws ? ' ⚖️' : '';
+                // Add law icon at the front if this tech unlocks laws
+                const lawIcon = hasLaws ? '⚖️ ' : '';
                 
                 if (isStartingTech) {
                     item.innerHTML = `
                         <span class="tech-order-number">${itemIndex}.</span>
-                        <span class="tech-order-name">${tech.name}${lawIcon}</span>
+                        <span class="tech-order-name">${lawIcon}${tech.name}</span>
                         <span class="tech-order-cost"><span style="text-decoration: line-through; color: #888;">${tech.cost}</span> <strong style="color: #5a8a3a;">FREE</strong></span>
                     `;
                 } else {
                     item.innerHTML = `
                         <span class="tech-order-number">${itemIndex}.</span>
-                        <span class="tech-order-name">${tech.name}${lawIcon}</span>
+                        <span class="tech-order-name">${lawIcon}${tech.name}</span>
                         <span class="tech-order-cost">${tech.cost}</span>
                     `;
                 }
