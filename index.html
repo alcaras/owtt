@@ -1609,14 +1609,37 @@
                 return; // Don't clear if disabled
             }
             
+            // Preserve the selected nation
+            const currentNation = selectedNation;
+            
             researchedTechs = [];
             researchOrder = [];
             researchedBonusTechs = [];
-            selectedNation = '';
             
-            // Reset nation selector
-            const select = document.getElementById('nationSelect');
-            select.value = '';
+            // If a nation is selected, keep it selected and add its starting techs back
+            if (currentNation) {
+                selectedNation = currentNation;
+                
+                // Add starting techs for the selected nation
+                if (nationData.startingTechs[currentNation]) {
+                    const startingTechs = nationData.startingTechs[currentNation];
+                    startingTechs.forEach(techId => {
+                        if (!researchedTechs.includes(techId)) {
+                            researchedTechs.push(techId);
+                            researchOrder.push(Date.now());
+                        }
+                    });
+                }
+                
+                // Keep nation selector value
+                const select = document.getElementById('nationSelect');
+                select.value = currentNation;
+            } else {
+                // Only reset nation if none was selected
+                selectedNation = '';
+                const select = document.getElementById('nationSelect');
+                select.value = '';
+            }
             
             initializeBonusTechs();
             updateTechStates();
