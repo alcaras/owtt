@@ -327,7 +327,7 @@
             min-width: 280px;
             max-width: 350px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
-            z-index: 1000;
+            z-index: 10000;
             display: none;
             pointer-events: none;
             word-wrap: break-word;
@@ -1273,7 +1273,10 @@
                 }
                 
                 // Add hover events for tooltip
-                item.addEventListener('mouseenter', (e) => showTooltip(e, tech));
+                item.addEventListener('mouseenter', (e) => {
+                    console.log('Tech tooltip triggered for:', tech.name);
+                    showTooltip(e, tech);
+                });
                 item.addEventListener('mouseleave', hideTooltip);
                 
                 list.appendChild(item);
@@ -1296,7 +1299,10 @@
                 `;
                 
                 // Add hover events for bonus tech tooltip
-                item.addEventListener('mouseenter', (e) => showBonusTooltip(e, bonusTech));
+                item.addEventListener('mouseenter', (e) => {
+                    console.log('Bonus tooltip triggered for:', bonusTech.name);
+                    showBonusTooltip(e, bonusTech);
+                });
                 item.addEventListener('mouseleave', hideTooltip);
                 
                 list.appendChild(item);
@@ -1408,13 +1414,27 @@
                 <p style="margin-top: 8px; font-style: italic; color: #a09080;">Click to toggle research</p>
             `;
             
-            // Position tooltip accounting for scroll
+            // Position tooltip accounting for scroll and viewport
             const rect = event.target.getBoundingClientRect();
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
             
-            tooltip.style.left = rect.right + scrollLeft + 10 + 'px';
-            tooltip.style.top = rect.top + scrollTop + 'px';
+            // Try to position to the right of the item, but adjust if it would go off-screen
+            let left = rect.right + scrollLeft + 10;
+            let top = rect.top + scrollTop;
+            
+            // If tooltip would go off the right edge, position it to the left
+            if (left + 300 > window.innerWidth) { // Assuming tooltip is ~300px wide
+                left = rect.left + scrollLeft - 310;
+            }
+            
+            // If tooltip would go off the bottom, adjust upward
+            if (top + 200 > window.innerHeight + scrollTop) { // Assuming tooltip is ~200px tall
+                top = rect.bottom + scrollTop - 200;
+            }
+            
+            tooltip.style.left = Math.max(10, left) + 'px'; // Don't go off left edge
+            tooltip.style.top = Math.max(10, top) + 'px'; // Don't go off top edge
             tooltip.classList.add('show');
         }
 
@@ -1453,13 +1473,27 @@
                 </div>
             `;
             
-            // Position tooltip accounting for scroll
+            // Position tooltip accounting for scroll and viewport
             const rect = event.target.getBoundingClientRect();
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
             
-            tooltip.style.left = rect.right + scrollLeft + 10 + 'px';
-            tooltip.style.top = rect.top + scrollTop + 'px';
+            // Try to position to the right of the item, but adjust if it would go off-screen
+            let left = rect.right + scrollLeft + 10;
+            let top = rect.top + scrollTop;
+            
+            // If tooltip would go off the right edge, position it to the left
+            if (left + 300 > window.innerWidth) { // Assuming tooltip is ~300px wide
+                left = rect.left + scrollLeft - 310;
+            }
+            
+            // If tooltip would go off the bottom, adjust upward
+            if (top + 200 > window.innerHeight + scrollTop) { // Assuming tooltip is ~200px tall
+                top = rect.bottom + scrollTop - 200;
+            }
+            
+            tooltip.style.left = Math.max(10, left) + 'px'; // Don't go off left edge
+            tooltip.style.top = Math.max(10, top) + 'px'; // Don't go off top edge
             tooltip.classList.add('show');
         }
 
