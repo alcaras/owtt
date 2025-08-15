@@ -418,6 +418,7 @@
         }
 
         .bonus-tech-node {
+            position: relative;
             background: linear-gradient(135deg, #4a3f2f, #3a2f1f);
             border: 2px solid #b4a037;
             border-radius: 6px;
@@ -736,29 +737,99 @@
 
         const nationData = {
             startingTechs: {
-                "NATION_AKSUM": ["TECH_TRAPPING", "TECH_LABOR_FORCE", "TECH_ADMINISTRATION"],
-                "NATION_ASSYRIA": ["TECH_TRAPPING", "TECH_ADMINISTRATION", "TECH_MILITARY_DRILL"],
-                "NATION_BABYLONIA": ["TECH_TRAPPING", "TECH_ADMINISTRATION", "TECH_RHETORIC"],
-                "NATION_CARTHAGE": ["TECH_TRAPPING", "TECH_DIVINATION", "TECH_ARISTOCRACY"],
-                "NATION_EGYPT": ["TECH_IRONWORKING", "TECH_STONECUTTING", "TECH_LABOR_FORCE"],
-                "NATION_GREECE": ["TECH_IRONWORKING", "TECH_STONECUTTING", "TECH_DRAMA"],
-                "NATION_HITTITE": ["TECH_IRONWORKING", "TECH_HUSBANDRY", "TECH_ADMINISTRATION"],
-                "NATION_KUSH": ["TECH_TRAPPING", "TECH_STONECUTTING", "TECH_DIVINATION"],
-                "NATION_PERSIA": ["TECH_IRONWORKING", "TECH_TRAPPING", "TECH_HUSBANDRY"],
-                "NATION_ROME": ["TECH_IRONWORKING", "TECH_STONECUTTING", "TECH_POLIS"]
-            },
+                "NATION_AKSUM": [
+                                "TECH_TRAPPING",
+                                "TECH_LABOR_FORCE",
+                                "TECH_ADMINISTRATION"
+                ],
+                "NATION_ASSYRIA": [
+                                "TECH_TRAPPING",
+                                "TECH_ADMINISTRATION",
+                                "TECH_MILITARY_DRILL"
+                ],
+                "NATION_BABYLONIA": [
+                                "TECH_TRAPPING",
+                                "TECH_ADMINISTRATION",
+                                "TECH_RHETORIC"
+                ],
+                "NATION_CARTHAGE": [
+                                "TECH_TRAPPING",
+                                "TECH_DIVINATION",
+                                "TECH_ARISTOCRACY"
+                ],
+                "NATION_EGYPT": [
+                                "TECH_IRONWORKING",
+                                "TECH_STONECUTTING",
+                                "TECH_LABOR_FORCE"
+                ],
+                "NATION_GREECE": [
+                                "TECH_IRONWORKING",
+                                "TECH_STONECUTTING",
+                                "TECH_DRAMA"
+                ],
+                "NATION_HITTITE": [
+                                "TECH_IRONWORKING",
+                                "TECH_HUSBANDRY",
+                                "TECH_ADMINISTRATION"
+                ],
+                "NATION_KUSH": [
+                                "TECH_TRAPPING",
+                                "TECH_STONECUTTING",
+                                "TECH_DIVINATION"
+                ],
+                "NATION_PERSIA": [
+                                "TECH_IRONWORKING",
+                                "TECH_TRAPPING",
+                                "TECH_HUSBANDRY"
+                ],
+                "NATION_ROME": [
+                                "TECH_IRONWORKING",
+                                "TECH_STONECUTTING",
+                                "TECH_POLIS"
+                ]
+},
             nationSpecificBonuses: {
-                "NATION_AKSUM": ["TECH_DMT_WARRIOR_BONUS", "TECH_SHOTELAI_BONUS"],
-                "NATION_ASSYRIA": ["TECH_BATTERING_RAM_BONUS", "TECH_SIEGE_TOWER_BONUS"],
-                "NATION_BABYLONIA": ["TECH_AKKADIAN_ARCHER_BONUS", "TECH_CIMMERIAN_ARCHER_BONUS"],
-                "NATION_CARTHAGE": ["TECH_AFRICAN_ELEPHANT_BONUS", "TECH_TURRETED_ELEPHANT_BONUS"],
-                "NATION_EGYPT": ["TECH_LIGHT_CHARIOT_BONUS", "TECH_MOUNTED_LANCER_BONUS"],
-                "NATION_GREECE": ["TECH_HOPLITE_BONUS", "TECH_PHALANGITE_BONUS"],
-                "NATION_HITTITE": ["TECH_HITTITE_CHARIOT_1_BONUS", "TECH_HITTITE_CHARIOT_2_BONUS"],
-                "NATION_KUSH": ["TECH_MEDJAY_ARCHER_BONUS", "TECH_BEJA_ARCHER_BONUS"],
-                "NATION_PERSIA": ["TECH_PALTON_CAVALRY_BONUS", "TECH_CATAPHRACT_ARCHER_BONUS"],
-                "NATION_ROME": ["TECH_HASTATUS_BONUS", "TECH_LEGIONARY_BONUS"]
-            }
+                "NATION_ASSYRIA": [
+                                "TECH_BATTERING_RAM_BONUS",
+                                "TECH_SIEGE_TOWER_BONUS"
+                ],
+                "NATION_BABYLONIA": [
+                                "TECH_AKKADIAN_ARCHER_BONUS",
+                                "TECH_CIMMERIAN_ARCHER_BONUS"
+                ],
+                "NATION_CARTHAGE": [
+                                "TECH_AFRICAN_ELEPHANT_BONUS",
+                                "TECH_TURRETED_ELEPHANT_BONUS"
+                ],
+                "NATION_EGYPT": [
+                                "TECH_LIGHT_CHARIOT_BONUS",
+                                "TECH_MOUNTED_LANCER_BONUS"
+                ],
+                "NATION_GREECE": [
+                                "TECH_HOPLITE_BONUS",
+                                "TECH_PHALANGITE_BONUS"
+                ],
+                "NATION_PERSIA": [
+                                "TECH_PALTON_CAVALRY_BONUS",
+                                "TECH_CATAPHRACT_ARCHER_BONUS"
+                ],
+                "NATION_ROME": [
+                                "TECH_HASTATUS_BONUS",
+                                "TECH_LEGIONARY_BONUS"
+                ],
+                "NATION_HITTITE": [
+                                "TECH_HITTITE_CHARIOT_1_BONUS",
+                                "TECH_HITTITE_CHARIOT_2_BONUS"
+                ],
+                "NATION_KUSH": [
+                                "TECH_MEDJAY_ARCHER_BONUS",
+                                "TECH_BEJA_ARCHER_BONUS"
+                ],
+                "NATION_AKSUM": [
+                                "TECH_DMT_WARRIOR_BONUS",
+                                "TECH_SHOTELAI_BONUS"
+                ]
+}
         };
 
         function initializeTechTree() {
