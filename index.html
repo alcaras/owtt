@@ -897,13 +897,30 @@
                 // Remove bonus tech
                 researchedBonusTechs.splice(index, 1);
             } else {
-                // Check if parent tech is researched
-                if (researchedTechs.includes(bonusTech.parent)) {
-                    researchedBonusTechs.push(bonusTechId);
+                // Add the parent tech and all its prerequisites first
+                if (!researchedTechs.includes(bonusTech.parent)) {
+                    // Add prerequisites of the parent tech
+                    const prereqsToAdd = getAllPrerequisites(bonusTech.parent);
+                    prereqsToAdd.forEach(prereqId => {
+                        if (!researchedTechs.includes(prereqId)) {
+                            researchedTechs.push(prereqId);
+                            researchOrder.push(Date.now());
+                        }
+                    });
+                    
+                    // Add the parent tech itself
+                    researchedTechs.push(bonusTech.parent);
+                    researchOrder.push(Date.now());
                 }
+                
+                // Now add the bonus tech
+                researchedBonusTechs.push(bonusTechId);
             }
+            
+            updateTechStates(); // Update main tech states too since we may have added main techs
             updateBonusTechStates();
-            updateOrderList(); // Update total cost
+            updateOrderList();
+            drawConnections(); // Redraw connections since main techs may have changed
         }
 
         function updateBonusTechStates() {
