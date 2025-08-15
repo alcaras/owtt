@@ -735,6 +735,20 @@
         let researchedBonusTechs = [];
         let selectedNation = '';
 
+        // Nation lookup array for URL indices
+        const nationLookup = [
+            "NATION_AKSUM",
+            "NATION_ASSYRIA", 
+            "NATION_BABYLONIA",
+            "NATION_CARTHAGE",
+            "NATION_EGYPT",
+            "NATION_GREECE",
+            "NATION_HITTITE",
+            "NATION_KUSH",
+            "NATION_PERSIA",
+            "NATION_ROME"
+        ];
+
         const nationData = {
             startingTechs: {
                 "NATION_AKSUM": ["TECH_TRAPPING", "TECH_LABOR_FORCE", "TECH_ADMINISTRATION"],
@@ -1394,20 +1408,22 @@
                 return;
             }
             
-            const params = new URLSearchParams();
+            const urlParts = [];
             
-            // Add nation if selected
+            // Add nation if selected (using numeric index)
             if (selectedNation) {
-                params.set('nation', selectedNation);
+                const nationIndex = nationLookup.findIndex(n => n === selectedNation);
+                if (nationIndex !== -1) {
+                    urlParts.push(`n=${nationIndex}`);
+                }
             }
             
             // Add techs if any are researched
             if (researchedTechs.length > 0) {
-                // Create compact numeric representation for URL
                 const techNumbers = researchedTechs.map(techId => {
                     return techData.techs.findIndex(t => t.id === techId);
                 }).filter(index => index !== -1);
-                params.set('techs', techNumbers.join(','));
+                urlParts.push(`t=${techNumbers.join(',')}`);
             }
             
             // Add bonus techs if any are researched
@@ -1415,10 +1431,12 @@
                 const bonusNumbers = researchedBonusTechs.map(bonusTechId => {
                     return techData.bonusTechs.findIndex(t => t.id === bonusTechId);
                 }).filter(index => index !== -1);
-                params.set('bonus', bonusNumbers.join(','));
+                urlParts.push(`b=${bonusNumbers.join(',')}`);
             }
             
-            const url = `https://alcaras.github.io/owtt/?${params.toString()}`;
+            const url = urlParts.length > 0 
+                ? `https://alcaras.github.io/owtt/?${urlParts.join('&')}`
+                : 'https://alcaras.github.io/owtt/';
             
             // Copy to clipboard and show feedback
             const shareButton = document.querySelector('.share-button');
@@ -1452,10 +1470,22 @@
         function loadFromUrl() {
             const params = new URLSearchParams(window.location.search);
             
-            // Load nation first
-            const nationParam = params.get('nation');
-            if (nationParam) {
-                selectedNation = nationParam;
+            // Load nation first (new format: n=index, old format: nation=NAME for backward compatibility)
+            let nationParam = params.get('n');
+            if (nationParam !== null) {
+                const nationIndex = parseInt(nationParam);
+                if (nationIndex >= 0 && nationIndex < nationLookup.length) {
+                    selectedNation = nationLookup[nationIndex];
+                }
+            } else {
+                // Backward compatibility with old format
+                nationParam = params.get('nation');
+                if (nationParam) {
+                    selectedNation = nationParam;
+                }
+            }
+            
+            if (selectedNation) {
                 const select = document.getElementById('nationSelect');
                 select.value = selectedNation;
                 
@@ -1471,8 +1501,8 @@
                 }
             }
             
-            // Load main techs
-            const techsParam = params.get('techs');
+            // Load main techs (new format: t=1,2,3, old format: techs=1,2,3 for backward compatibility)
+            let techsParam = params.get('t') || params.get('techs');
             if (techsParam) {
                 const techNumbers = techsParam.split(',').map(n => parseInt(n)).filter(n => !isNaN(n));
                 
@@ -1500,8 +1530,8 @@
                 });
             }
             
-            // Load bonus techs
-            const bonusParam = params.get('bonus');
+            // Load bonus techs (new format: b=1,2,3, old format: bonus=1,2,3 for backward compatibility)
+            let bonusParam = params.get('b') || params.get('bonus');
             if (bonusParam) {
                 const bonusNumbers = bonusParam.split(',').map(n => parseInt(n)).filter(n => !isNaN(n));
                 
