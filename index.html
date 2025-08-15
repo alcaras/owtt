@@ -1424,8 +1424,29 @@
         function simulateResearchPath(hasScholar, hasOracle, numSimulations) {
             const results = [];
             
-            // Build research path from current selections
-            const researchPath = [...researchedTechs];
+            // Build research path from current selections, excluding starting techs
+            const researchPath = [
+                ...researchedTechs.filter(techId => !isStartingTech(techId)),
+                ...researchedBonusTechs
+            ];
+            
+            // Debug: Calculate expected cost and compare to UI
+            let expectedCost = 0;
+            researchedTechs.forEach(techId => {
+                if (!isStartingTech(techId)) {
+                    const tech = techData.techs.find(t => t.id === techId);
+                    if (tech) expectedCost += tech.cost;
+                }
+            });
+            researchedBonusTechs.forEach(bonusId => {
+                const bonus = techData.bonusTechs.find(t => t.id === bonusId);
+                if (bonus) expectedCost += bonus.cost;
+            });
+            
+            console.log(`🔍 DEBUG: Expected total cost: ${expectedCost}`);
+            console.log(`🔍 DEBUG: Research path: ${researchPath.length} techs`);
+            console.log(`🔍 DEBUG: Main techs (non-starting): ${researchedTechs.filter(techId => !isStartingTech(techId)).length}`);
+            console.log(`🔍 DEBUG: Bonus techs: ${researchedBonusTechs.length}`);
             
             // Enable detailed debugging for first run only
             window.debugSimulation = true;
