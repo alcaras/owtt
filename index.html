@@ -1373,7 +1373,12 @@
             let unlocksList = '';
             const hasUnlocks = tech.unlocks.units?.length > 0 || tech.unlocks.projects?.length > 0 || 
                               tech.unlocks.improvements?.length > 0 || tech.unlocks.laws?.length > 0;
-            const hasBonusTechs = techData.bonusTechs.some(bonus => bonus.parent === tech.id);
+            const hasBonusTechs = techData.bonusTechs.some(bonus => {
+                if (bonus.parent !== tech.id) return false;
+                // Only count nation-specific bonus techs if that nation is selected
+                if (bonus.nation && bonus.nation !== selectedNation) return false;
+                return true;
+            });
             
             if (hasUnlocks || hasBonusTechs) {
                 unlocksList = '<div class="unlocks-list"><h4>Unlocks:</h4><ul>';
@@ -1398,7 +1403,12 @@
                     });
                 }
                 if (hasBonusTechs) {
-                    const bonusTechs = techData.bonusTechs.filter(bonus => bonus.parent === tech.id);
+                    const bonusTechs = techData.bonusTechs.filter(bonus => {
+                        if (bonus.parent !== tech.id) return false;
+                        // Only show nation-specific bonus techs if that nation is selected
+                        if (bonus.nation && bonus.nation !== selectedNation) return false;
+                        return true;
+                    });
                     bonusTechs.forEach(bonusTech => {
                         unlocksList += `<li>💎 ${bonusTech.name}</li>`;
                     });
