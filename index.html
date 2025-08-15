@@ -1066,16 +1066,6 @@
                 ? new Set(nationData.startingTechs[selectedNation]) 
                 : new Set();
             
-            // Find which starting techs can reach the target tech
-            const reachableFromStarting = new Set();
-            if (startingTechs.size > 0) {
-                startingTechs.forEach(startingTech => {
-                    if (canReachTech(startingTech, techId, new Set())) {
-                        reachableFromStarting.add(startingTech);
-                    }
-                });
-            }
-            
             function addPrereqs(id) {
                 if (visited.has(id)) return;
                 visited.add(id);
@@ -1088,8 +1078,8 @@
                 
                 // First add all prerequisites of this tech
                 tech.prereqs.forEach(prereqId => {
-                    // Skip prerequisites that are bypassed by starting techs
-                    if (!isBypassedByStartingTech(prereqId, id, reachableFromStarting)) {
+                    // Skip if this prerequisite is a starting tech (already have it)
+                    if (!startingTechs.has(prereqId)) {
                         addPrereqs(prereqId);
                     }
                 });
@@ -1103,8 +1093,8 @@
             const tech = techData.techs.find(t => t.id === techId);
             if (tech) {
                 tech.prereqs.forEach(prereqId => {
-                    // Skip prerequisites that are bypassed by starting techs
-                    if (!isBypassedByStartingTech(prereqId, techId, reachableFromStarting)) {
+                    // Skip if this prerequisite is a starting tech (already have it)
+                    if (!startingTechs.has(prereqId)) {
                         addPrereqs(prereqId);
                     }
                 });
@@ -1113,64 +1103,6 @@
             return result;
         }
         
-        // Helper function to check if we can reach target from source through prerequisite chain
-        function canReachTech(sourceTechId, targetTechId, visited) {
-            if (sourceTechId === targetTechId) return true;
-            if (visited.has(sourceTechId)) return false;
-            
-            visited.add(sourceTechId);
-            
-            // Find all techs that have sourceTechId as a prerequisite
-            const dependentTechs = techData.techs.filter(tech => 
-                tech.prereqs.includes(sourceTechId)
-            );
-            
-            return dependentTechs.some(tech => 
-                canReachTech(tech.id, targetTechId, new Set(visited))
-            );
-        }
-        
-        // Helper function to check if a prerequisite is bypassed by starting techs
-        function isBypassedByStartingTech(prereqId, targetId, reachableFromStarting) {
-            // A prerequisite can ONLY be bypassed if:
-            // 1. The prerequisite itself IS a starting tech, OR
-            // 2. A starting tech can reach the prerequisite (provides the same path)
-            
-            const startingTechs = selectedNation && nationData.startingTechs[selectedNation] 
-                ? new Set(nationData.startingTechs[selectedNation]) 
-                : new Set();
-            
-            // If the prereq itself is a starting tech, it's satisfied
-            if (startingTechs.has(prereqId)) return true;
-            
-            // Check if any starting tech can reach this specific prerequisite
-            // This means the starting tech provides an alternate path to satisfy this requirement
-            for (const startingTech of startingTechs) {
-                if (canReachTech(startingTech, prereqId, new Set())) {
-                    return true;
-                }
-            }
-            
-            return false;
-        }
-        
-        // Helper function to check if we can reach target from source without going through a specific prerequisite
-        function canReachTechWithoutPrereq(sourceTechId, targetTechId, avoidPrereqId, visited) {
-            if (sourceTechId === targetTechId) return true;
-            if (visited.has(sourceTechId)) return false;
-            if (sourceTechId === avoidPrereqId) return false; // Don't go through the prereq we're trying to avoid
-            
-            visited.add(sourceTechId);
-            
-            // Find all techs that have sourceTechId as a prerequisite
-            const dependentTechs = techData.techs.filter(tech => 
-                tech.prereqs.includes(sourceTechId)
-            );
-            
-            return dependentTechs.some(tech => 
-                canReachTechWithoutPrereq(tech.id, targetTechId, avoidPrereqId, new Set(visited))
-            );
-        }
 
         function getTechsToRemove(techId) {
             const toRemove = new Set([techId]);
