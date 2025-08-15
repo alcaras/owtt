@@ -1,0 +1,21 @@
+# Old World Game Files - Do not include copyrighted game content
+XML/
+Source/
+*.json
+old_world_tech_tree.html
+in-game-screenshot.png
+
+# System files
+.DS_Store
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
