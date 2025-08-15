@@ -874,9 +874,9 @@ class OldWorldParser:
 
 
 def generate_html(data: Dict, template_path: str = None, output_path: str = "index.html"):
-    """Generate the complete HTML file from parsed data"""
+    """Generate the complete HTML file from parsed data using simple template placeholders"""
     
-    # Read the working template
+    # Read the template file
     if template_path and Path(template_path).exists():
         with open(template_path, 'r') as f:
             html_template = f.read()
@@ -909,9 +909,8 @@ def generate_html(data: Dict, template_path: str = None, output_path: str = "ind
     techs_js = ",\n".join(tech_entries)
     bonus_js = ",\n".join(bonus_entries)
     
-    # Replace tech data in template
-    pattern = r'const techData = \{.*?techs:\s*\[.*?\],.*?bonusTechs:\s*\[.*?\]\s*\};'
-    replacement = f"""const techData = {{
+    # Build complete tech data block
+    tech_data_block = f"""const techData = {{
             techs: [
 {techs_js}
             ],
@@ -920,16 +919,15 @@ def generate_html(data: Dict, template_path: str = None, output_path: str = "ind
             ]
         }};"""
     
-    html_template = re.sub(pattern, replacement, html_template, flags=re.DOTALL)
-    
-    # Replace nation data
-    nation_pattern = r'const nationData = \{[^}]*startingTechs:\s*\{[^}]*\}[^}]*nationSpecificBonuses:\s*\{[^}]*\}[^}]*\};'
-    nation_replacement = f"""const nationData = {{
+    # Build nation data block
+    nation_data_block = f"""const nationData = {{
             startingTechs: {json.dumps(data['nationData']['startingTechs'], indent=16).replace('{', '{', 1)},
             nationSpecificBonuses: {json.dumps(data['nationData']['nationSpecificBonuses'], indent=16).replace('{', '{', 1)}
         }};"""
     
-    html_template = re.sub(nation_pattern, nation_replacement, html_template, flags=re.DOTALL)
+    # Replace template placeholders with actual data
+    html_template = html_template.replace("{{TECH_DATA}}", tech_data_block)
+    html_template = html_template.replace("{{NATION_DATA}}", nation_data_block)
     
     # Write the output file
     with open(output_path, 'w') as f:

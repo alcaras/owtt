@@ -709,6 +709,51 @@
         let researchedBonusTechs = [];
         let selectedNation = '';
 
+        // localStorage functions
+        function saveToLocalStorage() {
+            const state = {
+                researchedTechs: researchedTechs,
+                researchOrder: researchOrder,
+                researchedBonusTechs: researchedBonusTechs,
+                selectedNation: selectedNation,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('owtt-state', JSON.stringify(state));
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const stored = localStorage.getItem('owtt-state');
+                if (stored) {
+                    const state = JSON.parse(stored);
+                    
+                    // Restore state
+                    researchedTechs = state.researchedTechs || [];
+                    researchOrder = state.researchOrder || [];
+                    researchedBonusTechs = state.researchedBonusTechs || [];
+                    selectedNation = state.selectedNation || '';
+                    
+                    // Update UI
+                    if (selectedNation) {
+                        const select = document.getElementById('nationSelect');
+                        if (select) {
+                            select.value = selectedNation;
+                        }
+                    }
+                    
+                    console.log('Loaded state from localStorage:', state);
+                    return true;
+                }
+            } catch (error) {
+                console.warn('Failed to load from localStorage:', error);
+            }
+            return false;
+        }
+
+        function clearLocalStorage() {
+            localStorage.removeItem('owtt-state');
+        }
+
         // Nation lookup array for URL indices
         const nationLookup = [
             "NATION_AKSUM",
@@ -875,13 +920,7 @@
                                          bonusTech.name.includes('Scientist') || 
                                          bonusTech.name.includes('Court Soldier') ||
                                          bonusTech.name.includes('Merchant');
-                        // Use different icons for different bonus types
-                        let emoji = '🎁'; // Default present icon
-                        if (isCourtier) {
-                            emoji = '👤';
-                        } else if (bonusTech.id && bonusTech.id.includes('RESOURCE_')) {
-                            emoji = '💎'; // Luxury resources get gem icon
-                        }
+                        const emoji = isCourtier ? '👤' : '💎';
                         allUnlocks.push(`<span class="unlock-item">${emoji}${bonusTech.name}</span>`);
                     });
                 }
@@ -905,8 +944,17 @@
             // Initialize bonus tech section
             initializeBonusTechs();
             
-            // Load from URL if present
-            loadFromUrl();
+            // Load state: URL params take priority over localStorage
+            const urlParams = new URLSearchParams(window.location.search);
+            const hasUrlParams = urlParams.has('n') || urlParams.has('nation') || urlParams.has('t') || urlParams.has('techs') || urlParams.has('b') || urlParams.has('bonus');
+            
+            if (hasUrlParams) {
+                // Load from URL if present (for sharing links)
+                loadFromUrl();
+            } else {
+                // Load from localStorage if no URL params
+                loadFromLocalStorage();
+            }
             
             updateTechStates();
             drawConnections();
@@ -1008,6 +1056,7 @@
             updateBonusTechStates();
             updateOrderList();
             drawConnections(); // Redraw connections since main techs may have changed
+            saveToLocalStorage(); // Save state after changes
         }
 
         function updateBonusTechStates() {
@@ -1120,6 +1169,7 @@
             updateBonusTechStates(); // Update bonus techs when main techs change
             updateOrderList();
             drawConnections();
+            saveToLocalStorage(); // Save state after changes
         }
 
         function getAllPrerequisites(techId) {
@@ -1309,7 +1359,7 @@
                 item.style.cursor = 'pointer';
                 item.innerHTML = `
                     <span class="tech-order-number">${itemIndex}.</span>
-                    <span class="tech-order-name">${bonusTech.id && bonusTech.id.includes('RESOURCE_') ? '💎' : '🎁'} ${bonusTech.name}</span>
+                    <span class="tech-order-name">💎 ${bonusTech.name}</span>
                     <span class="tech-order-cost">${bonusTech.cost}</span>
                 `;
                 
@@ -1429,8 +1479,7 @@
                         return true;
                     });
                     bonusTechs.forEach(bonusTech => {
-                        const bonusIcon = bonusTech.id && bonusTech.id.includes('RESOURCE_') ? '💎' : '🎁';
-                        unlocksList += `<li>${bonusIcon} ${bonusTech.name}</li>`;
+                        unlocksList += `<li>💎 ${bonusTech.name}</li>`;
                     });
                 }
                 unlocksList += '</ul></div>';
@@ -1481,21 +1530,22 @@
             const parentName = parentTech ? parentTech.name : bonusTech.parent;
             
             // Determine the appropriate emoji based on bonus content
-            // Use different icons for different bonus types
-            let bonusEmoji = '🎁'; // Default present icon for regular bonuses
-            
-            // Use gem icon for luxury resources
-            if (bonusTech.id && bonusTech.id.includes('RESOURCE_')) {
-                bonusEmoji = '💎';
-            }
-            // Use person icon for courtiers
-            else if (bonusTech.name.includes('Minister') || 
+            let bonusEmoji = '💎';
+            if (bonusTech.bonus.includes('Stone') || bonusTech.bonus.includes('Iron') || bonusTech.bonus.includes('Food')) {
+                bonusEmoji = '📦'; // Resources
+            } else if (bonusTech.bonus.includes('Worker') || bonusTech.bonus.includes('Science')) {
+                bonusEmoji = '🔬'; // Science/Workers
+            } else if (bonusTech.bonus.includes('Courtier') || bonusTech.bonus.includes('General') || 
+                      bonusTech.bonus.includes('Governor') || bonusTech.bonus.includes('Spymaster')) {
+                bonusEmoji = '👤'; // Courtiers
+            } else if (bonusTech.bonus.includes('+1') || bonusTech.bonus.includes('+2')) {
+                bonusEmoji = '⚔️'; // Units
+            } else if (bonusTech.name.includes('Minister') || 
                      bonusTech.name.includes('Scientist') || 
                      bonusTech.name.includes('Court Soldier') ||
                      bonusTech.name.includes('Merchant')) {
-                bonusEmoji = '👤';
+                bonusEmoji = '👤'; // Additional courtier check by name
             }
-            // All other bonuses use the present icon
             
             tooltip.innerHTML = `
                 <h3>${bonusTech.name}</h3>
@@ -1716,6 +1766,7 @@
             updateBonusTechStates();
             updateOrderList();
             drawConnections();
+            saveToLocalStorage(); // Save state after clearing
             
             // Clear URL parameters
             window.history.replaceState({}, document.title, window.location.pathname);
@@ -1747,6 +1798,7 @@
             updateBonusTechStates();
             updateOrderList();
             drawConnections();
+            saveToLocalStorage(); // Save state after nation change
         }
 
         // Handle window resize
