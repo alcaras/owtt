@@ -94,6 +94,19 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
+        .total-laws {
+            background: linear-gradient(135deg, #d4af37, #f4e27a);
+            border: 1px solid #8b6914;
+            border-radius: 5px;
+            padding: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #2c1810;
+            font-weight: bold;
+            font-size: 1em;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
         .tech-order-list {
             flex: 1;
             overflow-y: auto;
@@ -583,6 +596,7 @@
         
         <h2>Research Order</h2>
         <div class="total-cost" id="totalCost">Total Cost: 0</div>
+        <div class="total-laws" id="totalLaws">Laws Available: 0</div>
         <div class="tech-order-list" id="techOrderList"></div>
         
         <button class="clear-button" onclick="clearBuild()">Clear All</button>
@@ -1120,9 +1134,11 @@
         function updateOrderList() {
             const list = document.getElementById('techOrderList');
             const totalCostElement = document.getElementById('totalCost');
+            const totalLawsElement = document.getElementById('totalLaws');
             list.innerHTML = '';
             
             let totalCost = 0;
+            let totalLaws = 0;
             let itemIndex = 1;
             
             // Add main techs
@@ -1134,6 +1150,11 @@
                 
                 if (!isStartingTech) {
                     totalCost += tech.cost;
+                }
+                
+                // Count laws from this tech
+                if (tech.unlocks && tech.unlocks.laws) {
+                    totalLaws += tech.unlocks.laws.length;
                 }
                 
                 const item = document.createElement('div');
@@ -1174,6 +1195,7 @@
             });
             
             totalCostElement.textContent = `Total Cost: ${totalCost}`;
+            totalLawsElement.textContent = `Laws Available: ${totalLaws}`;
             
             // Update clear button state
             const clearButton = document.querySelector('.clear-button');
