@@ -784,6 +784,10 @@
                 }
                 if (tech.unlocks.improvements?.length > 0) {
                     tech.unlocks.improvements.forEach(improvement => {
+                        // Only show Kushite Pyramids if Kush is selected
+                        if (improvement === "Kushite Pyramids" && selectedNation !== "NATION_KUSH") {
+                            return;
+                        }
                         allUnlocks.push(`<span class="unlock-item">🏗️${improvement}</span>`);
                     });
                 }
@@ -799,7 +803,12 @@
                 }
                 
                 // Check if this tech has bonus techs available and add to unlocks
-                const bonusTechs = techData.bonusTechs.filter(bonus => bonus.parent === tech.id);
+                const bonusTechs = techData.bonusTechs.filter(bonus => {
+                    if (bonus.parent !== tech.id) return false;
+                    // Only show nation-specific bonus cards if that nation is selected
+                    if (bonus.nation && bonus.nation !== selectedNation) return false;
+                    return true;
+                });
                 if (bonusTechs.length > 0) {
                     bonusTechs.forEach(bonusTech => {
                         // Use person emoji for courtiers, diamond for others
@@ -1389,6 +1398,10 @@
                 }
                 if (tech.unlocks.improvements?.length > 0) {
                     tech.unlocks.improvements.forEach(improvement => {
+                        // Only show Kushite Pyramids if Kush is selected
+                        if (improvement === "Kushite Pyramids" && selectedNation !== "NATION_KUSH") {
+                            return;
+                        }
                         unlocksList += `<li>🏗️ ${improvement}</li>`;
                     });
                 }
