@@ -43,11 +43,14 @@ class OldWorldParser:
         self.parse_nations()
         self.parse_bonuses()
         
+        # Parse what techs unlock
+        self.parse_unit_unlocks()
+        self.parse_improvement_unlocks()
+        self.parse_law_unlocks()
+        self.parse_project_unlocks()
+        
         # Post-process to separate bonus techs
         self.identify_bonus_techs()
-        
-        # Add hardcoded unlock data (since it's not fully in XML files)
-        self.add_manual_unlock_data()
         
         print(f"Parsed {len(self.techs)} main technologies")
         print(f"Parsed {len(self.bonus_techs)} bonus technologies")
@@ -353,9 +356,10 @@ class OldWorldParser:
         main_techs = []
         bonus_techs = []
         
-        # Victory techs and resource/event bonuses to exclude from bonus cards
+        # Victory techs and event bonuses to exclude from bonus cards
+        # Note: RESOURCE bonuses (luxuries) should be included as they're researchable
         exclude_from_bonus = ["ECONOMIC_REFORM", "MILITARY_PRESTIGE", "INDUSTRIAL_PROGRESS", 
-                             "RESOURCE_", "EVENT_"]
+                             "EVENT_"]
         
         for tech in self.techs:
             # Check if this should be excluded
@@ -442,9 +446,117 @@ class OldWorldParser:
         self.techs = main_techs
         self.bonus_techs = bonus_techs
     
-    def add_manual_unlock_data(self):
-        """Add manually curated unlock data that's not in the XML files"""
-        # This data is from the working index.html
+    def parse_unit_unlocks(self):
+        """Parse unit.xml to find what units each tech unlocks"""
+        file_path = self.xml_dir / "unit.xml"
+        if not file_path.exists():
+            print(f"Warning: {file_path} not found")
+            return
+            
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        
+        # Build a mapping of tech -> units
+        tech_units = {}
+        for unit in root.findall(".//Entry"):
+            unit_type = unit.find("zType")
+            tech_prereq = unit.find("TechPrereq")
+            if unit_type is not None and unit_type.text and tech_prereq is not None and tech_prereq.text:
+                tech_id = tech_prereq.text
+                unit_name = self.format_name(unit_type.text, "UNIT_")
+                if tech_id not in tech_units:
+                    tech_units[tech_id] = []
+                tech_units[tech_id].append(unit_name)
+        
+        # Update tech data with unit unlocks
+        for tech in self.techs:
+            if tech["id"] in tech_units:
+                tech["unlocks"]["units"] = tech_units[tech["id"]]
+    
+    def parse_improvement_unlocks(self):
+        """Parse improvement.xml to find what improvements each tech unlocks"""
+        file_path = self.xml_dir / "improvement.xml"
+        if not file_path.exists():
+            print(f"Warning: {file_path} not found")
+            return
+            
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        
+        tech_improvements = {}
+        for imp in root.findall(".//Entry"):
+            imp_type = imp.find("zType")
+            tech_prereq = imp.find("TechPrereq")
+            if imp_type is not None and imp_type.text and tech_prereq is not None and tech_prereq.text:
+                tech_id = tech_prereq.text
+                imp_name = self.format_name(imp_type.text, "IMPROVEMENT_")
+                if tech_id not in tech_improvements:
+                    tech_improvements[tech_id] = []
+                tech_improvements[tech_id].append(imp_name)
+        
+        for tech in self.techs:
+            if tech["id"] in tech_improvements:
+                tech["unlocks"]["improvements"] = tech_improvements[tech["id"]]
+    
+    def parse_law_unlocks(self):
+        """Parse law.xml to find what laws each tech unlocks"""
+        file_path = self.xml_dir / "law.xml"
+        if not file_path.exists():
+            print(f"Warning: {file_path} not found")
+            return
+            
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        
+        tech_laws = {}
+        for law in root.findall(".//Entry"):
+            law_type = law.find("zType")
+            tech_prereq = law.find("TechPrereq")
+            if law_type is not None and law_type.text and tech_prereq is not None and tech_prereq.text:
+                tech_id = tech_prereq.text
+                law_name = self.format_name(law_type.text, "LAW_")
+                if tech_id not in tech_laws:
+                    tech_laws[tech_id] = []
+                tech_laws[tech_id].append(law_name)
+        
+        # Group opposing laws with "/"
+        for tech_id, laws in tech_laws.items():
+            if len(laws) == 2:
+                # Assume they're opposing choices
+                tech_laws[tech_id] = [f"{laws[0]}/{laws[1]}"]
+        
+        for tech in self.techs:
+            if tech["id"] in tech_laws:
+                tech["unlocks"]["laws"] = tech_laws[tech["id"]]
+    
+    def parse_project_unlocks(self):
+        """Parse project.xml to find what projects each tech unlocks"""
+        file_path = self.xml_dir / "project.xml"
+        if not file_path.exists():
+            print(f"Warning: {file_path} not found")
+            return
+            
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+        
+        tech_projects = {}
+        for proj in root.findall(".//Entry"):
+            proj_type = proj.find("zType")
+            tech_prereq = proj.find("TechPrereq")
+            if proj_type is not None and proj_type.text and tech_prereq is not None and tech_prereq.text:
+                tech_id = tech_prereq.text
+                proj_name = self.format_name(proj_type.text, "PROJECT_")
+                if tech_id not in tech_projects:
+                    tech_projects[tech_id] = []
+                tech_projects[tech_id].append(proj_name)
+        
+        for tech in self.techs:
+            if tech["id"] in tech_projects:
+                tech["unlocks"]["projects"] = tech_projects[tech["id"]]
+    
+    def add_manual_unlock_data_OLD_REMOVED(self):
+        """DEPRECATED - Now parsing from game files directly"""
+        # Kept for reference only
         manual_unlocks = {
             "TECH_IRONWORKING": {"units": ["Warrior"], "improvements": [], "laws": [], "projects": []},
             "TECH_STONECUTTING": {"units": [], "improvements": ["Fort", "Quarry"], "laws": [], "projects": []},

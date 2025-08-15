@@ -8,34 +8,34 @@ This is an interactive web-based tech tree for the strategy game Old World by Mo
 
 ## Data Extraction Process
 
-The tech tree data was extracted from Old World game files located in the user's game installation. The key files used were:
+The tech tree data is automatically extracted from Old World game files using the `generate_tech_tree.py` parser.
 
 ### Required Game Files
-To extract updated tech data, you'll need access to these files from your Old World installation:
-- `XML/Infos/tech.xml` - Main technology definitions, prerequisites, costs, positions
+The parser reads these files from your Old World installation:
+- `XML/Infos/tech.xml` - Technology definitions, prerequisites, costs, positions
 - `XML/Infos/text-infos.xml` - Technology names and descriptions  
-- `XML/Infos/bonus.xml` - Bonus amounts for bonus technologies
+- `XML/Infos/bonus.xml` - Bonus technology values
 - `XML/Infos/nation.xml` - Nation starting technologies
 - `XML/Infos/text-nation.xml` - Nation display names
+- `XML/Infos/unit.xml` - Unit tech requirements (for unlocks)
+- `XML/Infos/improvement.xml` - Improvement tech requirements
+- `XML/Infos/law.xml` - Law tech requirements
+- `XML/Infos/project.xml` - Project tech requirements
+- `XML/Infos/effectPlayer.xml` - Additional unlock effects
 
-### Data Extraction Method
+### Parser Functionality
 
-Since no dedicated parser script was created, data was extracted manually during development using grep, XML parsing, and direct analysis. Here's the process used:
+The `generate_tech_tree.py` parser automatically:
 
-1. **Technology Data**: Extracted from `tech.xml` using patterns like:
-   ```bash
-   grep -A 20 "<Type>TECH_" tech.xml
-   ```
-
-2. **Prerequisites**: Found prerequisite relationships in `<aePrereqTechs>` sections
-
-3. **Unlocks**: Extracted what each tech unlocks (units, improvements, laws, projects) from various unlock sections
-
-4. **Bonus Technologies**: Identified by flags like `bHide="1"`, `bTrash="1"`, `bNoFree="1"`
-
-5. **Nation Data**: Starting techs found in `<aeStartingTech>` sections of nation.xml
-
-6. **Nation-Specific Bonuses**: Found bonus techs with `<aeNationValid>` restrictions
+1. **Extracts Technologies**: Reads all techs from `tech.xml` including costs, positions, and prerequisites
+2. **Parses Unlocks**: Scans unit.xml, improvement.xml, law.xml, and project.xml to find what each tech unlocks
+3. **Identifies Bonus Cards**: Separates bonus techs from main techs based on flags (`bHide`, `bTrash`, `bNoFree`)
+4. **Handles Special Cases**: 
+   - Victory techs (Economic Reform, Military Prestige, Industrial Progress) are main techs
+   - Resource bonuses (luxuries) are included as bonus cards
+   - Event bonuses are excluded from display
+5. **Extracts Nation Data**: Reads starting techs and nation-specific bonuses
+6. **Formats Output**: Generates complete index.html with all data and UI functionality
 
 ## Key Data Structures in index.html
 
