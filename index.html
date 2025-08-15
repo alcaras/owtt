@@ -1132,12 +1132,21 @@
         
         // Helper function to check if a prerequisite is bypassed by starting techs
         function isBypassedByStartingTech(prereqId, targetId, reachableFromStarting) {
-            // If no starting techs can reach the target, normal prerequisite rules apply
-            if (reachableFromStarting.size === 0) return false;
+            // A prerequisite can ONLY be bypassed if:
+            // 1. The prerequisite itself IS a starting tech, OR
+            // 2. A starting tech can reach the prerequisite (provides the same path)
             
-            // Check if any starting tech can reach the target without going through this prerequisite
-            for (const startingTech of reachableFromStarting) {
-                if (canReachTechWithoutPrereq(startingTech, targetId, prereqId, new Set())) {
+            const startingTechs = selectedNation && nationData.startingTechs[selectedNation] 
+                ? new Set(nationData.startingTechs[selectedNation]) 
+                : new Set();
+            
+            // If the prereq itself is a starting tech, it's satisfied
+            if (startingTechs.has(prereqId)) return true;
+            
+            // Check if any starting tech can reach this specific prerequisite
+            // This means the starting tech provides an alternate path to satisfy this requirement
+            for (const startingTech of startingTechs) {
+                if (canReachTech(startingTech, prereqId, new Set())) {
                     return true;
                 }
             }
