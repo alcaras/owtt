@@ -238,11 +238,10 @@ body {
     background: rgba(20, 15, 10, 0.95);
     border: 2px solid #8b6914;
     border-radius: 10px;
-    padding: 15px;
-    min-width: 1000px;
-    max-width: 1200px;
-    height: 650px;
-    max-height: 85vh;
+    padding: 20px;
+    width: 90%;
+    max-width: 1100px;
+    max-height: 80vh;
     overflow-y: auto;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
     z-index: 10001;
@@ -258,6 +257,16 @@ body {
 
 .simulation-options {
     margin-bottom: 20px;
+}
+
+.simulation-comparison {
+    font-size: 0.9em;
+}
+
+.simulation-comparison .variant-row {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .simulation-option {
