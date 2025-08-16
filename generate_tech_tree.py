@@ -328,36 +328,33 @@ class OldWorldParser:
         root = tree.getroot()
         
         # Create lookup for bonus values
-        bonus_values = {}
+        self.bonus_values = {}
         for bonus in root.findall(".//Entry"):
             bonus_type = bonus.find("zType")
             if bonus_type is None or not bonus_type.text:
                 continue
                 
-            # Extract numeric values from bonus
-            value = 0
-            for tag in ["iValue", "iCivics", "iScience", "iGold", "iFood", "iWood", "iStone", "iIron"]:
-                val = self.get_int_value(bonus, tag, 0)
-                if val > 0:
-                    value = val
-                    break
+            bonus_id = bonus_type.text
+            bonus_data = {"yields": {}, "other": {}}
             
-            # Also try to get text description
-            name_tag = bonus.find("Name")
-            name = ""
-            if name_tag is not None and name_tag.text:
-                name = self.text_data.get(name_tag.text, "")
+            # Extract values from aiGlobalYields
+            global_yields = bonus.find("aiGlobalYields")
+            if global_yields is not None:
+                for pair in global_yields.findall("Pair"):
+                    yield_type = pair.find("zIndex")
+                    yield_value = pair.find("iValue")
+                    if yield_type is not None and yield_value is not None:
+                        yield_name = yield_type.text.replace("YIELD_", "").lower()
+                        bonus_data["yields"][yield_name] = int(yield_value.text)
             
-            bonus_values[bonus_type.text] = {"value": value, "name": name}
-        
-        # Update tech data with bonus values
-        for tech in self.techs:
-            if tech.get("bonusDiscover") and tech["bonusDiscover"] in bonus_values:
-                tech["bonusValue"] = bonus_values[tech["bonusDiscover"]]["value"]
-                # Update bonus tech name if available
-                bonus_name = bonus_values[tech["bonusDiscover"]]["name"]
-                if bonus_name and "Bonus" not in tech["name"]:
-                    tech["name"] = bonus_name
+            self.bonus_values[bonus_id] = bonus_data
+    
+    def get_bonus_value(self, tech_id, yield_type):
+        """Get bonus value for a specific tech and yield type"""
+        bonus_key = f"BONUS_{tech_id}"
+        if bonus_key in self.bonus_values:
+            return self.bonus_values[bonus_key]["yields"].get(yield_type.lower(), 0)
+        return 0
     
     def identify_bonus_techs(self):
         """Separate bonus techs from main techs"""
@@ -382,27 +379,33 @@ class OldWorldParser:
                 tech_id_upper = tech["id"].upper()
                 bonus_text = ""
                 if "STONE" in tech_id_upper and "STONECUTTING" in tech_id_upper:
-                    bonus_text = "+200 Stone"
+                    stone_value = self.get_bonus_value(tech["id"], "stone")
+                    bonus_text = f"+{stone_value} Stone" if stone_value > 0 else "+200 Stone"
                 elif "WORKER" in tech_id_upper:
                     bonus_text = "+1 Worker"
                 elif "FOOD" in tech_id_upper:
-                    bonus_text = "+200 Food"
+                    food_value = self.get_bonus_value(tech["id"], "food")
+                    bonus_text = f"+{food_value} Food" if food_value > 0 else "+200 Food"
                 elif "SETTLER" in tech_id_upper:
                     bonus_text = "+1 Settler"
                 elif "BORDERS" in tech_id_upper:
                     bonus_text = "Border Growth"
                 elif "ORDERS" in tech_id_upper:
-                    bonus_text = "+20 Orders"
+                    orders_value = self.get_bonus_value(tech["id"], "orders")
+                    bonus_text = f"+{orders_value} Orders" if orders_value > 0 else "+20 Orders"
                 elif "MONEY" in tech_id_upper:
-                    bonus_text = "+200 Money"
+                    money_value = self.get_bonus_value(tech["id"], "money")
+                    bonus_text = f"+{money_value} Money" if money_value > 0 else "+200 Money"
                 elif "MINISTER" in tech_id_upper:
                     bonus_text = "+1 Minister"
                 elif "SCIENTIST" in tech_id_upper:
                     bonus_text = "Free Scientist"
                 elif "CIVICS" in tech_id_upper:
-                    bonus_text = "Civic Points"
+                    civics_value = self.get_bonus_value(tech["id"], "civics")
+                    bonus_text = f"+{civics_value} Civics" if civics_value > 0 else "Civic Points"
                 elif "TRAINING" in tech_id_upper:
-                    bonus_text = "Unit Training"
+                    training_value = self.get_bonus_value(tech["id"], "training")
+                    bonus_text = f"+{training_value} Training" if training_value > 0 else "Unit Training"
                 elif "HAPPINESS" in tech_id_upper:
                     bonus_text = "Happiness Boost"
                 elif "GOODS" in tech_id_upper:
