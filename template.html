@@ -1211,8 +1211,8 @@
                 if (loading) loading.style.display = 'none';
                 console.log('Results should now be visible using div layout');
                 
-                runButton.textContent = originalText;
-                runButton.disabled = false;
+                // Hide the button after simulation is complete
+                runButton.style.display = 'none';
             }, 100);
         }
 
@@ -1243,24 +1243,55 @@
             console.log(`🔍 DEBUG: Main techs (non-starting): ${researchedTechs.filter(techId => !isStartingTech(techId)).length}`);
             console.log(`🔍 DEBUG: Bonus techs: ${researchedBonusTechs.length}`);
             
-            // Enable detailed debugging for first run only
-            window.debugSimulation = true;
+            // Enable detailed debugging for Scholar simulations only
+            window.debugSimulation = hasScholar;
+            // Special debug mode for Stone Boost issue
+            window.debugStoneBoost = hasScholar;
             
             for (let sim = 0; sim < numSimulations; sim++) {
-                if (sim === 1) {
-                    window.debugSimulation = false; // Turn off debugging after first run
+                if (sim === 0) {
+                    window.verboseFirstTurn = true; // Extra verbose logging for first turn
+                } else if (sim === 100) {
+                    window.debugSimulation = false; // Turn off debugging after first 100 runs
+                    window.debugStoneBoost = false; // Turn off Stone Boost debugging after first 100 runs
+                    window.verboseFirstTurn = false;
                 }
                 const result = simulateSingleRun(researchPath, hasScholar, hasOracle);
                 if (result.failed) {
-                    results.push({ failed: true, reason: result.reason });
+                    results.push({ 
+                        failed: true, 
+                        reason: result.reason, 
+                        missedCards: result.missedCards,
+                        scholarRedraws: result.scholarRedraws, 
+                        scholarRedrawsSuccessful: result.scholarRedrawsSuccessful 
+                    });
                 } else {
-                    results.push(result.cost);
+                    results.push({ 
+                        cost: result.cost, 
+                        scholarRedraws: result.scholarRedraws, 
+                        scholarRedrawsSuccessful: result.scholarRedrawsSuccessful 
+                    });
                 }
             }
             
             // Separate successful and failed runs
-            const successfulRuns = results.filter(r => typeof r === 'number');
-            const failedRuns = results.filter(r => typeof r === 'object' && r.failed);
+            const successfulRuns = results.filter(r => !r.failed);
+            const failedRuns = results.filter(r => r.failed);
+            
+            // Calculate Scholar redraw statistics
+            const scholarStats = {
+                totalRedraws: results.reduce((sum, r) => sum + (r.scholarRedraws || 0), 0),
+                successfulRedraws: results.reduce((sum, r) => sum + (r.scholarRedrawsSuccessful || 0), 0),
+                avgRedrawsPerRun: 0,
+                redrawSuccessRate: 0
+            };
+            
+            if (hasScholar && results.length > 0) {
+                scholarStats.avgRedrawsPerRun = scholarStats.totalRedraws / results.length;
+                if (scholarStats.totalRedraws > 0) {
+                    scholarStats.redrawSuccessRate = scholarStats.successfulRedraws / scholarStats.totalRedraws;
+                }
+            }
             
             if (successfulRuns.length === 0) {
                 return { 
@@ -1275,13 +1306,14 @@
             }
             
             // Calculate statistics for successful runs
-            const sortedResults = successfulRuns.sort((a, b) => a - b);
+            const costs = successfulRuns.map(r => r.cost);
+            const sortedResults = costs.sort((a, b) => a - b);
             const min = sortedResults[0];
             const max = sortedResults[sortedResults.length - 1];
-            const avg = successfulRuns.reduce((sum, cost) => sum + cost, 0) / successfulRuns.length;
+            const avg = costs.reduce((sum, cost) => sum + cost, 0) / costs.length;
             
             // Calculate standard deviation
-            const variance = successfulRuns.reduce((sum, cost) => sum + Math.pow(cost - avg, 2), 0) / successfulRuns.length;
+            const variance = costs.reduce((sum, cost) => sum + Math.pow(cost - avg, 2), 0) / costs.length;
             const stdDev = Math.sqrt(variance);
             
             const successRate = successfulRuns.length / results.length;
@@ -1290,7 +1322,17 @@
                 return acc;
             }, {});
             
-            return { min, max, avg, stdDev, successRate, failureReasons, results };
+            // Track which specific bonus cards are missed
+            const missedBonusCards = {};
+            failedRuns.forEach(fail => {
+                if (fail.reason === 'missed_bonus_cards' && fail.missedCards) {
+                    fail.missedCards.forEach(cardId => {
+                        missedBonusCards[cardId] = (missedBonusCards[cardId] || 0) + 1;
+                    });
+                }
+            });
+            
+            return { min, max, avg, stdDev, successRate, failureReasons, results, scholarStats, missedBonusCards };
         }
 
         function isStartingTech(techId) {
@@ -1304,6 +1346,13 @@
             let removedBonusCards = new Set(); // Track permanently removed bonus cards
             let totalCost = 0;
             let turnCount = 0;
+            let scholarRedraws = 0; // Track number of redraws
+            let scholarRedrawsSuccessful = 0; // Track successful redraws (found target)
+            
+            // PERSISTENT draw and discard piles across all turns
+            let drawPile = [];
+            let discardPile = [];
+            let techsAlreadyInDeck = new Set(); // Track which techs are already in the deck
             
             if (window.debugSimulation) {
                 console.log(`🎲 Starting simulation: Scholar=${hasScholar}, Oracle=${hasOracle}`);
@@ -1355,24 +1404,88 @@
                     return { cost: -1, failed: true, reason: 'missed_bonus_cards', missedCards: missedBonusCards };
                 }
                 
-                // Get currently available techs (prerequisites met, not completed, not removed)
-                const availableTechs = getAvailableTechs(completedTechs, removedBonusCards);
-                const drawPile = [...availableTechs];
-                const discardPile = [];
-                shuffleArray(drawPile);
+                // For turn 1 with a nation, only add Tier 1 techs and their bonus cards
+                let availableTechs;
+                if (turnCount === 1 && selectedNation) {
+                    // First turn with nation: only Tier 1 techs not already owned
+                    const tier1TechIds = ["TECH_IRONWORKING", "TECH_STONECUTTING", "TECH_TRAPPING", "TECH_DIVINATION", "TECH_ADMINISTRATION"];
+                    availableTechs = techData.techs.filter(tech => {
+                        return tier1TechIds.includes(tech.id) && !completedTechs.has(tech.id) && !isStartingTech(tech.id);
+                    });
+                    
+                    // For Kush, also add the Stone Boost card since they start with Stonecutting
+                    if (selectedNation === "NATION_KUSH") {
+                        const stoneBoost = techData.bonusTechs.find(b => b.id === "TECH_STONECUTTING_BONUS_STONE");
+                        if (stoneBoost && !removedBonusCards.has(stoneBoost.id)) {
+                            stoneBoost.isBonus = true;
+                            availableTechs.push(stoneBoost);
+                        }
+                    }
+                } else {
+                    // Normal turn: get all available techs based on prerequisites
+                    availableTechs = getAvailableTechs(completedTechs, removedBonusCards);
+                }
+                
+                // Only add NEW techs to the draw pile (techs that weren't available before)
+                const newlyAvailableTechs = availableTechs.filter(tech => !techsAlreadyInDeck.has(tech.id));
+                
+                if (newlyAvailableTechs.length > 0) {
+                    // Add new techs to draw pile and shuffle them in
+                    newlyAvailableTechs.forEach(tech => {
+                        techsAlreadyInDeck.add(tech.id);
+                        drawPile.push(tech);
+                    });
+                    shuffleArray(drawPile);
+                    
+                    if (window.debugSimulation) {
+                        console.log(`🆕 Added ${newlyAvailableTechs.length} newly available techs to draw pile`);
+                        if (window.verboseFirstTurn && turnCount === 1) {
+                            console.log(`  New techs: ${newlyAvailableTechs.map(t => `${t.name}(${t.cost})`).join(', ')}`);
+                        }
+                    }
+                }
                 
                 if (window.debugSimulation && turnCount === 1) {
                     const mainCount = availableTechs.filter(t => !t.isBonus).length;
                     const bonusCount = availableTechs.filter(t => t.isBonus).length;
-                    console.log(`📚 Available techs: ${mainCount} main + ${bonusCount} bonus = ${availableTechs.length} total`);
+                    console.log(`📚 Total available techs: ${mainCount} main + ${bonusCount} bonus = ${availableTechs.length} total`);
+                    
+                    if (window.verboseFirstTurn) {
+                        console.log(`\n🔍 VERBOSE: First Turn Draw Pile Details:`);
+                        console.log(`Draw pile has ${drawPile.length} cards:`);
+                        
+                        // Group by type and cost
+                        const mainTechs = drawPile.filter(t => !t.isBonus).sort((a, b) => a.cost - b.cost);
+                        const bonusTechs = drawPile.filter(t => t.isBonus).sort((a, b) => a.cost - b.cost);
+                        
+                        console.log(`\n  Main Techs (${mainTechs.length}):`);
+                        mainTechs.forEach(t => {
+                            const isTarget = targetTechSet.has(t.id);
+                            console.log(`    ${isTarget ? '🎯' : '  '} ${t.name} (${t.cost} 🧪) - ${t.id}`);
+                        });
+                        
+                        console.log(`\n  Bonus Cards (${bonusTechs.length}):`);
+                        bonusTechs.forEach(t => {
+                            const isTarget = targetTechSet.has(t.id);
+                            console.log(`    ${isTarget ? '🎯' : '  '} ${t.name} (${t.cost} 🧪) - ${t.id}`);
+                        });
+                        
+                        console.log(`\nDiscard pile: ${discardPile.length} cards`);
+                        console.log(`Target techs we're looking for: ${Array.from(targetTechSet).join(', ')}`);
+                    }
                 }
                 
                 // Research one tech this turn
-                const result = researchOneTurn(targetTechSet, drawPile, discardPile, completedTechs, hasScholar, hasOracle, turnCount, removedBonusCards);
+                const result = researchOneTurn(targetTechSet, drawPile, discardPile, completedTechs, hasScholar, hasOracle, turnCount, removedBonusCards, { scholarRedraws, scholarRedrawsSuccessful });
                 if (result.cost >= 0) {
                     totalCost += result.cost;
                     if (result.removedBonusCards) {
                         result.removedBonusCards.forEach(id => removedBonusCards.add(id));
+                    }
+                    // Update redraw tracking
+                    if (result.redrawStats) {
+                        scholarRedraws = result.redrawStats.scholarRedraws;
+                        scholarRedrawsSuccessful = result.redrawStats.scholarRedrawsSuccessful;
                     }
                 } else {
                     if (window.debugSimulation) {
@@ -1393,7 +1506,19 @@
                 }
             }
             
-            return success ? { cost: totalCost, failed: false } : { cost: -1, failed: true, reason: 'incomplete', totalCost };
+            return success ? { 
+                cost: totalCost, 
+                failed: false,
+                scholarRedraws,
+                scholarRedrawsSuccessful
+            } : { 
+                cost: -1, 
+                failed: true, 
+                reason: 'incomplete', 
+                totalCost,
+                scholarRedraws,
+                scholarRedrawsSuccessful
+            };
         }
 
         function isSubset(subset, superset) {
@@ -1427,8 +1552,12 @@
                     return false;
                 }
                 
-                // Check if prerequisite main tech is completed
-                return (bonus.prereqs || []).every(prereqId => completedTechs.has(prereqId));
+                // Bonus cards require their parent tech to be completed
+                if (bonus.parent && !completedTechs.has(bonus.parent)) {
+                    return false;
+                }
+                
+                return true;
             });
             
             // Mark bonus cards so we can identify them later
@@ -1439,131 +1568,277 @@
             return [...availableMainTechs, ...availableBonusCards];
         }
 
-        function researchOneTurn(targetTechSet, drawPile, discardPile, completedTechs, hasScholar, hasOracle, turnCount, removedBonusCards) {
+        function researchOneTurn(targetTechSet, drawPile, discardPile, completedTechs, hasScholar, hasOracle, turnCount, removedBonusCards, redrawStats = { scholarRedraws: 0, scholarRedrawsSuccessful: 0 }) {
+            const callId = Math.random().toString(36).substr(2, 9);
+            if (window.debugStoneBoost) {
+                console.log(`📞 FUNCTION CALL: researchOneTurn [Call ID: ${callId}] Turn ${turnCount}`);
+            }
             if (window.debugSimulation) {
                 console.log(`\n--- Turn ${turnCount} ---`);
-                console.log(`📊 Available techs: ${drawPile.length}, Completed: ${completedTechs.size}`);
+                console.log(`📊 Draw pile: ${drawPile.length}, Discard pile: ${discardPile.length}, Completed: ${completedTechs.size}`);
                 console.log(`🔮 Oracle: ${hasOracle ? 'YES (+1 card)' : 'NO'}, 📜 Scholar: ${hasScholar ? 'YES (redraw available)' : 'NO'}`);
+                
+                if (window.verboseFirstTurn && turnCount === 1) {
+                    console.log(`\n🔍 VERBOSE: Draw/Discard State Before Drawing Hand:`);
+                    console.log(`  Draw pile: ${drawPile.length} cards`);
+                    console.log(`  Discard pile: ${discardPile.length} cards`);
+                }
             }
             
             // Draw hand from available techs
-            const handSize = hasOracle ? 5 : 4;
-            const hand = drawHand(drawPile, discardPile, handSize);
+            let hand = [];
+            let expectedHandSize;
+            if (turnCount === 1) {
+                // Special handling for Turn 1 - guaranteed Tier 1 techs
+                hand = drawFirstHand(drawPile, discardPile, hasOracle);
+                expectedHandSize = hand.length; // First turn draws all available
+            } else {
+                // Normal draw for subsequent turns
+                expectedHandSize = hasOracle ? 5 : 4;
+                hand = drawHand(drawPile, discardPile, expectedHandSize);
+            }
             
             if (hand.length === 0) {
                 if (window.debugSimulation) {
                     console.warn('⚠️ No techs available to draw');
                 }
-                return { cost: 0 };
+                return { cost: 0, redrawStats };
             }
             
-            if (window.debugSimulation) {
-                console.log(`✋ Hand (${hand.length}/${handSize}): ${hand.map(t => `${t.name}(${t.cost})`).join(', ')}`);
+            if (window.debugSimulation && turnCount > 1 && window.debugStoneBoost) {
+                console.log(`✋ Hand (${hand.length}/${expectedHandSize}): ${hand.map(t => `${t.name}(${t.cost})`).join(', ')}`);
             }
             
             // Look for target techs in hand
             const targetsInHand = hand.filter(tech => targetTechSet.has(tech.id));
             const bonusTargetsInHand = targetsInHand.filter(tech => tech.isBonus);
+            const mainTargetsInHand = targetsInHand.filter(tech => !tech.isBonus);
+            
+            // DEBUG: Special logging for Stone Boost case
+            if (window.debugStoneBoost) {
+                const stoneBoostInHand = hand.find(tech => tech.id === "TECH_STONECUTTING_BONUS_STONE");
+                if (stoneBoostInHand) {
+                    console.log(`🔍 STONE BOOST DEBUG: Stone Boost is in hand!`);
+                    console.log(`  - Full hand: ${hand.map(t => t.name).join(', ')}`);
+                    console.log(`  - Is Stone Boost a target? ${targetTechSet.has(stoneBoostInHand.id)}`);
+                    console.log(`  - Target set contains: ${Array.from(targetTechSet).join(', ')}`);
+                    console.log(`  - Stone Boost marked as bonus? ${stoneBoostInHand.isBonus}`);
+                    console.log(`  - Targets in hand: ${targetsInHand.map(t => t.name).join(', ')}`);
+                    console.log(`  - Bonus targets in hand: ${bonusTargetsInHand.map(t => t.name).join(', ')}`);
+                    console.log(`  - Main targets in hand: ${mainTargetsInHand.map(t => t.name).join(', ')}`);
+                }
+            }
             
             let bestChoice = null;
             
             if (targetsInHand.length > 0) {
-                // Handle multiple bonus cards dilemma
-                if (bonusTargetsInHand.length > 1) {
-                    if (window.debugSimulation) {
-                        console.warn(`⚠️ Multiple target bonus cards in hand! Can only choose one:`);
-                        bonusTargetsInHand.forEach(bonus => {
-                            console.warn(`   - ${bonus.name}`);
-                        });
+                // ALWAYS prioritize bonus cards since they're permanently lost if discarded
+                if (bonusTargetsInHand.length > 0) {
+                    if (bonusTargetsInHand.length > 1) {
+                        if (window.debugSimulation) {
+                            console.warn(`⚠️ Multiple target bonus cards in hand! Can only choose one:`);
+                            bonusTargetsInHand.forEach(bonus => {
+                                console.warn(`   - ${bonus.name}`);
+                            });
+                        }
+                        // Choose the most expensive bonus card (arbitrary strategy)
+                        bestChoice = bonusTargetsInHand.reduce((mostExpensive, bonus) => 
+                            bonus.cost > mostExpensive.cost ? bonus : mostExpensive
+                        );
+                        if (window.debugSimulation) {
+                            console.log(`🎯 Choosing most expensive bonus: ${bestChoice.name} (${bestChoice.cost} 🧪)`);
+                        }
+                    } else {
+                        // Single bonus card - select it
+                        bestChoice = bonusTargetsInHand[0];
+                        if (window.debugSimulation) {
+                            console.log(`🎁 Prioritizing bonus card: ${bestChoice.name} (bonus cards are lost if discarded)`);
+                        }
+                        if (window.debugStoneBoost && bestChoice.id === "TECH_STONECUTTING_BONUS_STONE") {
+                            console.log(`✅ STONE BOOST SELECTED: Successfully choosing Stone Boost as priority bonus card!`);
+                        }
                     }
-                    // Choose the most expensive bonus card (arbitrary strategy)
-                    bestChoice = bonusTargetsInHand.reduce((mostExpensive, bonus) => 
-                        bonus.cost > mostExpensive.cost ? bonus : mostExpensive
-                    );
+                } else if (mainTargetsInHand.length > 0) {
+                    // No bonus cards, pick the first main tech
+                    bestChoice = mainTargetsInHand[0];
                     if (window.debugSimulation) {
-                        console.log(`🎯 Choosing most expensive bonus: ${bestChoice.name} (${bestChoice.cost} 🧪)`);
+                        console.log(`🔬 Found target main tech: ${bestChoice.name}`);
                     }
-                } else {
-                    // Single target or main tech - select it
-                    bestChoice = targetsInHand[0];
-                    if (window.debugSimulation) {
-                        const techType = bestChoice.isBonus ? '🎁 bonus card' : '🔬 main tech';
-                        console.log(`✅ Found target ${techType}! Selecting: ${bestChoice.name}`);
+                    // This should never happen if Stone Boost is in hand as a target!
+                    if (window.debugStoneBoost && hand.some(t => t.id === "TECH_STONECUTTING_BONUS_STONE")) {
+                        console.log(`🚨 BUG: Choosing main tech ${bestChoice.name} when Stone Boost is in hand!`);
+                        console.log(`  - bonusTargetsInHand.length = ${bonusTargetsInHand.length}`);
+                        console.log(`  - bonusTargetsInHand = ${bonusTargetsInHand.map(t => t.name)}`);
                     }
                 }
             } else {
                 // No target tech in hand - consider Scholar redraw
                 if (hasScholar && shouldRedrawForTargets(hand, targetTechSet, drawPile, discardPile)) {
+                    redrawStats.scholarRedraws++;
                     if (window.debugSimulation) {
-                        console.log(`📜 Scholar redraw: Looking for target techs...`);
+                        console.log(`📜 Scholar redraw #${redrawStats.scholarRedraws}: Looking for target techs...`);
                     }
                     
                     // Discard current hand and redraw
-                    discardPile.push(...hand);
-                    const newHand = drawHand(drawPile, discardPile, handSize);
-                    const newTargetInHand = newHand.find(tech => targetTechSet.has(tech.id));
+                    // IMPORTANT: Bonus cards are permanently removed, not discarded!
+                    hand.forEach(tech => {
+                        if (tech.isBonus) {
+                            // Bonus cards are permanently removed when discarded
+                            removedBonusCards.add(tech.id);
+                            if (window.debugSimulation) {
+                                console.log(`💔 Bonus card permanently removed during Scholar redraw: ${tech.name}`);
+                            }
+                            if (window.debugStoneBoost && tech.id === "TECH_STONECUTTING_BONUS_STONE") {
+                                console.log(`🚨 STONE BOOST LOST IN REDRAW: Stone Boost was discarded during Scholar redraw!`);
+                                console.log(`  - Was Stone Boost a target? ${targetTechSet.has(tech.id)}`);
+                                console.log(`  - Why did we redraw with Stone Boost in hand?`);
+                            }
+                        } else {
+                            // Main techs go to discard pile
+                            discardPile.push(tech);
+                        }
+                    });
+                    hand = drawHand(drawPile, discardPile, expectedHandSize);  // Update hand to the new draw
                     
                     if (window.debugSimulation) {
-                        console.log(`✋ New hand (${newHand.length}): ${newHand.map(t => `${t.name}(${t.cost})`).join(', ')}`);
+                        console.log(`✋ New hand (${hand.length}): ${hand.map(t => `${t.name}(${t.cost})`).join(', ')}`);
                     }
                     
-                    if (newTargetInHand) {
-                        bestChoice = newTargetInHand;
-                        if (window.debugSimulation) {
-                            console.log(`✅ Found target in redraw! Selecting: ${newTargetInHand.name}`);
+                    // Apply same target prioritization logic as main selection
+                    const newTargetsInHand = hand.filter(tech => targetTechSet.has(tech.id));
+                    const newBonusTargetsInHand = newTargetsInHand.filter(tech => tech.isBonus);
+                    const newMainTargetsInHand = newTargetsInHand.filter(tech => !tech.isBonus);
+                    
+                    if (newTargetsInHand.length > 0) {
+                        // ALWAYS prioritize bonus cards since they're permanently lost if discarded
+                        if (newBonusTargetsInHand.length > 0) {
+                            if (newBonusTargetsInHand.length > 1) {
+                                // Choose the most expensive bonus card (arbitrary strategy)
+                                bestChoice = newBonusTargetsInHand.reduce((mostExpensive, bonus) => 
+                                    bonus.cost > mostExpensive.cost ? bonus : mostExpensive
+                                );
+                            } else {
+                                // Single bonus card - select it
+                                bestChoice = newBonusTargetsInHand[0];
+                            }
+                        } else {
+                            // No bonus cards, pick the first main tech
+                            bestChoice = newMainTargetsInHand[0];
                         }
-                    } else if (newHand.length > 0) {
+                        
+                        redrawStats.scholarRedrawsSuccessful++;
+                        if (window.debugSimulation) {
+                            const techType = bestChoice.isBonus ? '🎁 bonus' : '🔬 main';
+                            console.log(`✅ Found target ${techType} in redraw! Selecting: ${bestChoice.name} (Success rate: ${redrawStats.scholarRedrawsSuccessful}/${redrawStats.scholarRedraws})`);
+                        }
+                    } else if (hand.length > 0) {
                         // Pick cheapest from new hand
-                        bestChoice = newHand.reduce((cheapest, tech) => 
+                        // Even non-target bonus cards can be picked if they're cheapest
+                        bestChoice = hand.reduce((cheapest, tech) => 
                             tech.cost < cheapest.cost ? tech : cheapest
                         );
                         if (window.debugSimulation) {
-                            console.log(`💰 No target in redraw, picking cheapest: ${bestChoice.name} (${bestChoice.cost} 🧪)`);
+                            const techType = bestChoice.isBonus ? '🎁 bonus' : '🔬 main';
+                            console.log(`💰 No target in redraw, picking cheapest ${techType}: ${bestChoice.name} (${bestChoice.cost} 🧪)`);
                         }
                     }
                 } else {
                     // No redraw - pick cheapest to advance deck
+                    // Even non-target bonus cards can be picked if they're cheapest
                     bestChoice = hand.reduce((cheapest, tech) => 
                         tech.cost < cheapest.cost ? tech : cheapest
                     );
                     if (window.debugSimulation) {
-                        console.log(`💰 No target, picking cheapest: ${bestChoice.name} (${bestChoice.cost} 🧪)`);
+                        const techType = bestChoice.isBonus ? '🎁 bonus' : '🔬 main';
+                        console.log(`💰 No target, picking cheapest ${techType}: ${bestChoice.name} (${bestChoice.cost} 🧪)`);
                     }
                 }
             }
             
             if (bestChoice) {
+                // DEBUG: Log what was actually selected
+                if (window.debugStoneBoost && hand.some(t => t.id === "TECH_STONECUTTING_BONUS_STONE")) {
+                    console.log(`🎯 FINAL SELECTION when Stone Boost in hand: ${bestChoice.name} [Call ID: ${callId}]`);
+                    console.log(`  - bestChoice.id = ${bestChoice.id}`);
+                    console.log(`  - Is this Stone Boost? ${bestChoice.id === "TECH_STONECUTTING_BONUS_STONE"}`);
+                }
+                
                 completedTechs.add(bestChoice.id);
                 
                 // Handle discarded cards - bonus cards are permanently removed
                 const removedThisTurn = [];
                 hand.forEach(tech => {
-                    if (tech.id !== bestChoice.id && tech.isBonus) {
-                        removedBonusCards.add(tech.id);
-                        removedThisTurn.push(tech.id);
-                        if (window.debugSimulation) {
-                            console.log(`💔 Bonus card permanently removed: ${tech.name}`);
+                    if (tech.id !== bestChoice.id) {
+                        if (tech.isBonus) {
+                            // Bonus cards are permanently removed
+                            removedBonusCards.add(tech.id);
+                            removedThisTurn.push(tech.id);
+                            if (window.debugSimulation) {
+                                console.log(`💔 Bonus card permanently removed: ${tech.name}`);
+                            }
+                            if (window.debugStoneBoost && tech.id === "TECH_STONECUTTING_BONUS_STONE") {
+                                console.log(`🚨 STONE BOOST LOST: Stone Boost was discarded instead of selected!`);
+                                console.log(`  - Selected instead: ${bestChoice.name}`);
+                                console.log(`  - Was Stone Boost a target? ${targetTechSet.has(tech.id)}`);
+                            }
+                        } else {
+                            // Main techs go to discard pile
+                            discardPile.push(tech);
+                            if (window.verboseFirstTurn && window.debugSimulation) {
+                                console.log(`♻️ Main tech discarded: ${tech.name} (${tech.cost} 🧪) -> discard pile`);
+                            }
                         }
-                    } else if (tech.id !== bestChoice.id) {
-                        // Main techs go to discard pile (handled by drawHand reshuffling)
-                        discardPile.push(tech);
                     }
                 });
                 
                 if (window.debugSimulation) {
                     const techType = bestChoice.isBonus ? '🎁 BONUS' : '🔬 MAIN';
                     console.log(`${techType} Researched: ${bestChoice.name} - now completed!`);
+                    console.log(`📊 Post-research: Draw pile=${drawPile.length}, Discard pile=${discardPile.length}`);
                 }
                 
                 return { 
                     cost: bestChoice.cost, 
-                    removedBonusCards: removedThisTurn.length > 0 ? removedThisTurn : null 
+                    removedBonusCards: removedThisTurn.length > 0 ? removedThisTurn : null,
+                    redrawStats
                 };
             }
             
-            return { cost: 0 };
+            return { cost: 0, redrawStats };
         }
 
+        function drawFirstHand(drawPile, discardPile, hasOracle) {
+            // Special first draw rules:
+            // - If nation selected: guaranteed ALL the Tier 1 techs that nation doesn't have
+            //   - Most nations: 3 Tier 1 techs
+            //   - Kush: 2 Tier 1 techs + Stone Boost bonus card
+            // - If no nation: draw 5 cards including all Tier 1 techs
+            // - Oracle doesn't affect first draw
+            
+            const hand = [];
+            
+            if (selectedNation) {
+                // With a nation: draw ALL available cards (should be just the Tier 1s not owned)
+                while (drawPile.length > 0) {
+                    hand.push(drawPile.pop());
+                }
+            } else {
+                // No nation selected - draw 5 cards
+                for (let i = 0; i < 5 && drawPile.length > 0; i++) {
+                    hand.push(drawPile.pop());
+                }
+            }
+            
+            if (window.debugSimulation) {
+                console.log(`✋ First hand (${hand.length}): ${hand.map(t => `${t.name}(${t.cost})`).join(', ')}`);
+                if (selectedNation === "NATION_KUSH" && hand.some(t => t.id === "TECH_STONECUTTING_BONUS_STONE")) {
+                    console.log(`  📜 Kush special: Includes Stone Boost bonus card`);
+                }
+            }
+            
+            return hand;
+        }
+        
         function drawHand(drawPile, discardPile, handSize) {
             const hand = [];
             
@@ -1591,36 +1866,17 @@
         }
 
         function shouldRedrawForTargets(hand, targetTechSet, drawPile, discardPile) {
-            // Smart Scholar redraw logic based on expected value
+            // Simple Scholar redraw logic: if we don't have a target and one exists, redraw!
             const allAvailableCards = [...drawPile, ...discardPile];
             const targetStillAvailable = allAvailableCards.some(tech => targetTechSet.has(tech.id));
             
-            if (!targetStillAvailable) return false;
-            
-            // Calculate current hand stats
-            const avgHandCost = hand.reduce((sum, tech) => sum + tech.cost, 0) / hand.length;
-            const cheapestInHand = Math.min(...hand.map(tech => tech.cost));
-            
-            // Calculate expected stats of available deck
-            const avgDeckCost = allAvailableCards.reduce((sum, tech) => sum + tech.cost, 0) / allAvailableCards.length;
-            const targetProbability = allAvailableCards.filter(tech => targetTechSet.has(tech.id)).length / allAvailableCards.length;
-            
-            // Expected value calculation:
-            // If we find target: we get target tech (good!)
-            // If we don't find target: we get average deck cost
-            const expectedRedrawCost = (targetProbability * 0) + ((1 - targetProbability) * avgDeckCost);
-            
-            // Redraw if:
-            // 1. Current hand is worse than expected redraw outcome
-            // 2. Target probability is reasonable (> 10%)
-            // 3. Current hand is significantly above deck average (> 1.2x)
-            const handVsDeckRatio = avgHandCost / avgDeckCost;
-            const shouldRedraw = (cheapestInHand > expectedRedrawCost) && 
-                               (targetProbability > 0.10) && 
-                               (handVsDeckRatio > 1.2);
+            // Just redraw if any target is still available - be aggressive!
+            const shouldRedraw = targetStillAvailable;
             
             if (window.debugSimulation) {
-                console.log(`📜 Scholar analysis: handAvg=${Math.round(avgHandCost)}, deckAvg=${Math.round(avgDeckCost)}, ratio=${handVsDeckRatio.toFixed(2)}, targetProb=${Math.round(targetProbability*100)}%, redraw=${shouldRedraw ? 'YES' : 'NO'}`);
+                const targetCount = allAvailableCards.filter(tech => targetTechSet.has(tech.id)).length;
+                const targetProbability = targetCount / allAvailableCards.length;
+                console.log(`📜 Scholar: ${targetCount} targets in ${allAvailableCards.length} cards (${Math.round(targetProbability*100)}% chance) - redraw=${shouldRedraw ? 'YES' : 'NO'}`);
             }
             
             return shouldRedraw;
@@ -1667,8 +1923,9 @@
             for (const variant of allResults) {
                 console.log(`Processing variant: ${variant.name}`, variant.results);
                 const results = variant.results;
-                const rangeMin = Math.round(results.avg - results.stdDev);
-                const rangeMax = Math.round(results.avg + results.stdDev);
+                // Ensure std dev bars don't go outside min/max bounds
+                const rangeMin = Math.max(results.min, Math.round(results.avg - results.stdDev));
+                const rangeMax = Math.min(results.max, Math.round(results.avg + results.stdDev));
                 
                 // Calculate bar widths as percentages
                 const minPercent = ((results.min - globalMin) / range) * 100;
@@ -1677,39 +1934,90 @@
                 const stdDevLeftPercent = ((rangeMin - globalMin) / range) * 100;
                 const stdDevRightPercent = ((rangeMax - globalMin) / range) * 100;
                 
+                // Build missed bonus cards string
+                let missedCardsInfo = '';
+                if (results.successRate < 1 && results.missedBonusCards && Object.keys(results.missedBonusCards).length > 0) {
+                    const missedEntries = Object.entries(results.missedBonusCards).sort((a, b) => b[1] - a[1]);
+                    
+                    const missedList = missedEntries
+                        .slice(0, 3) // Show top 3
+                        .map(([cardId, count]) => {
+                            const bonus = techData.bonusTechs.find(t => t.id === cardId);
+                            const percentage = Math.round((count / 1000) * 100); // Percentage of total runs
+                            return `${bonus?.name || cardId} (${percentage}%)`;
+                        });
+                    missedCardsInfo = ` (failed: ${missedList.join(', ')})`;
+                }
+                
                 html += `
                     <div style="margin-bottom: 8px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
-                        <div style="color: #d4af37; font-weight: bold; margin-bottom: 4px; font-size: 0.95em; display: flex; justify-content: space-between;">
-                            <span>${variant.name}</span>
-                            <span style="color: ${results.successRate >= 0.95 ? 'var(--primary-green)' : results.successRate >= 0.8 ? 'var(--primary-gold)' : 'var(--light-red)'};">
-                                ${Math.round(results.successRate * 100)}% success
-                            </span>
+                        <div style="color: #d4af37; font-weight: bold; margin-bottom: 4px; font-size: 0.95em;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <span>${variant.name} <span style="font-weight: normal;">(<span style="color: var(--light-blue);">${Math.round(results.avg)}</span> <span style="color: var(--primary-gold);">± ${Math.round(results.stdDev)}</span>, range: <span style="color: var(--primary-green);">${results.min}</span>-<span style="color: var(--light-red);">${results.max}</span>)</span></span>
+                                <div style="text-align: right;">
+                                    <span style="color: ${results.successRate >= 0.95 ? 'var(--primary-green)' : results.successRate >= 0.8 ? 'var(--primary-gold)' : 'var(--light-red)'};">
+                                        ${Math.round(results.successRate * 100)}% success${missedCardsInfo}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                         
-                        <!-- Bar chart container -->
-                        <div style="position: relative; height: 20px; background: rgba(0,0,0,0.5); border-radius: 10px; margin: 6px 0; border: 1px solid #444;">
-                            <!-- Min-Max range bar (light gray) -->
-                            <div style="position: absolute; top: 8px; left: ${minPercent}%; width: ${maxPercent - minPercent}%; height: 8px; background: rgba(128,128,128,0.4); border-radius: 4px;"></div>
+                        <!-- Bar chart with inline labels -->
+                        <div style="position: relative; height: 45px; margin: 10px 0;">
+                            <!-- Numbers positioned above the bar at their actual locations -->
+                            ${(() => {
+                                // Check for overlapping labels and only show distinct values
+                                const labels = [
+                                    { value: results.min, percent: minPercent, color: 'var(--primary-green)', type: 'min' },
+                                    { value: Math.round(results.avg), percent: avgPercent, color: 'var(--light-blue)', type: 'avg' },
+                                    { value: results.max, percent: maxPercent, color: 'var(--light-red)', type: 'max' }
+                                ];
+                                
+                                // Sort by position
+                                labels.sort((a, b) => a.percent - b.percent);
+                                
+                                let labelHtml = '';
+                                const minSpacing = 5; // Minimum % spacing between labels
+                                let lastShownLabel = null;
+                                
+                                for (let i = 0; i < labels.length; i++) {
+                                    const label = labels[i];
+                                    
+                                    // Skip if too close to last shown label (within 5% and same value)
+                                    if (lastShownLabel && 
+                                        Math.abs(label.percent - lastShownLabel.percent) < minSpacing && 
+                                        Math.abs(label.value - lastShownLabel.value) < 50) {
+                                        continue; // Skip this label
+                                    }
+                                    
+                                    labelHtml += `<div style="position: absolute; top: 0; left: ${label.percent}%; transform: translateX(-50%); color: ${label.color}; font-size: 0.75em; font-weight: bold;">
+                                        ${label.value}
+                                    </div>`;
+                                    
+                                    lastShownLabel = label;
+                                }
+                                
+                                return labelHtml;
+                            })()}
                             
-                            <!-- StdDev range bar (gold) -->
-                            <div style="position: absolute; top: 8px; left: ${stdDevLeftPercent}%; width: ${stdDevRightPercent - stdDevLeftPercent}%; height: 14px; background: var(--primary-gold); opacity: 0.6; border-radius: 7px;"></div>
+                            <!-- Bar chart -->
+                            <div style="position: absolute; top: 18px; width: 100%; height: 20px; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid #444;">
+                                <!-- Min-Max range bar (light gray) -->
+                                <div style="position: absolute; top: 6px; left: ${minPercent}%; width: ${maxPercent - minPercent}%; height: 8px; background: rgba(128,128,128,0.4); border-radius: 4px;"></div>
+                                
+                                <!-- StdDev range bar (gold) -->
+                                <div style="position: absolute; top: 3px; left: ${stdDevLeftPercent}%; width: ${stdDevRightPercent - stdDevLeftPercent}%; height: 14px; background: var(--primary-gold); opacity: 0.6; border-radius: 7px;"></div>
+                                
+                                <!-- Average line (blue) -->
+                                <div style="position: absolute; top: 2px; left: ${avgPercent}%; width: 3px; height: 16px; background: var(--light-blue); border-radius: 1px;"></div>
+                                
+                                <!-- Min marker (green) -->
+                                <div style="position: absolute; top: 0; left: ${minPercent}%; width: 2px; height: 20px; background: var(--primary-green);"></div>
+                                
+                                <!-- Max marker (red) -->
+                                <div style="position: absolute; top: 0; left: ${maxPercent}%; width: 2px; height: 20px; background: var(--light-red);"></div>
+                            </div>
                             
-                            <!-- Average line (blue) -->
-                            <div style="position: absolute; top: 5px; left: ${avgPercent}%; width: 3px; height: 20px; background: var(--light-blue); border-radius: 1px;"></div>
-                            
-                            <!-- Min marker (green) -->
-                            <div style="position: absolute; top: 3px; left: ${minPercent}%; width: 2px; height: 24px; background: var(--primary-green);"></div>
-                            
-                            <!-- Max marker (red) -->
-                            <div style="position: absolute; top: 3px; left: ${maxPercent}%; width: 2px; height: 24px; background: var(--light-red);"></div>
-                        </div>
-                        
-                        <!-- Legend -->
-                        <div style="color: var(--text-light); font-size: 0.85em; display: flex; justify-content: space-between; margin-top: 5px;">
-                            <span>Min: <span style="color: var(--primary-green);">${results.min}</span></span>
-                            <span>Avg: <span style="color: var(--light-blue);">${Math.round(results.avg)}</span></span>
-                            <span>Max: <span style="color: var(--light-red);">${results.max}</span></span>
-                            <span>±σ: <span style="color: var(--primary-gold);">${Math.round(results.stdDev)}</span></span>
                         </div>
                         
                     </div>
