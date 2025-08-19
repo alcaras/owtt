@@ -517,6 +517,20 @@ body {
     font-size: 0.8em;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
+.tech-delta-cost {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background: rgba(180, 120, 40, 0.9);
+    color: #f4e4c1;
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-weight: bold;
+    font-size: 0.7em;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    min-width: 20px;
+    text-align: center;
+}
 
 .tech-name {
     font-weight: bold;

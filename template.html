@@ -518,6 +518,36 @@
             return result;
         }
         
+        function calculateDeltaCost(techId) {
+            // Calculate the additional cost needed to research this tech
+            const tech = techData.techs.find(t => t.id === techId);
+            if (!tech) return 0;
+            
+            // If already researched, delta is 0
+            if (researchedTechs.includes(techId)) return 0;
+            
+            // Get all prerequisites needed
+            const prereqsNeeded = getAllPrerequisites(techId);
+            
+            // Calculate total cost = cost of prereqs not yet researched + tech itself
+            let totalCost = 0;
+            
+            // Add cost of prerequisites not yet researched
+            prereqsNeeded.forEach(prereqId => {
+                if (!researchedTechs.includes(prereqId)) {
+                    const prereqTech = techData.techs.find(t => t.id === prereqId);
+                    if (prereqTech) {
+                        totalCost += prereqTech.cost;
+                    }
+                }
+            });
+            
+            // Add cost of the tech itself
+            totalCost += tech.cost;
+            
+            return totalCost;
+        }
+        
         function findInsertionIndex(techId) {
             // Find the correct position to insert a tech to maintain tech tree order
             // Insert after all prerequisites but before any techs that depend on this one
@@ -589,6 +619,12 @@
                     existingBadge.remove();
                 }
                 
+                // Remove delta cost indicator
+                const existingDeltaCost = node.querySelector('.tech-delta-cost');
+                if (existingDeltaCost) {
+                    existingDeltaCost.remove();
+                }
+                
                 const techIndex = researchedTechs.indexOf(tech.id);
                 if (techIndex > -1) {
                     // Check if this tech is completed or just on-path
@@ -610,6 +646,17 @@
                     node.appendChild(badge);
                 } else if (isAvailable(tech)) {
                     node.classList.add('available');
+                }
+                
+                // Add delta cost indicator for all unresearched techs
+                if (techIndex === -1) {
+                    const deltaCost = calculateDeltaCost(tech.id);
+                    if (deltaCost > 0) {
+                        const deltaCostElement = document.createElement('div');
+                        deltaCostElement.className = 'tech-delta-cost';
+                        deltaCostElement.textContent = deltaCost;
+                        node.appendChild(deltaCostElement);
+                    }
                 }
             });
         }
