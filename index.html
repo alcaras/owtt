@@ -466,12 +466,15 @@
             if (hasUrlParams) {
                 // Load from URL if present (for sharing links)
                 loadFromUrl();
+                // Clear URL params after loading so future reloads use localStorage
+                window.history.replaceState({}, document.title, window.location.pathname);
             } else {
                 // Load from localStorage if no URL params
                 loadFromLocalStorage();
             }
             
             updateTechStates();
+            updateBonusTechStates();
             updateOrderList();
             drawConnections();
         }
