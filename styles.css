@@ -667,9 +667,14 @@ body {
     animation: bonusPulse 2s infinite;
 }
 
-.bonus-tech-node.researched {
+.bonus-tech-node.completed {
     background: linear-gradient(135deg, #3a5a3f, #2a4a2f);
     border-color: #6ab36a;
+    opacity: 1;
+}
+.bonus-tech-node.on-path {
+    background: linear-gradient(135deg, #3a4a6a, #2a3a5a);
+    border-color: #5a8ab9;
     opacity: 1;
 }
 

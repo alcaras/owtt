@@ -446,6 +446,10 @@
                 `;
                 
                 node.addEventListener('click', () => toggleResearch(tech.id));
+                node.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    quickToggleCompletion(tech.id);
+                });
                 node.addEventListener('mouseenter', (e) => showTooltip(e, tech));
                 node.addEventListener('mouseleave', hideTooltip);
                 
@@ -522,6 +526,10 @@
                     `;
                     
                     node.addEventListener('click', () => toggleBonusResearch(bonusTech.id));
+                    node.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        quickToggleBonusCompletion(bonusTech.id);
+                    });
                     node.addEventListener('mouseenter', (e) => showBonusTooltip(e, bonusTech));
                     node.addEventListener('mouseleave', hideTooltip);
                     
@@ -543,6 +551,11 @@
             if (index > -1) {
                 // Remove bonus tech
                 researchedBonusTechs.splice(index, 1);
+                // Also remove from completed techs
+                const completedIndex = completedTechs.indexOf(bonusTechId);
+                if (completedIndex > -1) {
+                    completedTechs.splice(completedIndex, 1);
+                }
             } else {
                 // Add the parent tech and all its prerequisites first
                 if (!researchedTechs.includes(bonusTech.parent)) {
@@ -586,7 +599,7 @@
             availableBonusTechs.forEach(bonusTech => {
                 const node = document.getElementById(bonusTech.id);
                 if (node) {
-                    node.classList.remove('available', 'researched');
+                    node.classList.remove('available', 'researched', 'completed', 'on-path');
                     
                     // Remove existing order badge
                     const existingBadge = node.querySelector('.tech-order-badge');
@@ -595,7 +608,12 @@
                     }
                     
                     if (researchedBonusTechs.includes(bonusTech.id)) {
-                        node.classList.add('researched');
+                        // Check if completed or just on-path
+                        if (completedTechs.includes(bonusTech.id)) {
+                            node.classList.add('completed');
+                        } else {
+                            node.classList.add('on-path');
+                        }
                         
                         // Add order badge - calculate position in overall research order
                         const allResearched = [...researchedTechs, ...researchedBonusTechs];
@@ -623,38 +641,10 @@
                 <p><strong>Cost:</strong> ${bonusTech.cost} Science</p>
                 <p><strong>Requires:</strong> ${parentName}</p>
                 <p><strong>Bonus:</strong> ${bonusTech.bonus}</p>
-                <p style="margin-top: 8px; font-style: italic; color: #a09080;">Click to toggle research</p>
+                <p style="margin-top: 8px; font-style: italic; color: #a09080;">Click to add/remove • Right-click to mark completed</p>
             `;
             
-            // Position tooltip accounting for scroll and viewport bounds
-            const rect = event.target.getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-            
-            let left = rect.right + scrollLeft + 10;
-            let top = rect.top + scrollTop;
-            
-            // Check if tooltip would go off screen and adjust
-            const viewportWidth = window.innerWidth;
-            
-            // If too far right, position to left of element
-            if (left + 300 > viewportWidth + scrollLeft) {
-                left = rect.left + scrollLeft - 310;
-            }
-            
-            // If too high (near top), position below element
-            if (rect.top < 150) {
-                top = rect.bottom + scrollTop + 10;
-            }
-            
-            // Ensure tooltip doesn't go above the viewport
-            if (top < scrollTop + 10) {
-                top = scrollTop + 10;
-            }
-            
-            tooltip.style.left = left + 'px';
-            tooltip.style.top = top + 'px';
-            tooltip.classList.add('show');
+            positionTooltip(event, tooltip);
         }
 
         function toggleResearch(techId) {
@@ -850,6 +840,80 @@
             updateOrderList();
             saveToLocalStorage();
         }
+        
+        function quickToggleCompletion(techId) {
+            // Right-click: directly toggle completed state (add to researched if needed)
+            if (!researchedTechs.includes(techId)) {
+                // Add prerequisites and the tech itself
+                const prereqsToAdd = getAllPrerequisites(techId);
+                prereqsToAdd.forEach(prereqId => {
+                    if (!researchedTechs.includes(prereqId)) {
+                        researchedTechs.push(prereqId);
+                        researchOrder.push(Date.now());
+                        completedTechs.push(prereqId); // Mark prereqs as completed too
+                    }
+                });
+                
+                // Add and complete the tech itself
+                researchedTechs.push(techId);
+                researchOrder.push(Date.now());
+                completedTechs.push(techId);
+            } else {
+                // Toggle completion state
+                toggleTechCompletion(techId);
+            }
+            
+            updateTechStates();
+            updateBonusTechStates();
+            updateOrderList();
+            drawConnections();
+            saveToLocalStorage();
+        }
+        
+        function toggleBonusTechCompletion(bonusTechId) {
+            const index = completedTechs.indexOf(bonusTechId);
+            if (index > -1) {
+                // Remove from completed
+                completedTechs.splice(index, 1);
+            } else {
+                // Add to completed
+                completedTechs.push(bonusTechId);
+            }
+            
+            // Update displays
+            updateBonusTechStates();
+            updateOrderList();
+            saveToLocalStorage();
+        }
+        
+        function quickToggleBonusCompletion(bonusTechId) {
+            const bonusTech = techData.bonusTechs.find(t => t.id === bonusTechId);
+            if (!bonusTech) return;
+            
+            // Ensure parent tech is researched first
+            if (!researchedTechs.includes(bonusTech.parent)) {
+                quickToggleCompletion(bonusTech.parent);
+            }
+            
+            // Toggle bonus tech
+            if (!researchedBonusTechs.includes(bonusTechId)) {
+                researchedBonusTechs.push(bonusTechId);
+                completedTechs.push(bonusTechId);
+            } else {
+                const index = completedTechs.indexOf(bonusTechId);
+                if (index > -1) {
+                    completedTechs.splice(index, 1);
+                } else {
+                    completedTechs.push(bonusTechId);
+                }
+            }
+            
+            updateTechStates();
+            updateBonusTechStates();
+            updateOrderList();
+            drawConnections();
+            saveToLocalStorage();
+        }
 
         function isAvailable(tech) {
             return tech.prereqs.every(prereq => researchedTechs.includes(prereq));
@@ -935,7 +999,7 @@
                 // Add hover events for tooltip
                 listItem.addEventListener('mouseenter', (e) => {
                     console.log('Tech tooltip triggered for:', tech.name);
-                    showTooltip(e, tech);
+                    showResearchOrderTooltip(e, tech, isStartingTech, isCompleted);
                 });
                 listItem.addEventListener('mouseleave', hideTooltip);
                 
@@ -947,20 +1011,33 @@
                     totalCost += bonusTech.cost;
                     
                     const listItem = document.createElement('div');
-                    listItem.className = 'tech-order-item';
+                    const isCompleted = completedTechs.includes(bonusTechId);
+                    listItem.className = isCompleted ? 'tech-order-item completed' : 'tech-order-item';
                     listItem.setAttribute('data-bonus-tech-id', bonusTechId);
-                    listItem.style.backgroundColor = 'rgba(180, 160, 55, 0.2)'; // Highlight bonus techs
+                    if (!isCompleted) {
+                        listItem.style.backgroundColor = 'rgba(180, 160, 55, 0.2)'; // Highlight bonus techs only if not completed
+                    }
                     listItem.style.cursor = 'pointer';
+                    
+                    // Add checkmark if completed
+                    const checkmark = isCompleted ? '✓ ' : '';
+                    
                     listItem.innerHTML = `
-                        <span class="tech-order-number">${itemIndex}.</span>
+                        <span class="tech-order-number">${checkmark}${itemIndex}.</span>
                         <span class="tech-order-name">💎 ${bonusTech.name}</span>
                         <span class="tech-order-cost">${bonusTech.cost}</span>
                     `;
                     
+                    // Add click event to toggle completion
+                    listItem.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        toggleBonusTechCompletion(bonusTechId);
+                    });
+                    
                     // Add hover events for bonus tech tooltip
                     listItem.addEventListener('mouseenter', (e) => {
                         console.log('Bonus tooltip triggered for:', bonusTech.name);
-                        showBonusTooltip(e, bonusTech);
+                        showResearchOrderBonusTooltip(e, bonusTech, isCompleted);
                     });
                     listItem.addEventListener('mouseleave', hideTooltip);
                     
@@ -1023,6 +1100,84 @@
             });
         }
 
+        function showResearchOrderTooltip(event, tech, isStartingTech, isCompleted) {
+            const tooltip = document.getElementById('tooltip');
+            const prereqNames = tech.prereqs.map(id => {
+                const prereqTech = techData.techs.find(t => t.id === id);
+                return prereqTech ? prereqTech.name : id;
+            }).join(', ');
+            
+            let actionText = '';
+            if (isStartingTech) {
+                actionText = '<p style="margin-top: 8px; font-style: italic; color: #a09080;">Starting tech (always completed)</p>';
+            } else if (isCompleted) {
+                actionText = '<p style="margin-top: 8px; font-style: italic; color: #a09080;">✓ Completed • Click to mark as not completed</p>';
+            } else {
+                actionText = '<p style="margin-top: 8px; font-style: italic; color: #a09080;">Click to mark as completed</p>';
+            }
+            
+            tooltip.innerHTML = `
+                <h3>${tech.name}</h3>
+                <p><strong>Cost:</strong> ${tech.cost} Science</p>
+                ${tech.prereqs.length > 0 ? `<p><strong>Prerequisites:</strong> ${prereqNames}</p>` : ''}
+                ${actionText}
+            `;
+            
+            positionTooltip(event, tooltip);
+        }
+        
+        function showResearchOrderBonusTooltip(event, bonusTech, isCompleted) {
+            const tooltip = document.getElementById('tooltip');
+            const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
+            const parentName = parentTech ? parentTech.name : bonusTech.parent;
+            
+            let actionText = isCompleted 
+                ? '<p style="margin-top: 8px; font-style: italic; color: #a09080;">✓ Completed • Click to mark as not completed</p>'
+                : '<p style="margin-top: 8px; font-style: italic; color: #a09080;">Click to mark as completed</p>';
+            
+            tooltip.innerHTML = `
+                <h3>${bonusTech.name}</h3>
+                <p><strong>Cost:</strong> ${bonusTech.cost} Science</p>
+                <p><strong>Requires:</strong> ${parentName}</p>
+                <p><strong>Bonus:</strong> ${bonusTech.bonus}</p>
+                ${actionText}
+            `;
+            
+            positionTooltip(event, tooltip);
+        }
+        
+        function positionTooltip(event, tooltip) {
+            // Position tooltip accounting for scroll and viewport bounds
+            const rect = event.target.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            
+            let left = rect.right + scrollLeft + 10;
+            let top = rect.top + scrollTop;
+            
+            // Check if tooltip would go off screen and adjust
+            const viewportWidth = window.innerWidth;
+            
+            // If too far right, position to left of element
+            if (left + 300 > viewportWidth + scrollLeft) {
+                left = rect.left + scrollLeft - 310;
+            }
+            
+            // If too high (near top), position below element
+            if (rect.top < 150) {
+                top = rect.bottom + scrollTop + 10;
+            }
+            
+            // Ensure tooltip doesn't go above the viewport
+            if (top < scrollTop + 10) {
+                top = scrollTop + 10;
+            }
+            
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+            tooltip.classList.add('show');
+        }
+        
         function showTooltip(event, tech) {
             const tooltip = document.getElementById('tooltip');
             const prereqNames = tech.prereqs.map(id => {
@@ -1085,31 +1240,10 @@
                 <p><strong>Cost:</strong> ${tech.cost} Science</p>
                 ${tech.prereqs.length > 0 ? `<p><strong>Prerequisites:</strong> ${prereqNames}</p>` : ''}
                 ${unlocksList}
-                <p style="margin-top: 8px; font-style: italic; color: #a09080;">Click to toggle research</p>
+                <p style="margin-top: 8px; font-style: italic; color: #a09080;">Click to add/remove • Right-click to mark completed</p>
             `;
             
-            // Position tooltip accounting for scroll and viewport
-            const rect = event.target.getBoundingClientRect();
-            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-            
-            // Try to position to the right of the item, but adjust if it would go off-screen
-            let left = rect.right + scrollLeft + 10;
-            let top = rect.top + scrollTop;
-            
-            // If tooltip would go off the right edge, position it to the left
-            if (left + 300 > window.innerWidth) { // Assuming tooltip is ~300px wide
-                left = rect.left + scrollLeft - 310;
-            }
-            
-            // If tooltip would go off the bottom, adjust upward
-            if (top + 200 > window.innerHeight + scrollTop) { // Assuming tooltip is ~200px tall
-                top = rect.bottom + scrollTop - 200;
-            }
-            
-            tooltip.style.left = Math.max(10, left) + 'px'; // Don't go off left edge
-            tooltip.style.top = Math.max(10, top) + 'px'; // Don't go off top edge
-            tooltip.classList.add('show');
+            positionTooltip(event, tooltip);
         }
 
         function hideTooltip() {
