@@ -193,6 +193,33 @@ body {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
 }
 
+.undo-button, .redo-button {
+    width: 100%;
+    padding: 8px;
+    background: rgba(70, 90, 120, 0.5);
+    border: 1px solid #5a7ab9;
+    border-radius: 5px;
+    color: #c4d4f4;
+    font-weight: normal;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    font-size: 0.9em;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.undo-button:hover:not(.disabled), .redo-button:hover:not(.disabled) {
+    background: rgba(70, 90, 120, 0.7);
+    color: #fff;
+}
+
+.undo-button.disabled, .redo-button.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    background: rgba(70, 90, 120, 0.2);
+    color: #999;
+}
+
 .clear-button {
     width: 100%;
     padding: 8px;
@@ -499,6 +526,23 @@ body {
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.85; }
+}
+
+.tech-node.prereq-preview {
+    outline: 3px dashed #d4af37;
+    outline-offset: 2px;
+    animation: prereq-pulse 1.5s infinite;
+}
+
+@keyframes prereq-pulse {
+    0%, 100% { 
+        outline-color: #d4af37;
+        outline-offset: 2px;
+    }
+    50% { 
+        outline-color: #f4e27a;
+        outline-offset: 4px;
+    }
 }
 
 .tech-order-badge {

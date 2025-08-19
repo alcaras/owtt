@@ -58,6 +58,8 @@
         <div class="total-laws" id="totalLaws">Laws Available: 0</div>
         <div class="tech-order-list" id="techOrderList"></div>
         
+        <button class="redo-button" onclick="redoLastAction()" style="display: none;">Redo</button>
+        <button class="undo-button" onclick="undoLastAction()">Undo</button>
         <button class="clear-button" onclick="clearBuild()">Clear All</button>
     </div>
 
@@ -107,6 +109,10 @@
         let researchedBonusTechs = [];
         let completedTechs = []; // Tracks which techs have been marked as completed
         let selectedNation = '';
+        let undoHistory = []; // Track actions for undo functionality
+        let redoHistory = []; // Track actions for redo functionality
+        const MAX_UNDO_HISTORY = 20; // Limit undo history
+        const MAX_REDO_HISTORY = 20; // Limit redo history
 
         // localStorage functions
         function saveToLocalStorage() {
@@ -245,8 +251,14 @@
                     e.preventDefault();
                     quickToggleCompletion(tech.id);
                 });
-                node.addEventListener('mouseenter', (e) => showTooltip(e, tech));
-                node.addEventListener('mouseleave', hideTooltip);
+                node.addEventListener('mouseenter', (e) => {
+                    showTooltip(e, tech);
+                    showPrerequisitePreview(tech.id);
+                });
+                node.addEventListener('mouseleave', () => {
+                    hideTooltip();
+                    clearPrerequisitePreview();
+                });
                 
                 techTree.appendChild(node);
             });
@@ -272,6 +284,7 @@
             updateBonusTechStates();
             updateOrderList();
             drawConnections();
+            updateUndoRedoButtons(); // Initialize undo/redo button states
         }
 
         function initializeBonusTechs() {
@@ -345,6 +358,12 @@
             const bonusTech = techData.bonusTechs.find(t => t.id === bonusTechId);
             if (!bonusTech) return;
 
+            // Save state before changes for undo
+            const previousBonusTechs = researchedBonusTechs.slice();
+            const previousTechs = researchedTechs.slice();
+            const previousOrder = researchOrder.slice();
+            const previousCompleted = completedTechs.slice();
+
             const index = researchedBonusTechs.indexOf(bonusTechId);
             if (index > -1) {
                 // Remove bonus tech
@@ -354,6 +373,13 @@
                 if (completedIndex > -1) {
                     completedTechs.splice(completedIndex, 1);
                 }
+                
+                // Record action for undo
+                recordAction('removeBonusTech', {
+                    bonusTechName: bonusTech.name,
+                    previousBonusTechs: previousBonusTechs,
+                    previousCompleted: previousCompleted
+                });
             } else {
                 // Add the parent tech and all its prerequisites first
                 if (!researchedTechs.includes(bonusTech.parent)) {
@@ -376,6 +402,15 @@
                 
                 // Now add the bonus tech
                 researchedBonusTechs.push(bonusTechId);
+                
+                // Record action for undo
+                recordAction('addBonusTech', {
+                    bonusTechName: bonusTech.name,
+                    previousBonusTechs: previousBonusTechs,
+                    previousTechs: previousTechs,
+                    previousOrder: previousOrder,
+                    previousCompleted: previousCompleted
+                });
             }
             
             updateTechStates(); // Update main tech states too since we may have added main techs
@@ -446,19 +481,38 @@
         }
 
         function toggleResearch(techId) {
+            const tech = techData.techs.find(t => t.id === techId);
             const index = researchedTechs.indexOf(techId);
+            
+            // Save state before changes for undo
+            const previousTechs = researchedTechs.slice();
+            const previousOrder = researchOrder.slice();
+            const previousCompleted = completedTechs.slice();
+            
             if (index > -1) {
                 // Remove this tech and all techs that depend on it
                 const techsToRemove = getTechsToRemove(techId);
                 researchedTechs = researchedTechs.filter(id => !techsToRemove.includes(id));
                 researchOrder = researchOrder.slice(0, researchedTechs.length);
+                
+                // Record action for undo
+                recordAction('removeTech', {
+                    techName: tech ? tech.name : techId,
+                    removedTechs: techsToRemove,
+                    previousTechs: previousTechs,
+                    previousOrder: previousOrder,
+                    previousCompleted: previousCompleted
+                });
             } else {
                 // Add this tech and all its prerequisites
                 const prereqsToAdd = getAllPrerequisites(techId);
+                const addedTechs = [];
+                
                 prereqsToAdd.forEach(prereqId => {
                     if (!researchedTechs.includes(prereqId)) {
                         researchedTechs.push(prereqId);
                         researchOrder.push(Date.now());
+                        addedTechs.push(prereqId);
                     }
                 });
                 
@@ -466,7 +520,17 @@
                 if (!researchedTechs.includes(techId)) {
                     researchedTechs.push(techId);
                     researchOrder.push(Date.now());
+                    addedTechs.push(techId);
                 }
+                
+                // Record action for undo
+                recordAction('addTech', {
+                    techName: tech ? tech.name : techId,
+                    addedTechs: addedTechs,
+                    previousTechs: previousTechs,
+                    previousOrder: previousOrder,
+                    previousCompleted: previousCompleted
+                });
             }
             updateTechStates();
             updateBonusTechStates(); // Update bonus techs when main techs change
@@ -549,6 +613,308 @@
             totalCost += tech.cost;
             
             return totalCost;
+        }
+        
+        function showPrerequisitePreview(techId) {
+            // Clear any existing previews
+            clearPrerequisitePreview();
+            
+            // Don't show preview for already researched techs
+            if (researchedTechs.includes(techId)) return;
+            
+            // Add preview to the hovered tech itself
+            const hoveredNode = document.getElementById(techId);
+            if (hoveredNode) {
+                hoveredNode.classList.add('prereq-preview');
+            }
+            
+            // Get prerequisites that would be added
+            const prereqsNeeded = getAllPrerequisites(techId);
+            
+            // Highlight prerequisites that aren't already researched
+            prereqsNeeded.forEach(prereqId => {
+                if (!researchedTechs.includes(prereqId)) {
+                    const node = document.getElementById(prereqId);
+                    if (node) {
+                        node.classList.add('prereq-preview');
+                    }
+                }
+            });
+        }
+        
+        function clearPrerequisitePreview() {
+            // Remove preview class from all nodes
+            document.querySelectorAll('.tech-node.prereq-preview').forEach(node => {
+                node.classList.remove('prereq-preview');
+            });
+        }
+        
+        function recordAction(type, data) {
+            // Add action to undo history
+            undoHistory.push({
+                type: type,
+                data: data,
+                timestamp: Date.now()
+            });
+            
+            // Clear redo history when new action is performed
+            redoHistory = [];
+            
+            // Limit history size
+            if (undoHistory.length > MAX_UNDO_HISTORY) {
+                undoHistory.shift();
+            }
+            
+            // Update undo/redo button states
+            updateUndoRedoButtons();
+        }
+        
+        function undoLastAction() {
+            if (undoHistory.length === 0) return;
+            
+            const action = undoHistory.pop();
+            
+            // Add to redo history
+            redoHistory.push(action);
+            if (redoHistory.length > MAX_REDO_HISTORY) {
+                redoHistory.shift();
+            }
+            
+            switch(action.type) {
+                case 'addTech':
+                    // Remove the added techs
+                    researchedTechs = action.data.previousTechs.slice();
+                    researchOrder = action.data.previousOrder.slice();
+                    completedTechs = action.data.previousCompleted.slice();
+                    break;
+                    
+                case 'removeTech':
+                    // Re-add the removed techs
+                    researchedTechs = action.data.previousTechs.slice();
+                    researchOrder = action.data.previousOrder.slice();
+                    completedTechs = action.data.previousCompleted.slice();
+                    break;
+                    
+                case 'addBonusTech':
+                    // Remove the added bonus tech and any main techs that were added
+                    researchedBonusTechs = action.data.previousBonusTechs.slice();
+                    researchedTechs = action.data.previousTechs.slice();
+                    researchOrder = action.data.previousOrder.slice();
+                    completedTechs = action.data.previousCompleted.slice();
+                    break;
+                    
+                case 'removeBonusTech':
+                    // Re-add the removed bonus tech
+                    researchedBonusTechs = action.data.previousBonusTechs.slice();
+                    break;
+                    
+                case 'toggleCompletion':
+                    // Restore previous completion state
+                    completedTechs = action.data.previousCompleted.slice();
+                    break;
+                    
+                case 'clearAll':
+                    // Restore everything that was cleared
+                    researchedTechs = action.data.previousTechs.slice();
+                    researchOrder = action.data.previousOrder.slice();
+                    researchedBonusTechs = action.data.previousBonusTechs.slice();
+                    completedTechs = action.data.previousCompleted.slice();
+                    break;
+            }
+            
+            // Update displays
+            updateTechStates();
+            updateBonusTechStates();
+            updateOrderList();
+            drawConnections();
+            saveToLocalStorage();
+            updateUndoRedoButtons();
+        }
+        
+        function redoLastAction() {
+            if (redoHistory.length === 0) return;
+            
+            const action = redoHistory.pop();
+            
+            // Add back to undo history
+            undoHistory.push(action);
+            if (undoHistory.length > MAX_UNDO_HISTORY) {
+                undoHistory.shift();
+            }
+            
+            // Re-apply the action
+            switch(action.type) {
+                case 'addTech':
+                    // Re-add the techs
+                    researchedTechs = action.data.previousTechs.slice();
+                    researchOrder = action.data.previousOrder.slice();
+                    completedTechs = action.data.previousCompleted.slice();
+                    
+                    // Now add the techs that were originally added
+                    action.data.addedTechs.forEach(techId => {
+                        if (!researchedTechs.includes(techId)) {
+                            researchedTechs.push(techId);
+                            researchOrder.push(Date.now());
+                        }
+                    });
+                    break;
+                    
+                case 'removeTech':
+                    // Re-remove the techs
+                    researchedTechs = action.data.previousTechs.slice();
+                    researchOrder = action.data.previousOrder.slice();
+                    completedTechs = action.data.previousCompleted.slice();
+                    
+                    // Now remove the techs that were originally removed
+                    researchedTechs = researchedTechs.filter(id => !action.data.removedTechs.includes(id));
+                    researchOrder = researchOrder.slice(0, researchedTechs.length);
+                    break;
+                    
+                case 'addBonusTech':
+                    // Re-add the bonus tech
+                    researchedBonusTechs = action.data.previousBonusTechs.slice();
+                    researchedTechs = action.data.previousTechs.slice();
+                    researchOrder = action.data.previousOrder.slice();
+                    completedTechs = action.data.previousCompleted.slice();
+                    
+                    // Re-apply the addition
+                    const bonusTech = techData.bonusTechs.find(t => t.name === action.data.bonusTechName);
+                    if (bonusTech && !researchedBonusTechs.includes(bonusTech.id)) {
+                        researchedBonusTechs.push(bonusTech.id);
+                    }
+                    break;
+                    
+                case 'removeBonusTech':
+                    // Re-remove the bonus tech
+                    researchedBonusTechs = action.data.previousBonusTechs.slice();
+                    const bonusToRemove = techData.bonusTechs.find(t => t.name === action.data.bonusTechName);
+                    if (bonusToRemove) {
+                        const index = researchedBonusTechs.indexOf(bonusToRemove.id);
+                        if (index > -1) {
+                            researchedBonusTechs.splice(index, 1);
+                        }
+                    }
+                    break;
+                    
+                case 'toggleCompletion':
+                    // Re-toggle completion
+                    completedTechs = action.data.previousCompleted.slice();
+                    const techToToggle = action.data.techName;
+                    const tech = techData.techs.find(t => t.name === techToToggle) || 
+                                 techData.bonusTechs.find(t => t.name === techToToggle);
+                    if (tech) {
+                        if (action.data.wasCompleted) {
+                            // Was completed, so remove from completed
+                            const idx = completedTechs.indexOf(tech.id);
+                            if (idx > -1) completedTechs.splice(idx, 1);
+                        } else {
+                            // Was not completed, so add to completed
+                            if (!completedTechs.includes(tech.id)) {
+                                completedTechs.push(tech.id);
+                            }
+                        }
+                    }
+                    break;
+                    
+                case 'clearAll':
+                    // Re-clear everything
+                    researchedTechs = [];
+                    researchOrder = [];
+                    researchedBonusTechs = [];
+                    completedTechs = [];
+                    break;
+            }
+            
+            // Update displays
+            updateTechStates();
+            updateBonusTechStates();
+            updateOrderList();
+            drawConnections();
+            saveToLocalStorage();
+            updateUndoRedoButtons();
+        }
+        
+        function updateUndoRedoButtons() {
+            const undoButton = document.querySelector('.undo-button');
+            const redoButton = document.querySelector('.redo-button');
+            
+            // Update undo button
+            if (undoButton) {
+                if (undoHistory.length === 0) {
+                    undoButton.classList.add('disabled');
+                    undoButton.textContent = '← Undo';
+                } else {
+                    undoButton.classList.remove('disabled');
+                    const lastAction = undoHistory[undoHistory.length - 1];
+                    
+                    // Create descriptive text for the last action
+                    let actionText = '← Undo: ';
+                    switch(lastAction.type) {
+                        case 'addTech':
+                            actionText += `Added ${lastAction.data.techName}`;
+                            break;
+                        case 'removeTech':
+                            actionText += `Removed ${lastAction.data.techName}`;
+                            break;
+                        case 'addBonusTech':
+                            actionText += `Added ${lastAction.data.bonusTechName}`;
+                            break;
+                        case 'removeBonusTech':
+                            actionText += `Removed ${lastAction.data.bonusTechName}`;
+                            break;
+                        case 'toggleCompletion':
+                            actionText += lastAction.data.wasCompleted ? 'Unmarked' : 'Marked';
+                            actionText += ` ${lastAction.data.techName}`;
+                            break;
+                        case 'clearAll':
+                            actionText += `Cleared ${lastAction.data.clearedCount} tech${lastAction.data.clearedCount !== 1 ? 's' : ''}`;
+                            break;
+                        default:
+                            actionText += 'Last action';
+                    }
+                    
+                    undoButton.textContent = actionText;
+                }
+            }
+            
+            // Update redo button
+            if (redoButton) {
+                if (redoHistory.length === 0) {
+                    redoButton.style.display = 'none';
+                } else {
+                    redoButton.style.display = 'block';
+                    redoButton.classList.remove('disabled');
+                    const nextAction = redoHistory[redoHistory.length - 1];
+                    
+                    // Create descriptive text for the next action
+                    let actionText = '→ Redo: ';
+                    switch(nextAction.type) {
+                        case 'addTech':
+                            actionText += `Add ${nextAction.data.techName}`;
+                            break;
+                        case 'removeTech':
+                            actionText += `Remove ${nextAction.data.techName}`;
+                            break;
+                        case 'addBonusTech':
+                            actionText += `Add ${nextAction.data.bonusTechName}`;
+                            break;
+                        case 'removeBonusTech':
+                            actionText += `Remove ${nextAction.data.bonusTechName}`;
+                            break;
+                        case 'toggleCompletion':
+                            actionText += nextAction.data.wasCompleted ? 'Unmark' : 'Mark';
+                            actionText += ` ${nextAction.data.techName}`;
+                            break;
+                        case 'clearAll':
+                            actionText += `Clear ${nextAction.data.clearedCount} tech${nextAction.data.clearedCount !== 1 ? 's' : ''}`;
+                            break;
+                        default:
+                            actionText += 'Last action';
+                    }
+                    
+                    redoButton.textContent = actionText;
+                }
+            }
         }
         
         function findInsertionIndex(techId) {
@@ -1298,6 +1664,23 @@
                 return; // Don't clear if disabled
             }
             
+            // Save state before clearing for undo
+            const previousTechs = researchedTechs.slice();
+            const previousOrder = researchOrder.slice();
+            const previousBonusTechs = researchedBonusTechs.slice();
+            const previousCompleted = completedTechs.slice();
+            
+            // Only record if there was something to clear
+            if (previousTechs.length > 0 || previousBonusTechs.length > 0) {
+                recordAction('clearAll', {
+                    previousTechs: previousTechs,
+                    previousOrder: previousOrder,
+                    previousBonusTechs: previousBonusTechs,
+                    previousCompleted: previousCompleted,
+                    clearedCount: previousTechs.length + previousBonusTechs.length
+                });
+            }
+            
             // Preserve the selected nation
             const currentNation = selectedNation;
             
@@ -1305,6 +1688,7 @@
             researchOrder = [];
             researchedBonusTechs = [];
             completedTechs = [];
+            redoHistory = []; // Clear redo history too
             
             // If a nation is selected, keep it selected and add its starting techs back
             if (currentNation) {
@@ -1337,6 +1721,7 @@
             updateOrderList();
             drawConnections();
             saveToLocalStorage(); // Save state after clearing
+            updateUndoRedoButtons(); // Update undo/redo button states
             
             // Clear URL parameters
             window.history.replaceState({}, document.title, window.location.pathname);
