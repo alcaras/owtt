@@ -138,6 +138,17 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: all 0.3s ease;
+}
+
+.tech-order-item.completed {
+    background: rgba(42, 74, 47, 0.5);
+    border-color: #5a8a3a;
+}
+
+.tech-order-item.completed .tech-order-number {
+    color: #5a8a3a;
+    font-weight: bold;
 }
 
 .tech-order-number {
@@ -470,9 +481,13 @@ body {
     z-index: 10;
 }
 
-.tech-node.researched {
+.tech-node.completed {
     background: linear-gradient(135deg, #2a4a2f, #1a3a1f);
     border-color: #5a8a3a;
+}
+.tech-node.on-path {
+    background: linear-gradient(135deg, #2a3a5a, #1a2a4a);
+    border-color: #4a7ab9;
 }
 
 .tech-node.available {

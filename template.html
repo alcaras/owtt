@@ -105,6 +105,7 @@
         let researchedTechs = [];
         let researchOrder = [];
         let researchedBonusTechs = [];
+        let completedTechs = []; // Tracks which techs have been marked as completed
         let selectedNation = '';
 
         // localStorage functions
@@ -113,6 +114,7 @@
                 researchedTechs: researchedTechs,
                 researchOrder: researchOrder,
                 researchedBonusTechs: researchedBonusTechs,
+                completedTechs: completedTechs,
                 selectedNation: selectedNation,
                 timestamp: Date.now()
             };
@@ -129,6 +131,7 @@
                     researchedTechs = state.researchedTechs || [];
                     researchOrder = state.researchOrder || [];
                     researchedBonusTechs = state.researchedBonusTechs || [];
+                    completedTechs = state.completedTechs || [];
                     selectedNation = state.selectedNation || '';
                     
                     // Update UI
@@ -588,7 +591,7 @@
         function updateTechStates() {
             techData.techs.forEach(tech => {
                 const node = document.getElementById(tech.id);
-                node.classList.remove('researched', 'available');
+                node.classList.remove('researched', 'available', 'completed', 'on-path');
                 
                 // Remove order badge
                 const existingBadge = node.querySelector('.tech-order-badge');
@@ -598,7 +601,18 @@
                 
                 const techIndex = researchedTechs.indexOf(tech.id);
                 if (techIndex > -1) {
-                    node.classList.add('researched');
+                    // Check if this tech is completed or just on-path
+                    // Starting techs are always completed
+                    const isStartingTech = selectedNation && 
+                        nationData.startingTechs[selectedNation] && 
+                        nationData.startingTechs[selectedNation].includes(tech.id);
+                    
+                    if (isStartingTech || completedTechs.includes(tech.id)) {
+                        node.classList.add('completed');
+                    } else {
+                        node.classList.add('on-path');
+                    }
+                    
                     // Add order badge
                     const badge = document.createElement('div');
                     badge.className = 'tech-order-badge';
@@ -608,6 +622,28 @@
                     node.classList.add('available');
                 }
             });
+        }
+        
+        function toggleTechCompletion(techId) {
+            // Don't allow toggling starting techs
+            if (selectedNation && nationData.startingTechs[selectedNation] && 
+                nationData.startingTechs[selectedNation].includes(techId)) {
+                return;
+            }
+            
+            const index = completedTechs.indexOf(techId);
+            if (index > -1) {
+                // Remove from completed
+                completedTechs.splice(index, 1);
+            } else {
+                // Add to completed
+                completedTechs.push(techId);
+            }
+            
+            // Update displays
+            updateTechStates();
+            updateOrderList();
+            saveToLocalStorage();
         }
 
         function isAvailable(tech) {
@@ -660,26 +696,36 @@
                 }
                 
                 const listItem = document.createElement('div');
-                listItem.className = 'tech-order-item';
+                // Starting techs are always completed
+                const isCompleted = isStartingTech || completedTechs.includes(techId);
+                listItem.className = isCompleted ? 'tech-order-item completed' : 'tech-order-item';
                 listItem.setAttribute('data-tech-id', techId);
-                listItem.style.cursor = 'pointer';
+                listItem.style.cursor = isStartingTech ? 'default' : 'pointer';
                 
                 // Add law icon at the front if this tech unlocks laws
                 const lawIcon = hasLaws ? '⚖️ ' : '';
+                // Add checkmark if completed
+                const checkmark = isCompleted ? '✓ ' : '';
                 
                 if (isStartingTech) {
                     listItem.innerHTML = `
-                        <span class="tech-order-number">${itemIndex}.</span>
+                        <span class="tech-order-number">${checkmark}${itemIndex}.</span>
                         <span class="tech-order-name">${lawIcon}${tech.name}</span>
                         <span class="tech-order-cost"><span style="text-decoration: line-through; color: #888;">${tech.cost}</span> <strong style="color: #5a8a3a;">FREE</strong></span>
                     `;
                 } else {
                     listItem.innerHTML = `
-                        <span class="tech-order-number">${itemIndex}.</span>
+                        <span class="tech-order-number">${checkmark}${itemIndex}.</span>
                         <span class="tech-order-name">${lawIcon}${tech.name}</span>
                         <span class="tech-order-cost">${tech.cost}</span>
                     `;
                 }
+                
+                // Add click event to toggle completion
+                listItem.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleTechCompletion(techId);
+                });
                 
                 // Add hover events for tooltip
                 listItem.addEventListener('mouseenter', (e) => {
@@ -1074,6 +1120,7 @@
             researchedTechs = [];
             researchOrder = [];
             researchedBonusTechs = [];
+            completedTechs = [];
             
             // If a nation is selected, keep it selected and add its starting techs back
             if (currentNation) {
@@ -1111,24 +1158,89 @@
             window.history.replaceState({}, document.title, window.location.pathname);
         }
 
+        // Helper function to check if a tech is a dependency for other researched techs
+        function isTechDependency(techId, excludeTechs = []) {
+            return researchedTechs.some(researchedId => {
+                // Skip if this is one of the techs we're excluding from the check
+                if (excludeTechs.includes(researchedId)) {
+                    return false;
+                }
+                
+                // Get all prerequisites for this researched tech (includes indirect dependencies)
+                const allPrereqs = getAllPrerequisites(researchedId);
+                
+                // Check if techId is in the prerequisite chain
+                return allPrereqs.includes(techId);
+            });
+        }
+        
         function selectNation() {
             const select = document.getElementById('nationSelect');
+            const previousNation = selectedNation;
             selectedNation = select.value;
             
-            // Clear current research when changing nations
-            researchedTechs = [];
-            researchOrder = [];
-            researchedBonusTechs = [];
+            // Handle previous nation's techs and bonus cards
+            if (previousNation && nationData.startingTechs[previousNation]) {
+                const oldStartingTechs = nationData.startingTechs[previousNation];
+                const newStartingTechs = selectedNation && nationData.startingTechs[selectedNation] 
+                    ? nationData.startingTechs[selectedNation] : [];
+                
+                // Remove nation-specific bonus cards from the previous nation
+                researchedBonusTechs = researchedBonusTechs.filter(bonusTechId => {
+                    const bonusTech = techData.bonusTechs.find(t => t.id === bonusTechId);
+                    // Remove if it's nation-specific to the old nation
+                    return !bonusTech || !bonusTech.nation || bonusTech.nation !== previousNation;
+                });
+                
+                // Process each old starting tech
+                const techsToRemove = [];
+                oldStartingTechs.forEach(techId => {
+                    // Keep if it's also a starting tech for the new nation
+                    if (newStartingTechs.includes(techId)) {
+                        return; // Keep it as a starting tech
+                    }
+                    
+                    // Check if this tech is a dependency for other researched techs
+                    // (excluding other old starting techs from the dependency check)
+                    if (isTechDependency(techId, oldStartingTechs)) {
+                        // Convert to regular tech (keep in list but not as starting)
+                        return;
+                    }
+                    
+                    // Otherwise, mark for removal
+                    techsToRemove.push(techId);
+                });
+                
+                // Remove techs that aren't dependencies
+                researchedTechs = researchedTechs.filter(techId => !techsToRemove.includes(techId));
+                researchOrder = researchOrder.slice(0, researchedTechs.length);
+                completedTechs = completedTechs.filter(techId => !techsToRemove.includes(techId));
+                
+                // Also remove bonus techs whose parent was removed
+                researchedBonusTechs = researchedBonusTechs.filter(bonusTechId => {
+                    const bonusTech = techData.bonusTechs.find(t => t.id === bonusTechId);
+                    return bonusTech && !techsToRemove.includes(bonusTech.parent);
+                });
+            }
             
-            // Add starting techs if a nation is selected
+            // Add new nation's starting techs at the beginning if a nation is selected
             if (selectedNation && nationData.startingTechs[selectedNation]) {
                 const startingTechs = nationData.startingTechs[selectedNation];
+                
+                // Add starting techs at the beginning of the list
+                const newResearchedTechs = [];
+                const newResearchOrder = [];
+                
                 startingTechs.forEach(techId => {
                     if (!researchedTechs.includes(techId)) {
-                        researchedTechs.push(techId);
-                        researchOrder.push(Date.now());
+                        newResearchedTechs.push(techId);
+                        newResearchOrder.push(Date.now() - 10000); // Earlier timestamp
                     }
                 });
+                
+                // Combine with existing techs
+                researchedTechs = [...newResearchedTechs, ...researchedTechs];
+                researchOrder = [...newResearchOrder, ...researchOrder];
             }
             
             // Update the bonus tech display to show/hide nation-specific bonuses
