@@ -849,7 +849,7 @@ body {
         top: auto;
         width: 100%;
         height: auto;
-        max-height: 45vh;
+        max-height: 50vh;
         overflow-y: auto;
         overflow-x: hidden;
         border-top: 2px solid #8b6914;
@@ -943,7 +943,7 @@ body {
     
     .tech-order-list {
         flex: 1;
-        max-height: 120px;
+        max-height: 180px;
         overflow-y: auto;
         overflow-x: hidden;
     }
@@ -990,13 +990,13 @@ body {
 @media (max-width: 600px) {
     .sidebar {
         height: auto;
-        max-height: 40vh;
+        max-height: 55vh;
         padding: 10px;
     }
     
     .main-container {
         padding: 10px;
-        padding-bottom: 350px;
+        padding-bottom: 400px;
     }
     
     .tech-tree {
@@ -1066,7 +1066,8 @@ body {
     }
     
     .tech-order-list {
-        max-height: 120px;
+        max-height: 200px;
+        min-height: 100px;
     }
     
     .tech-order-item {
