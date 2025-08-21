@@ -71,21 +71,21 @@
             </div>
             
             <h2>Research Order</h2>
+            <button class="simulate-button" onclick="openSimulationPanel()">🎲 Simulate Research</button>
             <div class="tech-order-list" id="techOrderList"></div>
         </div>
         
         <div class="sidebar-actions">
             <div class="desktop-button-group">
-                <button class="simulate-button" onclick="openSimulationPanel()">🎲 Simulate Research</button>
-                <button class="redo-button" onclick="redoLastAction()" style="display: none;">Redo</button>
                 <button class="undo-button" onclick="undoLastAction()">Undo</button>
+                <button class="redo-button" onclick="redoLastAction()">Redo</button>
                 <button class="clear-button" onclick="clearBuild()">Clear All</button>
             </div>
             
             <div class="mobile-button-row">
                 <button class="simulate-button" onclick="openSimulationPanel()">🎲</button>
                 <button class="undo-button" onclick="undoLastAction()">Undo</button>
-                <button class="redo-button" onclick="redoLastAction()" style="display: none;">Redo</button>
+                <button class="redo-button" onclick="redoLastAction()">Redo</button>
                 <button class="clear-button" onclick="clearBuild()">Clear</button>
             </div>
         </div>
@@ -1109,11 +1109,11 @@
             // Update redo buttons
             redoButtons.forEach(redoButton => {
                 if (redoHistory.length === 0) {
-                    redoButton.style.display = 'none';
+                    redoButton.classList.add('disabled');
                 } else {
-                    redoButton.style.display = '';
                     redoButton.classList.remove('disabled');
                 }
+                redoButton.textContent = 'Redo';
             });
         }
         

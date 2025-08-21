@@ -254,6 +254,23 @@ body {
     color: #999;
 }
 
+.sidebar-scrollable .simulate-button {
+    width: 100%;
+    padding: 10px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+    font-size: 1em;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 1;
+}
+
 .simulate-button {
     width: 100%;
     padding: 10px;
@@ -854,11 +871,6 @@ body {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-}
-
-.desktop-button-group .simulate-button {
-    flex: 1;
-    min-width: 120px;
 }
 
 
