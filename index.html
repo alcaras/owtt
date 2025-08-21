@@ -30,7 +30,13 @@
         </div>
     </div>
 
-    <div class="sidebar">
+    <!-- Mobile Sidebar Toggle Button -->
+    <button class="mobile-sidebar-toggle" id="mobileSidebarToggle" onclick="toggleMobileSidebar()">
+        📊 <span id="toggleButtonText">Show Menu</span>
+    </button>
+
+    <div class="sidebar" id="sidebar">
+        <button class="mobile-close-button" onclick="toggleMobileSidebar()">×</button>
         <div class="share-section">
             <button class="share-button" onclick="shareBuild()">Share Build</button>
         </div>
@@ -53,14 +59,18 @@
         </div>
         
         <h2>Research Order</h2>
-        <button class="simulate-button" onclick="openSimulationPanel()">🎲 Simulate Research</button>
-        <div class="total-cost" id="totalCost">Total Cost: 0</div>
-        <div class="total-laws" id="totalLaws">Laws Available: 0</div>
+        <div class="mobile-stats-row">
+            <div class="total-cost" id="totalCost">Total Cost: 0</div>
+            <div class="total-laws" id="totalLaws">Laws Available: 0</div>
+        </div>
         <div class="tech-order-list" id="techOrderList"></div>
         
-        <button class="redo-button" onclick="redoLastAction()" style="display: none;">Redo</button>
-        <button class="undo-button" onclick="undoLastAction()">Undo</button>
-        <button class="clear-button" onclick="clearBuild()">Clear All</button>
+        <div class="mobile-button-row">
+            <button class="simulate-button" onclick="openSimulationPanel()">🎲</button>
+            <button class="undo-button" onclick="undoLastAction()">Undo</button>
+            <button class="redo-button" onclick="redoLastAction()" style="display: none;">Redo</button>
+            <button class="clear-button" onclick="clearBuild()">Clear</button>
+        </div>
     </div>
 
     <div class="tooltip" id="tooltip"></div>
@@ -1719,6 +1729,20 @@
             tooltip.style.left = Math.max(10, left) + 'px'; // Don't go off left edge
             tooltip.style.top = Math.max(10, top) + 'px'; // Don't go off top edge
             tooltip.classList.add('show');
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleButton = document.getElementById('mobileSidebarToggle');
+            const toggleText = document.getElementById('toggleButtonText');
+            
+            if (sidebar.classList.contains('mobile-visible')) {
+                sidebar.classList.remove('mobile-visible');
+                toggleText.textContent = 'Show Menu';
+            } else {
+                sidebar.classList.add('mobile-visible');
+                toggleText.textContent = 'Hide Menu';
+            }
         }
 
         function shareBuild() {

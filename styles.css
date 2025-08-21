@@ -758,6 +758,30 @@ body {
     }
 }
 
+/* Mobile sidebar toggle button - hidden by default */
+.mobile-sidebar-toggle {
+    display: none;
+}
+
+.mobile-close-button {
+    display: none;
+}
+
+/* Mobile button and stats row - default styles */
+.mobile-stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.mobile-stats-row > div {
+    flex: 1;
+}
+
+.mobile-button-row {
+    display: none; /* Hidden by default, shown on mobile */
+}
+
 /* Hide interactive elements on touch devices */
 @media (pointer: coarse), (hover: none) {
     /* Hide prerequisite arrows on mobile */
@@ -837,7 +861,7 @@ body {
         margin-right: 0;
         margin-bottom: 0;
         padding: 10px;
-        padding-bottom: 420px;
+        padding-bottom: 60px;
         width: 100%;
         min-width: 100%;
         overflow-x: auto;
@@ -845,15 +869,41 @@ body {
         position: relative;
     }
     
+    /* Mobile sidebar toggle button */
+    .mobile-sidebar-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #d4af37, #8b6914);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 12px 20px;
+        font-weight: bold;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        z-index: 9998;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .mobile-sidebar-toggle:hover {
+        background: linear-gradient(135deg, #f4e27a, #d4af37);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+    }
+    
     .sidebar {
         position: fixed;
-        bottom: 0;
+        bottom: -100%;
         left: 0;
         right: 0;
         top: auto;
         width: 100%;
         height: auto;
-        max-height: 50vh;
+        max-height: 75vh;
         overflow-y: auto;
         overflow-x: hidden;
         border-top: 2px solid #8b6914;
@@ -861,9 +911,38 @@ body {
         z-index: 9999;
         background: rgba(20, 15, 10, 0.98);
         padding: 15px;
+        padding-top: 40px;
         box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.8);
         display: flex;
         flex-direction: column;
+        transition: bottom 0.3s ease;
+    }
+    
+    .sidebar.mobile-visible {
+        bottom: 0;
+    }
+    
+    .mobile-close-button {
+        display: block;
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        background: none;
+        border: none;
+        color: #d4af37;
+        font-size: 28px;
+        cursor: pointer;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
+    
+    .mobile-close-button:hover {
+        background: rgba(212, 175, 55, 0.2);
     }
     
     .tech-tree-wrapper {
@@ -947,11 +1026,44 @@ body {
     
     .tech-order-list {
         flex: 1 1 auto;
-        max-height: 180px;
-        min-height: 80px;
+        max-height: 35vh;
+        min-height: 150px;
         overflow-y: auto;
         overflow-x: hidden;
         display: block;
+    }
+    
+    /* Mobile button row layout */
+    .mobile-button-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        position: sticky;
+        bottom: 0;
+        background: rgba(20, 15, 10, 0.98);
+        padding: 10px 0;
+    }
+    
+    .mobile-button-row button {
+        flex: 1;
+        padding: 8px;
+        font-size: 0.9em;
+    }
+    
+    .mobile-button-row .simulate-button {
+        max-width: 50px;
+        flex: 0 0 auto;
+    }
+    
+    /* Hide desktop button styles on mobile */
+    .simulate-button:not(.mobile-button-row .simulate-button) {
+        display: none;
+    }
+    
+    .undo-button:not(.mobile-button-row .undo-button),
+    .redo-button:not(.mobile-button-row .redo-button),
+    .clear-button:not(.mobile-button-row .clear-button) {
+        margin-top: 0;
     }
     
     .tech-order-item {
@@ -995,15 +1107,21 @@ body {
 
 @media (max-width: 600px) {
     .sidebar {
-        height: auto;
-        max-height: 60vh;
-        min-height: 300px;
+        max-height: 70vh;
         padding: 10px;
+        padding-top: 35px;
     }
     
     .main-container {
         padding: 10px;
-        padding-bottom: 400px;
+        padding-bottom: 60px;
+    }
+    
+    .mobile-sidebar-toggle {
+        bottom: 15px;
+        right: 15px;
+        padding: 10px 16px;
+        font-size: 0.9em;
     }
     
     .tech-tree {
@@ -1073,8 +1191,8 @@ body {
     }
     
     .tech-order-list {
-        max-height: 200px;
-        min-height: 100px;
+        max-height: 30vh;
+        min-height: 120px;
     }
     
     .tech-order-item {
