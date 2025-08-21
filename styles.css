@@ -754,6 +754,50 @@ body {
     }
 }
 
+/* Hide interactive elements on touch devices */
+@media (pointer: coarse), (hover: none) {
+    /* Hide prerequisite arrows on mobile */
+    .leader-line {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
+    /* Disable hover glowing border effect */
+    .tech-node:hover {
+        border-color: #8b6914;
+        transform: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    .tech-node.completed:hover {
+        border-color: #5a8a3a;
+    }
+    
+    .tech-node.on-path:hover {
+        border-color: #4a7ab9;
+    }
+    
+    .tech-node.available:hover {
+        border-color: #b4a037;
+    }
+    
+    .bonus-tech-node:hover {
+        background: linear-gradient(135deg, #4a3f2f, #3a2f1f);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* Hide tooltips on mobile */
+    .tooltip {
+        display: none !important;
+    }
+    
+    /* Disable prerequisite preview effect */
+    .tech-node.prereq-preview {
+        outline: none;
+        animation: none;
+    }
+}
+
 /* Responsive design */
 @media (max-width: 1200px) {
     .tech-tree {
