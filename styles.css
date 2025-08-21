@@ -452,6 +452,20 @@ body {
     padding: 20px;
 }
 
+.simulation-row.grayed-out {
+    opacity: 0.5;
+    color: #999;
+    background: rgba(50, 50, 50, 0.2);
+}
+
+.simulation-row.grayed-out td {
+    color: #999;
+}
+
+.simulation-row {
+    transition: all 0.3s ease;
+}
+
 .tech-tree-wrapper {
     position: relative;
     padding: 10px;
@@ -786,7 +800,7 @@ body {
 /* Sidebar toggle button for desktop - attached to sidebar */
 .sidebar-toggle {
     position: absolute;
-    left: -40px;
+    left: -38px;
     top: 50%;
     transform: translateY(-50%);
     background: linear-gradient(135deg, #d4af37, #8b6914);
