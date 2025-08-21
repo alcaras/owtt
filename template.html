@@ -355,12 +355,13 @@
             if (hasUrlParams) {
                 // Load from URL if present (for sharing links)
                 loadFromUrl();
-                // Clear URL params after loading so future reloads use localStorage
-                window.history.replaceState({}, document.title, window.location.pathname);
             } else {
                 // Load from localStorage if no URL params
                 loadFromLocalStorage();
             }
+            
+            // Update URL to reflect current state (whether loaded from URL or localStorage)
+            updateURL();
             
             updateTechStates();
             updateBonusTechStates();
@@ -450,6 +451,11 @@
             if (index > -1) {
                 // Remove bonus tech
                 researchedBonusTechs.splice(index, 1);
+                // Remove from research order
+                const orderIndex = researchOrder.indexOf(bonusTechId);
+                if (orderIndex > -1) {
+                    researchOrder.splice(orderIndex, 1);
+                }
                 // Also remove from completed techs
                 const completedIndex = completedTechs.indexOf(bonusTechId);
                 if (completedIndex > -1) {
@@ -472,18 +478,19 @@
                             // Find the correct insertion point to maintain tech tree order
                             const insertIndex = findInsertionIndex(prereqId);
                             researchedTechs.splice(insertIndex, 0, prereqId);
-                            researchOrder.splice(insertIndex, 0, Date.now() - (prereqsToAdd.length - prereqsToAdd.indexOf(prereqId)) * 1000);
+                            researchOrder.splice(insertIndex, 0, prereqId);
                         }
                     });
                     
                     // Add the parent tech itself in the correct position
                     const parentInsertIndex = findInsertionIndex(bonusTech.parent);
                     researchedTechs.splice(parentInsertIndex, 0, bonusTech.parent);
-                    researchOrder.splice(parentInsertIndex, 0, Date.now() - 500);
+                    researchOrder.splice(parentInsertIndex, 0, bonusTech.parent);
                 }
                 
-                // Now add the bonus tech
+                // Now add the bonus tech at the end of research order (when clicked)
                 researchedBonusTechs.push(bonusTechId);
+                researchOrder.push(bonusTechId);
                 
                 // Record action for undo
                 recordAction('addBonusTech', {
@@ -593,7 +600,7 @@
                 prereqsToAdd.forEach(prereqId => {
                     if (!researchedTechs.includes(prereqId)) {
                         researchedTechs.push(prereqId);
-                        researchOrder.push(Date.now());
+                        researchOrder.push(techId);
                         addedTechs.push(prereqId);
                     }
                 });
@@ -601,7 +608,7 @@
                 // Add the clicked tech itself if not already added
                 if (!researchedTechs.includes(techId)) {
                     researchedTechs.push(techId);
-                    researchOrder.push(Date.now());
+                    researchOrder.push(techId);
                     addedTechs.push(techId);
                 }
                 
@@ -838,7 +845,7 @@
                     action.data.addedTechs.forEach(techId => {
                         if (!researchedTechs.includes(techId)) {
                             researchedTechs.push(techId);
-                            researchOrder.push(Date.now());
+                            researchOrder.push(techId);
                         }
                     });
                     break;
@@ -1152,14 +1159,14 @@
                 prereqsToAdd.forEach(prereqId => {
                     if (!researchedTechs.includes(prereqId)) {
                         researchedTechs.push(prereqId);
-                        researchOrder.push(Date.now());
+                        researchOrder.push(techId);
                         completedTechs.push(prereqId); // Mark prereqs as completed too
                     }
                 });
                 
                 // Add and complete the tech itself
                 researchedTechs.push(techId);
-                researchOrder.push(Date.now());
+                researchOrder.push(techId);
                 completedTechs.push(techId);
             } else {
                 // Toggle completion state
@@ -1234,20 +1241,18 @@
             let totalLaws = 0;
             let itemIndex = 1;
             
-            // Create unified ordering: combine main techs with their associated bonus techs
+            // Use the actual research order array
             const unifiedOrder = [];
             
-            // Add main techs in order
-            researchedTechs.forEach((techId) => {
-                unifiedOrder.push({ type: 'main', id: techId });
-                
-                // Add any bonus techs that belong to this main tech
-                researchedBonusTechs.forEach((bonusTechId) => {
-                    const bonusTech = techData.bonusTechs.find(t => t.id === bonusTechId);
-                    if (bonusTech && bonusTech.parent === techId) {
-                        unifiedOrder.push({ type: 'bonus', id: bonusTechId });
-                    }
-                });
+            researchOrder.forEach((techId) => {
+                // Check if it's a main tech
+                if (researchedTechs.includes(techId)) {
+                    unifiedOrder.push({ type: 'main', id: techId });
+                }
+                // Check if it's a bonus tech
+                else if (researchedBonusTechs.includes(techId)) {
+                    unifiedOrder.push({ type: 'bonus', id: techId });
+                }
             });
             
             // Process the unified order
@@ -1341,7 +1346,6 @@
                     
                     // Add hover events for bonus tech tooltip
                     listItem.addEventListener('mouseenter', (e) => {
-                        console.log('Bonus tooltip triggered for:', bonusTech.name);
                         showResearchOrderBonusTooltip(e, bonusTech, isCompleted);
                     });
                     listItem.addEventListener('mouseleave', hideTooltip);
@@ -1725,7 +1729,7 @@
                     startingTechs.forEach(techId => {
                         if (!researchedTechs.includes(techId)) {
                             researchedTechs.push(techId);
-                            researchOrder.push(Date.now());
+                            researchOrder.push(techId);
                         }
                     });
                 }
@@ -1825,7 +1829,10 @@
             
             // Update displays
             initializeBonusTechs();
+            updateTechStates();
+            updateBonusTechStates();
             updateOrderList();
+            drawConnections();
         }
 
         function clearBuild() {
@@ -1874,7 +1881,7 @@
                     startingTechs.forEach(techId => {
                         if (!researchedTechs.includes(techId)) {
                             researchedTechs.push(techId);
-                            researchOrder.push(Date.now());
+                            researchOrder.push(techId);
                         }
                     });
                 }
@@ -2011,11 +2018,9 @@
             
             // Check if we need to run a new simulation
             if (simulationIsCurrentForTechTree) {
-                console.log('🎯 Simulation is current, no need to re-run');
                 return;
             }
             
-            console.log('🔄 Running new simulation for current tech tree');
             
             // Tech selection changed, need to run new simulation
             // Initialize with progress bars
@@ -2193,15 +2198,12 @@
             const stdDevRightPercent = globalRange > 0 ? ((rangeMax - globalMin) / globalRange) * 100 : 55;
             
             // Debug bonus card combinations
-            console.log(`🎁 Bonus card combinations for ${variantName}:`, results.bonusCardCombinations);
-            
             // Build bonus card breakdown string
             let bonusCardsInfo = '';
             const totalRuns = 1000;
             const runsWithDiscards = results.runsWithDiscards || 0;
             const runsWithAllCards = totalRuns - runsWithDiscards;
             
-            console.log(`📊 ${variantName}: ${runsWithAllCards} runs with all cards, ${runsWithDiscards} runs with discards`);
             
             // Calculate what percentage got all targeted bonus cards without choosing
             const allCardsPercent = Math.round((runsWithAllCards / totalRuns) * 100);
@@ -2220,7 +2222,6 @@
             }
             
             bonusCardsInfo = ` <span style="font-weight: normal;">(${breakdown.join(', ')})</span>`;
-            console.log(`📝 ${variantName} breakdown:`, breakdown.join(', '));
             
             // Update the variant's header
             const variantElement = document.getElementById(`variant${variantIndex}`);
@@ -2316,24 +2317,18 @@ ${bonusCardsInfo.trim()}
                 for (const variant of variants) {
                     console.log(`🚀 Starting variant: ${variant.name} (Scholar=${variant.scholar}, Oracle=${variant.oracle})`);
                     const results = simulateResearchPath(variant.scholar, variant.oracle, 1000);
-                    console.log(`✅ Completed variant: ${variant.name}`, results);
                     allResults.push({
                         name: variant.name,
                         results: results
                     });
                 }
                 
-                console.log('All simulation results:', allResults);
                 displayComparisonResults(allResults);
                 
                 const loading = document.getElementById('simulationLoading');
                 const panel = document.getElementById('simulationPanel');
                 const overlay = document.getElementById('simulationOverlay');
                 
-                console.log('Elements found:');
-                console.log('- loading element:', !!loading);
-                console.log('- simulation panel:', !!panel);
-                console.log('- simulation overlay:', !!overlay);
                 
                 if (panel) {
                     console.log('Panel display style:', panel.style.display);
@@ -2472,7 +2467,6 @@ ${bonusCardsInfo.trim()}
                     });
                 }
             });
-            console.log(`🎁 DEBUG: Found discards in ${runsWithDiscards} out of ${results.length} total runs`);
             
             return { min, max, avg, stdDev, successRate, failureReasons, results, scholarStats, discardedBonusCards, runsWithDiscards };
         }
@@ -2498,12 +2492,6 @@ ${bonusCardsInfo.trim()}
             let techsAlreadyInDeck = new Set(); // Track which techs are already in the deck
             
             if (window.debugSimulation) {
-                console.log(`🎲 Starting simulation: Scholar=${hasScholar}, Oracle=${hasOracle}`);
-                console.log(`🎯 Target techs: ${researchPath.map(id => {
-                    const mainTech = techData.techs.find(t => t.id === id);
-                    const bonusTech = techData.bonusTechs.find(t => t.id === id);
-                    return (mainTech || bonusTech)?.name || id;
-                }).join(', ')}`);
             }
             
             // Add starting techs as already completed
@@ -2524,12 +2512,6 @@ ${bonusCardsInfo.trim()}
             const targetBonusCards = researchPath.filter(id => techData.bonusTechs.some(t => t.id === id));
             const targetTechSet = new Set(researchPath);
             
-            if (window.debugSimulation && targetBonusCards.length > 0) {
-                console.log(`🎁 Target bonus cards: ${targetBonusCards.map(id => {
-                    const bonus = techData.bonusTechs.find(t => t.id === id);
-                    return bonus?.name || id;
-                }).join(', ')}`);
-            }
             
             // Keep researching until all target techs are completed
             while (!isSubset(targetTechSet, completedTechs) && turnCount < 500) {
@@ -2591,7 +2573,6 @@ ${bonusCardsInfo.trim()}
                 if (window.debugSimulation && turnCount === 1) {
                     const mainCount = availableTechs.filter(t => !t.isBonus).length;
                     const bonusCount = availableTechs.filter(t => t.isBonus).length;
-                    console.log(`📚 Total available techs: ${mainCount} main + ${bonusCount} bonus = ${availableTechs.length} total`);
                     
                     if (window.verboseFirstTurn) {
                         console.log(`\n🔍 VERBOSE: First Turn Draw Pile Details:`);
@@ -2604,13 +2585,10 @@ ${bonusCardsInfo.trim()}
                         console.log(`\n  Main Techs (${mainTechs.length}):`);
                         mainTechs.forEach(t => {
                             const isTarget = targetTechSet.has(t.id);
-                            console.log(`    ${isTarget ? '🎯' : '  '} ${t.name} (${t.cost} 🧪) - ${t.id}`);
                         });
                         
-                        console.log(`\n  Bonus Cards (${bonusTechs.length}):`);
                         bonusTechs.forEach(t => {
                             const isTarget = targetTechSet.has(t.id);
-                            console.log(`    ${isTarget ? '🎯' : '  '} ${t.name} (${t.cost} 🧪) - ${t.id}`);
                         });
                         
                         console.log(`\nDiscard pile: ${discardPile.length} cards`);
@@ -2724,8 +2702,6 @@ ${bonusCardsInfo.trim()}
             }
             if (window.debugSimulation) {
                 console.log(`\n--- Turn ${turnCount} ---`);
-                console.log(`📊 Draw pile: ${drawPile.length}, Discard pile: ${discardPile.length}, Completed: ${completedTechs.size}`);
-                console.log(`🔮 Oracle: ${hasOracle ? 'YES (+1 card)' : 'NO'}, 📜 Scholar: ${hasScholar ? 'YES (redraw available)' : 'NO'}`);
                 
                 if (window.verboseFirstTurn && turnCount === 1) {
                     console.log(`\n🔍 VERBOSE: Draw/Discard State Before Drawing Hand:`);
@@ -2767,13 +2743,9 @@ ${bonusCardsInfo.trim()}
             if (window.debugStoneBoost) {
                 const stoneBoostInHand = hand.find(tech => tech.id === "TECH_STONECUTTING_BONUS_STONE");
                 if (stoneBoostInHand) {
-                    console.log(`🔍 STONE BOOST DEBUG: Stone Boost is in hand!`);
                     console.log(`  - Full hand: ${hand.map(t => t.name).join(', ')}`);
-                    console.log(`  - Is Stone Boost a target? ${targetTechSet.has(stoneBoostInHand.id)}`);
                     console.log(`  - Target set contains: ${Array.from(targetTechSet).join(', ')}`);
-                    console.log(`  - Stone Boost marked as bonus? ${stoneBoostInHand.isBonus}`);
                     console.log(`  - Targets in hand: ${targetsInHand.map(t => t.name).join(', ')}`);
-                    console.log(`  - Bonus targets in hand: ${bonusTargetsInHand.map(t => t.name).join(', ')}`);
                     console.log(`  - Main targets in hand: ${mainTargetsInHand.map(t => t.name).join(', ')}`);
                 }
             }
@@ -2797,16 +2769,13 @@ ${bonusCardsInfo.trim()}
                             return bonusIndex < highestIndex ? bonus : highest;
                         });
                         if (window.debugSimulation) {
-                            console.log(`🎯 Choosing highest priority bonus: ${bestChoice.name} (priority ${researchedBonusTechs.indexOf(bestChoice.id)})`);
                         }
                     } else {
                         // Single bonus card - select it
                         bestChoice = bonusTargetsInHand[0];
                         if (window.debugSimulation) {
-                            console.log(`🎁 Prioritizing bonus card: ${bestChoice.name} (bonus cards are lost if discarded)`);
                         }
                         if (window.debugStoneBoost && bestChoice.id === "TECH_STONECUTTING_BONUS_STONE") {
-                            console.log(`✅ STONE BOOST SELECTED: Successfully choosing Stone Boost as priority bonus card!`);
                         }
                     }
                 } else if (mainTargetsInHand.length > 0) {
@@ -2828,9 +2797,6 @@ ${bonusCardsInfo.trim()}
                     }
                     // This should never happen if Stone Boost is in hand as a target!
                     if (window.debugStoneBoost && hand.some(t => t.id === "TECH_STONECUTTING_BONUS_STONE")) {
-                        console.log(`🚨 BUG: Choosing main tech ${bestChoice.name} when Stone Boost is in hand!`);
-                        console.log(`  - bonusTargetsInHand.length = ${bonusTargetsInHand.length}`);
-                        console.log(`  - bonusTargetsInHand = ${bonusTargetsInHand.map(t => t.name)}`);
                     }
                 }
             } else {
@@ -2838,7 +2804,6 @@ ${bonusCardsInfo.trim()}
                 if (hasScholar && shouldRedrawForTargets(hand, targetTechSet, drawPile, discardPile)) {
                     redrawStats.scholarRedraws++;
                     if (window.debugSimulation) {
-                        console.log(`📜 Scholar redraw #${redrawStats.scholarRedraws}: Looking for target techs...`);
                     }
                     
                     // Discard current hand and redraw
@@ -2848,12 +2813,8 @@ ${bonusCardsInfo.trim()}
                             // Bonus cards are permanently removed when discarded
                             removedBonusCards.add(tech.id);
                             if (window.debugSimulation) {
-                                console.log(`💔 Bonus card permanently removed during Scholar redraw: ${tech.name}`);
                             }
                             if (window.debugStoneBoost && tech.id === "TECH_STONECUTTING_BONUS_STONE") {
-                                console.log(`🚨 STONE BOOST LOST IN REDRAW: Stone Boost was discarded during Scholar redraw!`);
-                                console.log(`  - Was Stone Boost a target? ${targetTechSet.has(tech.id)}`);
-                                console.log(`  - Why did we redraw with Stone Boost in hand?`);
                             }
                         } else {
                             // Main techs go to discard pile
@@ -2893,7 +2854,6 @@ ${bonusCardsInfo.trim()}
                         redrawStats.scholarRedrawsSuccessful++;
                         if (window.debugSimulation) {
                             const techType = bestChoice.isBonus ? '🎁 bonus' : '🔬 main';
-                            console.log(`✅ Found target ${techType} in redraw! Selecting: ${bestChoice.name} (Success rate: ${redrawStats.scholarRedrawsSuccessful}/${redrawStats.scholarRedraws})`);
                         }
                     } else if (hand.length > 0) {
                         // Pick cheapest from new hand
@@ -2922,9 +2882,6 @@ ${bonusCardsInfo.trim()}
             if (bestChoice) {
                 // DEBUG: Log what was actually selected
                 if (window.debugStoneBoost && hand.some(t => t.id === "TECH_STONECUTTING_BONUS_STONE")) {
-                    console.log(`🎯 FINAL SELECTION when Stone Boost in hand: ${bestChoice.name} [Call ID: ${callId}]`);
-                    console.log(`  - bestChoice.id = ${bestChoice.id}`);
-                    console.log(`  - Is this Stone Boost? ${bestChoice.id === "TECH_STONECUTTING_BONUS_STONE"}`);
                 }
                 
                 completedTechs.add(bestChoice.id);
@@ -2942,7 +2899,6 @@ ${bonusCardsInfo.trim()}
                         const discardedTargetedCards = targetedCardsInHand.filter(t => t.id !== bestChoice.id);
                         bonusCardCombination = discardedTargetedCards.map(tech => tech.id);
                         if (window.debugSimulation) {
-                            console.log(`⚠️ Multiple TARGETED bonus cards in hand: ${bonusCardsInHand.map(t => t.name).join(' + ')}`);
                             console.log(`  Selected: ${bestChoice.name}`);
                             console.log(`  Discarded TARGETED: ${discardedTargetedCards.map(t => t.name).join(', ')}`);
                         }
@@ -2956,12 +2912,8 @@ ${bonusCardsInfo.trim()}
                             removedBonusCards.add(tech.id);
                             removedThisTurn.push(tech.id);
                             if (window.debugSimulation) {
-                                console.log(`💔 Bonus card permanently removed: ${tech.name}`);
                             }
                             if (window.debugStoneBoost && tech.id === "TECH_STONECUTTING_BONUS_STONE") {
-                                console.log(`🚨 STONE BOOST LOST: Stone Boost was discarded instead of selected!`);
-                                console.log(`  - Selected instead: ${bestChoice.name}`);
-                                console.log(`  - Was Stone Boost a target? ${targetTechSet.has(tech.id)}`);
                             }
                         } else {
                             // Main techs go to discard pile
@@ -2976,7 +2928,6 @@ ${bonusCardsInfo.trim()}
                 if (window.debugSimulation) {
                     const techType = bestChoice.isBonus ? '🎁 BONUS' : '🔬 MAIN';
                     console.log(`${techType} Researched: ${bestChoice.name} - now completed!`);
-                    console.log(`📊 Post-research: Draw pile=${drawPile.length}, Discard pile=${discardPile.length}`);
                 }
                 
                 return { 
@@ -3015,7 +2966,6 @@ ${bonusCardsInfo.trim()}
             if (window.debugSimulation) {
                 console.log(`✋ First hand (${hand.length}): ${hand.map(t => `${t.name}(${t.cost})`).join(', ')}`);
                 if (selectedNation === "NATION_KUSH" && hand.some(t => t.id === "TECH_STONECUTTING_BONUS_STONE")) {
-                    console.log(`  📜 Kush special: Includes Stone Boost bonus card`);
                 }
             }
             
@@ -3029,7 +2979,6 @@ ${bonusCardsInfo.trim()}
                 // Reshuffle if draw pile is empty
                 if (drawPile.length === 0 && discardPile.length > 0) {
                     if (window.debugSimulation) {
-                        console.log(`🔄 Reshuffling: Moving ${discardPile.length} cards from discard to draw pile`);
                     }
                     drawPile.push(...discardPile);
                     discardPile.length = 0;
@@ -3059,7 +3008,6 @@ ${bonusCardsInfo.trim()}
             if (window.debugSimulation) {
                 const targetCount = allAvailableCards.filter(tech => targetTechSet.has(tech.id)).length;
                 const targetProbability = targetCount / allAvailableCards.length;
-                console.log(`📜 Scholar: ${targetCount} targets in ${allAvailableCards.length} cards (${Math.round(targetProbability*100)}% chance) - redraw=${shouldRedraw ? 'YES' : 'NO'}`);
             }
             
             return shouldRedraw;
