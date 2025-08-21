@@ -36,12 +36,11 @@
         <div class="total-laws" id="totalLawsMobile">Laws: 0</div>
     </div>
 
-    <!-- Sidebar Toggle Button -->
-    <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
-        <span class="toggle-icon" id="toggleIcon">◀</span>
-    </button>
-
     <div class="sidebar" id="sidebar">
+        <!-- Sidebar Toggle Button -->
+        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
+            <span class="toggle-icon" id="toggleIcon">◀</span>
+        </button>
         <button class="mobile-close-button" onclick="toggleSidebar()">×</button>
         
         <div class="sidebar-stats">
@@ -1548,6 +1547,10 @@
                     mainContainer.classList.add('sidebar-collapsed');
                     toggleIcon.textContent = '▶';
                 }
+                // Redraw connections after sidebar toggle with a small delay for animation
+                setTimeout(() => {
+                    drawConnections();
+                }, 350);
             }
         }
 
