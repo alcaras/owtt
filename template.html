@@ -30,6 +30,12 @@
         </div>
     </div>
 
+    <!-- Mobile Stats Bar (visible when sidebar collapsed) -->
+    <div class="mobile-stats-bar" id="mobileStatsBar">
+        <div class="total-cost" id="totalCostMobile">0 🧪</div>
+        <div class="total-laws" id="totalLawsMobile">Laws: 0</div>
+    </div>
+
     <!-- Sidebar Toggle Button -->
     <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
         <span class="toggle-icon" id="toggleIcon">◀</span>
@@ -37,10 +43,19 @@
 
     <div class="sidebar" id="sidebar">
         <button class="mobile-close-button" onclick="toggleSidebar()">×</button>
+        
+        <div class="sidebar-stats">
+            <div class="total-cost" id="totalCost">0 🧪</div>
+            <div class="total-laws" id="totalLaws">Laws: 0</div>
+        </div>
+        
         <div class="sidebar-scrollable">
             <div class="share-section">
                 <button class="share-button" onclick="shareBuild()">Share Build</button>
             </div>
+            
+            <h2>Research Order</h2>
+            <div class="tech-order-list" id="techOrderList"></div>
             
             <div class="nation-section">
                 <h2>Nation</h2>
@@ -58,18 +73,11 @@
                     <option value="NATION_ROME">Rome</option>
                 </select>
             </div>
-            
-            <h2>Research Order</h2>
-            <button class="simulate-button desktop-only" onclick="openSimulationPanel()">🎲 Simulate Research</button>
-            <div class="mobile-stats-row">
-                <div class="total-cost" id="totalCost">0 🧪</div>
-                <div class="total-laws" id="totalLaws">Laws: 0</div>
-            </div>
-            <div class="tech-order-list" id="techOrderList"></div>
         </div>
         
         <div class="sidebar-actions">
             <div class="desktop-button-group">
+                <button class="simulate-button" onclick="openSimulationPanel()">🎲 Simulate Research</button>
                 <button class="redo-button" onclick="redoLastAction()" style="display: none;">Redo</button>
                 <button class="undo-button" onclick="undoLastAction()">Undo</button>
                 <button class="clear-button" onclick="clearBuild()">Clear All</button>
@@ -1126,6 +1134,8 @@
             const list = document.getElementById('techOrderList');
             const totalCostElement = document.getElementById('totalCost');
             const totalLawsElement = document.getElementById('totalLaws');
+            const totalCostMobileElement = document.getElementById('totalCostMobile');
+            const totalLawsMobileElement = document.getElementById('totalLawsMobile');
             list.innerHTML = '';
             
             let totalCost = 0;
@@ -1251,6 +1261,8 @@
             
             totalCostElement.textContent = `${totalCost} 🧪`;
             totalLawsElement.textContent = `Laws: ${totalLaws}`;
+            if (totalCostMobileElement) totalCostMobileElement.textContent = `${totalCost} 🧪`;
+            if (totalLawsMobileElement) totalLawsMobileElement.textContent = `Laws: ${totalLaws}`;
             
             // Update clear button state for both desktop and mobile
             const clearButtons = document.querySelectorAll('.clear-button');
