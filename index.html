@@ -2934,6 +2934,41 @@
         window.addEventListener('resize', () => {
             drawConnections();
         });
+        
+        // Handle scrolling to update arrow positions
+        let scrollTimeout;
+        const handleScroll = () => {
+            // Clear existing timeout
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+            }
+            // Set a new timeout to redraw after scrolling stops
+            scrollTimeout = setTimeout(() => {
+                drawConnections();
+            }, 100); // Redraw 100ms after scrolling stops
+        };
+        
+        // Listen for various scroll and touch events
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        document.addEventListener('scroll', handleScroll, { passive: true });
+        
+        // For mobile touch events
+        let touchMoveTimeout;
+        document.addEventListener('touchmove', () => {
+            if (touchMoveTimeout) {
+                clearTimeout(touchMoveTimeout);
+            }
+            touchMoveTimeout = setTimeout(() => {
+                drawConnections();
+            }, 100);
+        }, { passive: true });
+        
+        // Also redraw when touch ends
+        document.addEventListener('touchend', () => {
+            setTimeout(() => {
+                drawConnections();
+            }, 50);
+        }, { passive: true });
 
         // Initialize the tech tree when page loads
         window.addEventListener('load', initializeTechTree);
