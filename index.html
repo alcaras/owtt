@@ -104,13 +104,11 @@
         </p>
         
         <div class="simulation-comparison" id="simulationResults">
-            <div class="comparison-loading" id="simulationLoading" style="display: none;">
-                🔄 Running simulations... This may take a few moments.
-            </div>
             <table class="comparison-table" id="comparisonTable">
                 <thead>
                     <tr>
                         <th>Configuration</th>
+                        <th>Progress</th>
                         <th>Min Cost</th>
                         <th>Max Cost</th>
                         <th>Average Cost</th>
@@ -1102,7 +1100,11 @@
                             actionText += 'Last action';
                     }
                     
-                    undoButton.textContent = 'Undo';
+                    // Limit text length and update
+                    if (actionText.length > 35) {
+                        actionText = actionText.substring(0, 32) + '...';
+                    }
+                    undoButton.textContent = actionText;
                 }
             });
             
@@ -1110,10 +1112,43 @@
             redoButtons.forEach(redoButton => {
                 if (redoHistory.length === 0) {
                     redoButton.classList.add('disabled');
+                    redoButton.textContent = 'Redo';
                 } else {
                     redoButton.classList.remove('disabled');
+                    const nextAction = redoHistory[redoHistory.length - 1];
+                    
+                    // Create descriptive text for the next action
+                    let actionText = 'Redo →: ';
+                    switch(nextAction.type) {
+                        case 'addTech':
+                            actionText += `Add ${nextAction.data.techName}`;
+                            break;
+                        case 'removeTech':
+                            actionText += `Remove ${nextAction.data.techName}`;
+                            break;
+                        case 'addBonusTech':
+                            actionText += `Add ${nextAction.data.bonusTechName}`;
+                            break;
+                        case 'removeBonusTech':
+                            actionText += `Remove ${nextAction.data.bonusTechName}`;
+                            break;
+                        case 'toggleCompletion':
+                            actionText += nextAction.data.wasCompleted ? 'Unmark' : 'Mark';
+                            actionText += ` ${nextAction.data.techName}`;
+                            break;
+                        case 'clearAll':
+                            actionText += `Clear ${nextAction.data.clearedCount} tech${nextAction.data.clearedCount !== 1 ? 's' : ''}`;
+                            break;
+                        default:
+                            actionText += 'Last action';
+                    }
+                    
+                    // Limit text length and update
+                    if (actionText.length > 35) {
+                        actionText = actionText.substring(0, 32) + '...';
+                    }
+                    redoButton.textContent = actionText;
                 }
-                redoButton.textContent = 'Redo';
             });
         }
         
@@ -2090,29 +2125,27 @@
             document.getElementById('simulationOverlay').style.display = 'block';
             document.getElementById('simulationPanel').style.display = 'block';
             
-            // Show results table immediately with placeholders
-            const loadingElement = document.getElementById('simulationLoading');
-            const tableElement = document.getElementById('comparisonTable');
-            if (loadingElement) loadingElement.style.display = 'none';
-            if (tableElement) tableElement.style.display = 'table';
-            
-            // Initialize table with grayed out rows
+            // Initialize table with grayed out rows and progress bars
             const resultsElement = document.getElementById('comparisonResults');
             resultsElement.innerHTML = `
                 <tr class="simulation-row grayed-out" id="simRow0">
                     <td class="comparison-variant">Base</td>
+                    <td><div class="progress-bar"><div class="progress-fill" id="progress0">0%</div></div></td>
                     <td colspan="5">Running simulation...</td>
                 </tr>
                 <tr class="simulation-row grayed-out" id="simRow1">
                     <td class="comparison-variant">Scholar Only</td>
+                    <td><div class="progress-bar"><div class="progress-fill" id="progress1">0%</div></div></td>
                     <td colspan="5">Waiting...</td>
                 </tr>
                 <tr class="simulation-row grayed-out" id="simRow2">
                     <td class="comparison-variant">Oracle Only</td>
+                    <td><div class="progress-bar"><div class="progress-fill" id="progress2">0%</div></div></td>
                     <td colspan="5">Waiting...</td>
                 </tr>
                 <tr class="simulation-row grayed-out" id="simRow3">
                     <td class="comparison-variant">Scholar + Oracle</td>
+                    <td><div class="progress-bar"><div class="progress-fill" id="progress3">0%</div></div></td>
                     <td colspan="5">Waiting...</td>
                 </tr>
             `;
@@ -2137,39 +2170,66 @@
             ];
             
             for (const variant of variants) {
-                // Update status to "Running simulation..."
                 const row = document.getElementById(`simRow${variant.index}`);
+                const progressBar = document.getElementById(`progress${variant.index}`);
+                
+                // Update status to "Running..."
                 row.innerHTML = `
                     <td class="comparison-variant">${variant.name}</td>
+                    <td><div class="progress-bar"><div class="progress-fill" id="progress${variant.index}" style="width: 0%;">0%</div></div></td>
                     <td colspan="5">Running simulation...</td>
                 `;
                 
-                // Run simulation asynchronously
+                // Run simulation in batches with progress updates
                 await new Promise(resolve => {
-                    setTimeout(() => {
-                        const results = simulateResearchPath(variant.scholar, variant.oracle, 1000);
+                    const totalSims = 1000;
+                    const batchSize = 50; // Run 50 sims at a time
+                    let completed = 0;
+                    let allResults = [];
+                    
+                    function runBatch() {
+                        const currentBatch = Math.min(batchSize, totalSims - completed);
+                        const batchResults = simulateResearchPath(variant.scholar, variant.oracle, currentBatch);
+                        allResults = allResults.concat(batchResults);
+                        completed += currentBatch;
                         
-                        // Calculate statistics
-                        const average = Math.round(results.reduce((a, b) => a + b, 0) / results.length);
-                        const min = Math.min(...results);
-                        const max = Math.max(...results);
-                        const stdDev = Math.round(Math.sqrt(results.reduce((sq, n) => sq + Math.pow(n - average, 2), 0) / results.length));
-                        const expectedMin = Math.max(min, average - stdDev);
-                        const expectedMax = Math.min(max, average + stdDev);
+                        // Update progress bar
+                        const progress = Math.round((completed / totalSims) * 100);
+                        const progressElement = document.getElementById(`progress${variant.index}`);
+                        if (progressElement) {
+                            progressElement.style.width = `${progress}%`;
+                            progressElement.textContent = `${progress}%`;
+                        }
                         
-                        // Update row with results
-                        row.classList.remove('grayed-out');
-                        row.innerHTML = `
-                            <td class="comparison-variant">${variant.name}</td>
-                            <td>${min.toLocaleString()}</td>
-                            <td>${max.toLocaleString()}</td>
-                            <td><strong>${average.toLocaleString()}</strong></td>
-                            <td>${stdDev.toLocaleString()}</td>
-                            <td>${expectedMin.toLocaleString()} - ${expectedMax.toLocaleString()}</td>
-                        `;
-                        
-                        resolve();
-                    }, 100); // Small delay to show progress
+                        if (completed >= totalSims) {
+                            // Calculate final statistics
+                            const average = Math.round(allResults.reduce((a, b) => a + b, 0) / allResults.length);
+                            const min = Math.min(...allResults);
+                            const max = Math.max(...allResults);
+                            const stdDev = Math.round(Math.sqrt(allResults.reduce((sq, n) => sq + Math.pow(n - average, 2), 0) / allResults.length));
+                            const expectedMin = Math.max(min, average - stdDev);
+                            const expectedMax = Math.min(max, average + stdDev);
+                            
+                            // Update row with final results
+                            row.classList.remove('grayed-out');
+                            row.innerHTML = `
+                                <td class="comparison-variant">${variant.name}</td>
+                                <td><span class="progress-complete">✓ Complete</span></td>
+                                <td>${min.toLocaleString()}</td>
+                                <td>${max.toLocaleString()}</td>
+                                <td><strong>${average.toLocaleString()}</strong></td>
+                                <td>${stdDev.toLocaleString()}</td>
+                                <td>${expectedMin.toLocaleString()} - ${expectedMax.toLocaleString()}</td>
+                            `;
+                            
+                            resolve();
+                        } else {
+                            // Continue with next batch
+                            setTimeout(runBatch, 10);
+                        }
+                    }
+                    
+                    runBatch();
                 });
             }
         }
