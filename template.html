@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Old World Tech Tree</title>
     <script src="https://cdn.jsdelivr.net/npm/leader-line@1.0.7/leader-line.min.js"></script>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=6">
 
 </head>
 <body>
@@ -148,6 +148,43 @@
                 timestamp: Date.now()
             };
             localStorage.setItem('owtt-state', JSON.stringify(state));
+            
+            // Update URL to always be shareable
+            updateURL();
+        }
+
+        function updateURL() {
+            const urlParts = [];
+            
+            // Add nation if selected (using numeric index)
+            if (selectedNation) {
+                const nationIndex = nationLookup.findIndex(n => n === selectedNation);
+                if (nationIndex !== -1) {
+                    urlParts.push(`n=${nationIndex}`);
+                }
+            }
+            
+            // Add techs if any are researched
+            if (researchedTechs.length > 0) {
+                const techNumbers = researchedTechs.map(techId => {
+                    return techData.techs.findIndex(t => t.id === techId);
+                }).filter(index => index !== -1);
+                urlParts.push(`t=${techNumbers.join(',')}`);
+            }
+            
+            // Add bonus techs if any are researched
+            if (researchedBonusTechs.length > 0) {
+                const bonusNumbers = researchedBonusTechs.map(bonusTechId => {
+                    return techData.bonusTechs.findIndex(t => t.id === bonusTechId);
+                }).filter(index => index !== -1);
+                urlParts.push(`b=${bonusNumbers.join(',')}`);
+            }
+            
+            const searchParams = urlParts.length > 0 ? `?${urlParts.join('&')}` : '';
+            
+            // Update the URL without reloading the page
+            const newUrl = window.location.pathname + searchParams;
+            window.history.replaceState({}, document.title, newUrl);
         }
 
         function loadFromLocalStorage() {
@@ -170,6 +207,9 @@
                             select.value = selectedNation;
                         }
                     }
+                    
+                    // Update URL to match loaded state
+                    updateURL();
                     
                     console.log('Loaded state from localStorage:', state);
                     return true;
@@ -1612,35 +1652,8 @@
                 return;
             }
             
-            const urlParts = [];
-            
-            // Add nation if selected (using numeric index)
-            if (selectedNation) {
-                const nationIndex = nationLookup.findIndex(n => n === selectedNation);
-                if (nationIndex !== -1) {
-                    urlParts.push(`n=${nationIndex}`);
-                }
-            }
-            
-            // Add techs if any are researched
-            if (researchedTechs.length > 0) {
-                const techNumbers = researchedTechs.map(techId => {
-                    return techData.techs.findIndex(t => t.id === techId);
-                }).filter(index => index !== -1);
-                urlParts.push(`t=${techNumbers.join(',')}`);
-            }
-            
-            // Add bonus techs if any are researched
-            if (researchedBonusTechs.length > 0) {
-                const bonusNumbers = researchedBonusTechs.map(bonusTechId => {
-                    return techData.bonusTechs.findIndex(t => t.id === bonusTechId);
-                }).filter(index => index !== -1);
-                urlParts.push(`b=${bonusNumbers.join(',')}`);
-            }
-            
-            const url = urlParts.length > 0 
-                ? `https://alcaras.github.io/owtt/?${urlParts.join('&')}`
-                : 'https://alcaras.github.io/owtt/';
+            // URL is already up-to-date, just copy the current URL
+            const url = window.location.href;
             
             // Copy to clipboard and show feedback
             const shareButton = document.querySelector('.share-button');
@@ -2118,39 +2131,29 @@
             // Build bonus card breakdown string
             let bonusCardsInfo = '';
             const totalRuns = 1000;
-            const runsWithCombinations = results.bonusCardCombinations ? 
-                Object.values(results.bonusCardCombinations).reduce((sum, count) => sum + count, 0) : 0;
-            const runsWithAllCards = totalRuns - runsWithCombinations;
+            const runsWithDiscards = results.runsWithDiscards || 0;
+            const runsWithAllCards = totalRuns - runsWithDiscards;
             
-            console.log(`📊 ${variantName}: ${runsWithAllCards} runs with all cards, ${runsWithCombinations} runs with combinations`);
+            console.log(`📊 ${variantName}: ${runsWithAllCards} runs with all cards, ${runsWithDiscards} runs with discards`);
             
-            if (runsWithCombinations > 0) {
-                // Some runs had to choose between bonus cards
-                const breakdown = [];
-                
-                if (runsWithAllCards > 0) {
-                    const allCardsPercent = Math.round((runsWithAllCards / totalRuns) * 100);
-                    breakdown.push(`${allCardsPercent}% all cards`);
-                }
-                
-                if (results.bonusCardCombinations && Object.keys(results.bonusCardCombinations).length > 0) {
-                    const combinationEntries = Object.entries(results.bonusCardCombinations).sort((a, b) => b[1] - a[1]);
-                    combinationEntries.slice(0, 3).forEach(([combinationKey, count]) => {
-                        const cardIds = combinationKey.split('+');
-                        const cardNames = cardIds.map(cardId => {
-                            const bonus = techData.bonusTechs.find(t => t.id === cardId);
-                            return bonus?.name || cardId;
-                        });
-                        const percentage = Math.round((count / totalRuns) * 100);
-                        breakdown.push(`${percentage}% chose between ${cardNames.join(' + ')}`);
-                    });
-                }
-                
-                bonusCardsInfo = ` <span style="font-weight: normal;">(${breakdown.join(', ')})</span>`;
-                console.log(`📝 ${variantName} breakdown:`, breakdown.join(', '));
-            } else {
-                console.log(`✅ ${variantName}: All runs got all bonus cards`);
+            // Calculate what percentage got all targeted bonus cards without choosing
+            const allCardsPercent = Math.round((runsWithAllCards / totalRuns) * 100);
+            const breakdown = [`${allCardsPercent}% all targeted bonus cards`];
+            
+            // Add discarded bonus card breakdown
+            if (results.discardedBonusCards && Object.keys(results.discardedBonusCards).length > 0) {
+                const discardEntries = Object.entries(results.discardedBonusCards).sort((a, b) => b[1] - a[1]);
+                const topDiscards = discardEntries.slice(0, 3).map(([cardId, count]) => {
+                    const bonus = techData.bonusTechs.find(t => t.id === cardId);
+                    const cardName = bonus?.name.replace(' Bonus', '').replace(' Boost', '') || cardId;
+                    const percentage = Math.round((count / totalRuns) * 100);
+                    return `${percentage}% discarded ${cardName}`;
+                });
+                breakdown.push(...topDiscards);
             }
+            
+            bonusCardsInfo = ` <span style="font-weight: normal;">(${breakdown.join(', ')})</span>`;
+            console.log(`📝 ${variantName} breakdown:`, breakdown.join(', '));
             
             // Update the variant's header
             const variantElement = document.getElementById(`variant${variantIndex}`);
@@ -2161,7 +2164,7 @@
                         <span>${variantName} <span style="font-weight: normal;">(<span style="color: var(--light-blue);">${Math.round(results.avg)}</span> <span style="color: var(--primary-gold);">± ${Math.round(results.stdDev)}</span>, range: <span style="color: var(--primary-green);">${results.min}</span>-<span style="color: var(--light-red);">${results.max}</span>)</span></span>
                         <div style="text-align: right;">
                             <span style="color: ${results.successRate >= 0.95 ? 'var(--primary-green)' : results.successRate >= 0.8 ? 'var(--primary-gold)' : 'var(--light-red)'};">
-                                ${Math.round(results.successRate * 100)}% all bonus cards${bonusCardsInfo}
+${bonusCardsInfo.trim()}
                             </span>
                         </div>
                     `;
@@ -2326,14 +2329,15 @@
                         reason: result.reason, 
                         missedCards: result.missedCards,
                         scholarRedraws: result.scholarRedraws, 
-                        scholarRedrawsSuccessful: result.scholarRedrawsSuccessful 
+                        scholarRedrawsSuccessful: result.scholarRedrawsSuccessful,
+                        bonusCardCombinations: result.bonusCardCombinations
                     });
                 } else {
                     results.push({ 
                         cost: result.cost, 
                         scholarRedraws: result.scholarRedraws, 
                         scholarRedrawsSuccessful: result.scholarRedrawsSuccessful,
-                        bonusCardCombination: result.bonusCardCombination
+                        bonusCardCombinations: result.bonusCardCombinations
                     });
                 }
             }
@@ -2386,16 +2390,24 @@
                 return acc;
             }, {});
             
-            // Track bonus card combinations that had to be split (from ALL runs)
-            const bonusCardCombinations = {};
-            results.forEach(run => {
-                if (run.bonusCardCombination) {
-                    const combinationKey = run.bonusCardCombination.join('+');
-                    bonusCardCombinations[combinationKey] = (bonusCardCombinations[combinationKey] || 0) + 1;
+            // Track discarded bonus cards (from ALL runs)
+            const discardedBonusCards = {};
+            let runsWithDiscards = 0;
+            results.forEach((run, index) => {
+                if (run.bonusCardCombinations && Array.isArray(run.bonusCardCombinations)) {
+                    if (run.bonusCardCombinations.length > 0) {
+                        runsWithDiscards++;
+                    }
+                    run.bonusCardCombinations.forEach(discardedCardsList => {
+                        discardedCardsList.forEach(cardId => {
+                            discardedBonusCards[cardId] = (discardedBonusCards[cardId] || 0) + 1;
+                        });
+                    });
                 }
             });
+            console.log(`🎁 DEBUG: Found discards in ${runsWithDiscards} out of ${results.length} total runs`);
             
-            return { min, max, avg, stdDev, successRate, failureReasons, results, scholarStats, bonusCardCombinations };
+            return { min, max, avg, stdDev, successRate, failureReasons, results, scholarStats, discardedBonusCards, runsWithDiscards };
         }
 
         function isStartingTech(techId) {
@@ -2411,6 +2423,7 @@
             let turnCount = 0;
             let scholarRedraws = 0; // Track number of redraws
             let scholarRedrawsSuccessful = 0; // Track successful redraws (found target)
+            let allBonusCardCombinations = []; // Track all bonus card combinations from this run
             
             // PERSISTENT draw and discard piles across all turns
             let drawPile = [];
@@ -2464,7 +2477,7 @@
                             return bonus?.name || id;
                         }).join(', ')}`);
                     }
-                    return { cost: -1, failed: true, reason: 'missed_bonus_cards', missedCards: missedBonusCards };
+                    return { cost: -1, failed: true, reason: 'missed_bonus_cards', missedCards: missedBonusCards, bonusCardCombinations: allBonusCardCombinations };
                 }
                 
                 // For turn 1 with a nation, only add Tier 1 techs and their bonus cards
@@ -2545,6 +2558,10 @@
                     if (result.removedBonusCards) {
                         result.removedBonusCards.forEach(id => removedBonusCards.add(id));
                     }
+                    // Track bonus card combinations
+                    if (result.bonusCardCombination) {
+                        allBonusCardCombinations.push(result.bonusCardCombination);
+                    }
                     // Update redraw tracking
                     if (result.redrawStats) {
                         scholarRedraws = result.redrawStats.scholarRedraws;
@@ -2573,14 +2590,16 @@
                 cost: totalCost, 
                 failed: false,
                 scholarRedraws,
-                scholarRedrawsSuccessful
+                scholarRedrawsSuccessful,
+                bonusCardCombinations: allBonusCardCombinations
             } : { 
                 cost: -1, 
                 failed: true, 
                 reason: 'incomplete', 
                 totalCost,
                 scholarRedraws,
-                scholarRedrawsSuccessful
+                scholarRedrawsSuccessful,
+                bonusCardCombinations: allBonusCardCombinations
             };
         }
 
@@ -2704,12 +2723,14 @@
                                 console.warn(`   - ${bonus.name}`);
                             });
                         }
-                        // Choose the most expensive bonus card (arbitrary strategy)
-                        bestChoice = bonusTargetsInHand.reduce((mostExpensive, bonus) => 
-                            bonus.cost > mostExpensive.cost ? bonus : mostExpensive
-                        );
+                        // Choose the highest priority bonus card (earliest in research order)
+                        bestChoice = bonusTargetsInHand.reduce((highest, bonus) => {
+                            const highestIndex = researchedBonusTechs.indexOf(highest.id);
+                            const bonusIndex = researchedBonusTechs.indexOf(bonus.id);
+                            return bonusIndex < highestIndex ? bonus : highest;
+                        });
                         if (window.debugSimulation) {
-                            console.log(`🎯 Choosing most expensive bonus: ${bestChoice.name} (${bestChoice.cost} 🧪)`);
+                            console.log(`🎯 Choosing highest priority bonus: ${bestChoice.name} (priority ${researchedBonusTechs.indexOf(bestChoice.id)})`);
                         }
                     } else {
                         // Single bonus card - select it
@@ -2722,10 +2743,21 @@
                         }
                     }
                 } else if (mainTargetsInHand.length > 0) {
-                    // No bonus cards, pick the first main tech
-                    bestChoice = mainTargetsInHand[0];
-                    if (window.debugSimulation) {
-                        console.log(`🔬 Found target main tech: ${bestChoice.name}`);
+                    // No bonus cards, pick highest priority main tech
+                    if (mainTargetsInHand.length > 1) {
+                        bestChoice = mainTargetsInHand.reduce((highest, tech) => {
+                            const highestIndex = researchedTechs.indexOf(highest.id);
+                            const techIndex = researchedTechs.indexOf(tech.id);
+                            return techIndex < highestIndex ? tech : highest;
+                        });
+                        if (window.debugSimulation) {
+                            console.log(`🔬 Choosing highest priority main tech: ${bestChoice.name} (priority ${researchedTechs.indexOf(bestChoice.id)})`);
+                        }
+                    } else {
+                        bestChoice = mainTargetsInHand[0];
+                        if (window.debugSimulation) {
+                            console.log(`🔬 Found target main tech: ${bestChoice.name}`);
+                        }
                     }
                     // This should never happen if Stone Boost is in hand as a target!
                     if (window.debugStoneBoost && hand.some(t => t.id === "TECH_STONECUTTING_BONUS_STONE")) {
@@ -2776,10 +2808,12 @@
                         // ALWAYS prioritize bonus cards since they're permanently lost if discarded
                         if (newBonusTargetsInHand.length > 0) {
                             if (newBonusTargetsInHand.length > 1) {
-                                // Choose the most expensive bonus card (arbitrary strategy)
-                                bestChoice = newBonusTargetsInHand.reduce((mostExpensive, bonus) => 
-                                    bonus.cost > mostExpensive.cost ? bonus : mostExpensive
-                                );
+                                // Choose the highest priority bonus card (earliest in research order)
+                                bestChoice = newBonusTargetsInHand.reduce((highest, bonus) => {
+                                    const highestIndex = researchedBonusTechs.indexOf(highest.id);
+                                    const bonusIndex = researchedBonusTechs.indexOf(bonus.id);
+                                    return bonusIndex < highestIndex ? bonus : highest;
+                                });
                             } else {
                                 // Single bonus card - select it
                                 bestChoice = newBonusTargetsInHand[0];
@@ -2833,13 +2867,18 @@
                 const bonusCardsInHand = hand.filter(tech => tech.isBonus);
                 let bonusCardCombination = null;
                 
-                // If we had multiple bonus cards in hand, track the combination
+                // Track discarded bonus cards if we had to choose between targeted ones
                 if (bonusCardsInHand.length > 1) {
-                    bonusCardCombination = bonusCardsInHand.map(tech => tech.id).sort();
-                    if (window.debugSimulation) {
-                        console.log(`⚠️ Multiple bonus cards in hand: ${bonusCardsInHand.map(t => t.name).join(' + ')}`);
-                        console.log(`  Selected: ${bestChoice.name}`);
-                        console.log(`  Discarded: ${bonusCardsInHand.filter(t => t.id !== bestChoice.id).map(t => t.name).join(', ')}`);
+                    const targetedCardsInHand = bonusCardsInHand.filter(tech => targetTechSet.has(tech.id));
+                    if (targetedCardsInHand.length > 1) {
+                        // We had multiple targeted bonus cards and had to choose
+                        const discardedTargetedCards = targetedCardsInHand.filter(t => t.id !== bestChoice.id);
+                        bonusCardCombination = discardedTargetedCards.map(tech => tech.id);
+                        if (window.debugSimulation) {
+                            console.log(`⚠️ Multiple TARGETED bonus cards in hand: ${bonusCardsInHand.map(t => t.name).join(' + ')}`);
+                            console.log(`  Selected: ${bestChoice.name}`);
+                            console.log(`  Discarded TARGETED: ${discardedTargetedCards.map(t => t.name).join(', ')}`);
+                        }
                     }
                 }
                 
@@ -3033,7 +3072,7 @@
                                 <span>${variant.name} <span style="font-weight: normal;">(<span style="color: var(--light-blue);">${Math.round(results.avg)}</span> <span style="color: var(--primary-gold);">± ${Math.round(results.stdDev)}</span>, range: <span style="color: var(--primary-green);">${results.min}</span>-<span style="color: var(--light-red);">${results.max}</span>)</span></span>
                                 <div style="text-align: right;">
                                     <span style="color: ${results.successRate >= 0.95 ? 'var(--primary-green)' : results.successRate >= 0.8 ? 'var(--primary-gold)' : 'var(--light-red)'};">
-                                        ${Math.round(results.successRate * 100)}% all bonus cards${bonusCardsInfo}
+        ${bonusCardsInfo.trim()}
                                     </span>
                                 </div>
                             </div>
