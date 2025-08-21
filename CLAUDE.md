@@ -95,9 +95,13 @@ const nationData = {
 - FREE starting techs don't count toward cost
 
 ### Share System
-- URLs encode nation, main techs, and bonus techs as numeric arrays
+- URLs use unified encoding format documented in `URLPARAM.md`
 - Compact representation using tech array indices
+- Nation parameter: `n=0-9` (nation index)
+- Research order parameter: `o=1,2,-1,3` (positive=main techs, negative=bonus cards)
+- Preserves exact click order for accurate build sharing
 - Full state restoration from URL parameters
+- Backwards compatibility with old URL formats
 
 ### State Persistence
 - localStorage automatically saves tech selections, nation choice, research order, and completion status
