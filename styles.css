@@ -792,10 +792,6 @@ body {
     transition: right 0.3s ease;
 }
 
-/* Inner container to handle overflow */
-.sidebar > *:not(.sidebar-toggle) {
-    overflow: hidden;
-}
 
 /* Sidebar toggle button for desktop - attached to sidebar */
 .sidebar-toggle {
@@ -1041,6 +1037,8 @@ body {
     }
     
     .sidebar-scrollable {
+        flex: 1;
+        overflow-y: auto;
         padding: 15px;
         padding-top: 40px;
     }
@@ -1233,6 +1231,8 @@ body {
     }
     
     .sidebar-scrollable {
+        flex: 1;
+        overflow-y: auto;
         padding: 10px;
         padding-top: 35px;
     }
