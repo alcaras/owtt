@@ -1911,6 +1911,12 @@
         }
 
         // Simulation functions
+        // Simulation caching variables
+        let lastSimulatedTechs = null;
+        let lastSimulatedBonusTechs = null;
+        let lastSimulatedNation = null;
+        let cachedSimulationResults = null;
+
         function openSimulationPanel() {
             if (researchedTechs.length === 0) {
                 alert('Please select some technologies to research first!');
@@ -1920,35 +1926,84 @@
             document.getElementById('simulationOverlay').style.display = 'block';
             document.getElementById('simulationPanel').style.display = 'block';
             
-            // Initialize table with grayed out rows and progress bars
-            const resultsElement = document.getElementById('comparisonResults');
-            resultsElement.innerHTML = `
-                <tr class="simulation-row grayed-out" id="simRow0">
-                    <td class="comparison-variant">Base</td>
-                    <td><div class="progress-bar"><div class="progress-fill" id="progress0">0%</div></div></td>
-                    <td colspan="5">Running simulation...</td>
-                </tr>
-                <tr class="simulation-row grayed-out" id="simRow1">
-                    <td class="comparison-variant">Scholar Only</td>
-                    <td><div class="progress-bar"><div class="progress-fill" id="progress1">0%</div></div></td>
-                    <td colspan="5">Waiting...</td>
-                </tr>
-                <tr class="simulation-row grayed-out" id="simRow2">
-                    <td class="comparison-variant">Oracle Only</td>
-                    <td><div class="progress-bar"><div class="progress-fill" id="progress2">0%</div></div></td>
-                    <td colspan="5">Waiting...</td>
-                </tr>
-                <tr class="simulation-row grayed-out" id="simRow3">
-                    <td class="comparison-variant">Scholar + Oracle</td>
-                    <td><div class="progress-bar"><div class="progress-fill" id="progress3">0%</div></div></td>
-                    <td colspan="5">Waiting...</td>
-                </tr>
-            `;
+            // Check if tech selection has changed since last simulation
+            const currentTechsKey = JSON.stringify({
+                techs: [...researchedTechs].sort(),
+                bonusTechs: [...researchedBonusTechs].sort(),
+                nation: selectedNation
+            });
+            
+            const lastTechsKey = lastSimulatedTechs ? JSON.stringify({
+                techs: [...lastSimulatedTechs].sort(),
+                bonusTechs: [...lastSimulatedBonusTechs].sort(),
+                nation: lastSimulatedNation
+            }) : null;
+            
+            if (cachedSimulationResults && currentTechsKey === lastTechsKey) {
+                // Tech selection hasn't changed, show cached results
+                displayCachedResults();
+                return;
+            }
+            
+            // Tech selection changed, need to run new simulation
+            // Initialize with progress bars
+            const container = document.getElementById('simulationResults');
+            if (container) {
+                let html = `
+                    <div style="color: #d4af37; font-size: 1.1em; margin-bottom: 15px; text-align: center;">
+                        📊 Research Cost Comparison (1000 runs each)
+                    </div>
+                    <div style="background: rgba(139, 105, 20, 0.15); padding: 15px; border-radius: 8px; border: 1px solid #8b6914;">
+                `;
+                
+                const variants = [
+                    { name: "Base", index: 0 },
+                    { name: "Oracle Only", index: 1 },
+                    { name: "Scholar Only", index: 2 },
+                    { name: "Scholar + Oracle", index: 3 }
+                ];
+                
+                for (const variant of variants) {
+                    html += `
+                        <div id="variant${variant.index}" style="margin-bottom: 8px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                            <div style="color: #d4af37; font-weight: bold; margin-bottom: 4px; font-size: 0.95em;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <span>${variant.name}</span>
+                                    <div style="text-align: right;">
+                                        <span style="color: var(--light-blue);">Running...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Progress bar area that will become the final visualization -->
+                            <div id="barArea${variant.index}" style="position: relative; height: 45px; margin: 10px 0;">
+                                <!-- Progress bar (will be replaced with final bars at 100%) -->
+                                <div id="progressContainer${variant.index}" style="position: absolute; top: 18px; width: 100%; height: 20px; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid #444;">
+                                    <div class="progress-fill" id="progress${variant.index}" style="width: 0%; height: 100%; background: linear-gradient(135deg, #3498db, #2980b9); transition: width 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8em; border-radius: 10px;">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += '</div>';
+                container.innerHTML = html;
+            }
             
             // Start running simulations
             setTimeout(() => {
                 runSimulationAsync();
             }, 100);
+        }
+
+        function displayCachedResults() {
+            // Show cached simulation results immediately
+            if (cachedSimulationResults) {
+                const container = document.getElementById('simulationResults');
+                if (container) {
+                    container.innerHTML = cachedSimulationResults;
+                }
+            }
         }
 
         function closeSimulationPanel() {
@@ -1965,8 +2020,8 @@
             ];
             
             // Immediately switch to bar chart display with progress bars
-            const container = document.getElementById('simulationResults');
-            if (container) {
+            const asyncContainer = document.getElementById('simulationResults');
+            if (asyncContainer) {
                 let html = `
                     <div style="color: #d4af37; font-size: 1.1em; margin-bottom: 15px; text-align: center;">
                         📊 Research Cost Comparison (1000 runs each)
@@ -1998,7 +2053,7 @@
                 }
                 
                 html += '</div>';
-                container.innerHTML = html;
+                asyncContainer.innerHTML = html;
             }
             
             // Base simulation will set the global scale for all variants
@@ -2052,6 +2107,17 @@
                     runBatch();
                 });
             }
+            
+            // Cache the current simulation state and results
+            lastSimulatedTechs = [...researchedTechs];
+            lastSimulatedBonusTechs = [...researchedBonusTechs];
+            lastSimulatedNation = selectedNation;
+            
+            // Cache the final HTML results
+            const cacheContainer = document.getElementById('simulationResults');
+            if (cacheContainer) {
+                cachedSimulationResults = cacheContainer.innerHTML;
+            }
         }
         
         function updateVariantDisplay(variantIndex, variantName, results, globalMin, globalMax) {
@@ -2078,7 +2144,7 @@
                         const percentage = Math.round((count / 1000) * 100);
                         return `${bonus?.name || cardId} (${percentage}%)`;
                     });
-                missedCardsInfo = ` <span style="font-weight: normal;">(failed: ${missedList.join(', ')})</span>`;
+                missedCardsInfo = ` <span style="font-weight: normal;">(discarded: ${missedList.join(', ')})</span>`;
             }
             
             // Update the variant's header
