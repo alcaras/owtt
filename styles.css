@@ -260,6 +260,8 @@ body {
     margin-bottom: 15px;
     font-size: 1em;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 1;
 }
 
 .simulate-button:hover {
@@ -776,11 +778,23 @@ body {
 @media (max-width: 900px) {
     body {
         flex-direction: column;
+        padding: 0;
+        margin: 0;
+        overflow-x: hidden;
+        position: relative;
+        min-height: 100vh;
     }
     
     .main-container {
         margin-right: 0;
-        margin-bottom: 300px;
+        margin-bottom: 0;
+        padding: 10px;
+        padding-bottom: 420px;
+        width: 100%;
+        min-width: 100%;
+        overflow-x: auto;
+        overflow-y: visible;
+        position: relative;
     }
     
     .sidebar {
@@ -788,20 +802,260 @@ body {
         bottom: 0;
         left: 0;
         right: 0;
+        top: auto;
         width: 100%;
-        height: 300px;
-        max-height: 300px;
+        height: auto;
+        max-height: 45vh;
         overflow-y: auto;
+        overflow-x: hidden;
+        border-top: 2px solid #8b6914;
+        border-left: none;
+        z-index: 9999;
+        background: rgba(20, 15, 10, 0.98);
+        padding: 15px;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.8);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .tech-tree-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: visible;
+        padding-bottom: 20px;
+        -webkit-overflow-scrolling: touch;
     }
     
     .tech-tree {
-        grid-template-columns: repeat(8, minmax(90px, 1fr));
+        grid-template-columns: repeat(8, 95px);
         gap: 4px;
+        width: 760px;
+        min-width: 760px;
     }
     
     .tech-cost-headers {
-        grid-template-columns: repeat(8, minmax(90px, 1fr));
+        grid-template-columns: repeat(8, 95px);
         gap: 4px;
+        width: 760px;
+        min-width: 760px;
+        position: relative;
+        background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-medium) 100%);
+        z-index: 10;
+        padding: 5px 0;
+    }
+    
+    .tech-node {
+        min-height: 85px;
+        padding: 4px;
+    }
+    
+    .tech-name {
+        font-size: 0.75em;
+    }
+    
+    .tech-unlocks {
+        font-size: 0.55em;
+        max-height: 40px;
+    }
+    
+    .bonus-tech-section {
+        margin-top: 20px;
+        padding: 15px 10px;
+    }
+    
+    .bonus-tech-grid {
+        padding: 5px;
+        gap: 8px;
+    }
+    
+    .bonus-tech-node {
+        width: 95px;
+        min-height: 60px;
+        padding: 4px;
+    }
+    
+    .bonus-tech-name {
+        font-size: 0.75em;
+    }
+    
+    .bonus-tech-cost {
+        font-size: 0.65em;
+    }
+    
+    .sidebar h2 {
+        font-size: 1.1em;
+        margin-bottom: 10px;
+    }
+    
+    .share-button {
+        font-size: 1em;
+        padding: 10px;
+    }
+    
+    .simulate-button {
+        font-size: 0.9em;
+        padding: 8px;
+    }
+    
+    .tech-order-list {
+        flex: 1;
+        max-height: 120px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    
+    .tech-order-item {
+        padding: 6px;
+        margin-bottom: 5px;
+        font-size: 0.9em;
+    }
+    
+    .nation-section, .share-section {
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .simulation-panel {
+        width: 95%;
+        max-width: none;
+        max-height: 85vh;
+        padding: 15px;
+        top: 45%;
+        transform: translate(-50%, -45%);
+    }
+    
+    .simulation-panel h3 {
+        font-size: 1.1em;
+    }
+    
+    .comparison-table {
+        font-size: 0.8em;
+    }
+    
+    .comparison-table th, .comparison-table td {
+        padding: 5px;
+        font-size: 0.75em;
+    }
+    
+    .tooltip {
+        max-width: 280px;
+        font-size: 0.85em;
+    }
+}
+
+@media (max-width: 600px) {
+    .sidebar {
+        height: auto;
+        max-height: 40vh;
+        padding: 10px;
+    }
+    
+    .main-container {
+        padding: 10px;
+        padding-bottom: 350px;
+    }
+    
+    .tech-tree {
+        grid-template-columns: repeat(8, 85px);
+        gap: 3px;
+        width: 700px;
+        min-width: 700px;
+    }
+    
+    .tech-cost-headers {
+        grid-template-columns: repeat(8, 85px);
+        gap: 3px;
+        font-size: 0.75em;
+        width: 700px;
+        min-width: 700px;
+    }
+    
+    .tech-cost-header {
+        padding: 4px 2px;
+    }
+    
+    .tech-node {
+        min-height: 75px;
+    }
+    
+    .tech-name {
+        font-size: 0.7em;
+    }
+    
+    .tech-unlocks {
+        font-size: 0.5em;
+        display: none;
+    }
+    
+    .tech-order-badge {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7em;
+        top: -8px;
+        right: -8px;
+    }
+    
+    .bonus-tech-node {
+        width: 85px;
+        min-height: 55px;
+    }
+    
+    .bonus-tech-name {
+        font-size: 0.7em;
+    }
+    
+    .bonus-tech-cost {
+        font-size: 0.6em;
+    }
+    
+    .bonus-cost-group {
+        min-width: 90px;
+    }
+    
+    .bonus-cost-header {
+        font-size: 0.75em;
+        padding: 3px 8px;
+    }
+    
+    .sidebar h2 {
+        font-size: 1em;
+    }
+    
+    .tech-order-list {
+        max-height: 120px;
+    }
+    
+    .tech-order-item {
+        padding: 4px;
+        font-size: 0.85em;
+    }
+    
+    .share-button {
+        font-size: 0.9em;
+        padding: 8px;
+    }
+    
+    .simulate-button {
+        font-size: 0.85em;
+        padding: 6px;
+        margin-bottom: 10px;
+    }
+    
+    .total-cost, .total-laws {
+        font-size: 0.9em;
+        padding: 6px;
+        margin-bottom: 10px;
+    }
+    
+    .undo-button, .redo-button, .clear-button {
+        font-size: 0.85em;
+        padding: 6px;
+        margin-top: 5px;
+    }
+    
+    .nation-select {
+        padding: 8px;
+        font-size: 0.9em;
     }
 }
 
