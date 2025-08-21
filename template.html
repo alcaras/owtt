@@ -101,7 +101,19 @@
         <h3>🎲 Research Simulation Comparison</h3>
         <p style="color: #f4e4c1; margin-bottom: 15px; text-align: center; font-size: 0.9em;">
             Running 1000 simulations for each Scholar/Oracle combination to compare variance in research costs.
+            <br>
+            <a href="#" onclick="return false;" onmouseenter="showTooltip(event, 'simulation-logic')" onmouseleave="hideTooltip()" style="color: var(--primary-gold); text-decoration: underline; font-size: 0.85em;">💡 Simulation Logic</a>
         </p>
+        
+        <div id="simulation-logic" style="display: none; position: absolute; background: rgba(20, 15, 10, 0.95); border: 1px solid #8b6914; border-radius: 5px; padding: 10px; font-size: 0.8em; color: #f4e4c1; max-width: 400px; z-index: 10002; box-shadow: 0 4px 12px rgba(0,0,0,0.8);">
+            <strong style="color: #d4af37;">Simulation Logic:</strong>
+            <ul style="margin: 5px 0; padding-left: 18px; line-height: 1.3;">
+                <li>When no targeted techs drawn: cycles with lowest cost tech/bonus card</li>
+                <li>When confronted with multiple targeted bonus cards: picks higher priority (earlier in research order)</li>
+                <li>When confronted with multiple targeted techs: picks higher priority (earlier in research order)</li>
+                <li>Scholar: simulated as single redraw per draw (actual Scholar can redraw once per turn, and redraw again the next turn if they don't get a targeted tech in the first turn's redraw, etc.)</li>
+            </ul>
+        </div>
         
         <div class="simulation-comparison" id="simulationResults">
             <table class="comparison-table" id="comparisonTable">
@@ -164,20 +176,27 @@
                 }
             }
             
-            // Add techs if any are researched
-            if (researchedTechs.length > 0) {
-                const techNumbers = researchedTechs.map(techId => {
-                    return techData.techs.findIndex(t => t.id === techId);
-                }).filter(index => index !== -1);
-                urlParts.push(`t=${techNumbers.join(',')}`);
-            }
-            
-            // Add bonus techs if any are researched
-            if (researchedBonusTechs.length > 0) {
-                const bonusNumbers = researchedBonusTechs.map(bonusTechId => {
-                    return techData.bonusTechs.findIndex(t => t.id === bonusTechId);
-                }).filter(index => index !== -1);
-                urlParts.push(`b=${bonusNumbers.join(',')}`);
+            // Add research order if any techs are researched
+            if (researchOrder.length > 0) {
+                const orderNumbers = researchOrder.map(techId => {
+                    // Check if it's a main tech first
+                    const mainTechIndex = techData.techs.findIndex(t => t.id === techId);
+                    if (mainTechIndex !== -1) {
+                        return mainTechIndex;
+                    }
+                    
+                    // Check if it's a bonus tech (use negative numbers)
+                    const bonusTechIndex = techData.bonusTechs.findIndex(t => t.id === techId);
+                    if (bonusTechIndex !== -1) {
+                        return -(bonusTechIndex + 1); // -1 means bonus tech index 0, -2 means index 1, etc.
+                    }
+                    
+                    return null; // Invalid tech ID
+                }).filter(num => num !== null);
+                
+                if (orderNumbers.length > 0) {
+                    urlParts.push(`o=${orderNumbers.join(',')}`);
+                }
             }
             
             const searchParams = urlParts.length > 0 ? `?${urlParts.join('&')}` : '';
@@ -1712,48 +1731,96 @@
                 }
             }
             
-            // Load main techs (new format: t=1,2,3, old format: techs=1,2,3 for backward compatibility)
-            let techsParam = params.get('t') || params.get('techs');
-            if (techsParam) {
-                const techNumbers = techsParam.split(',').map(n => parseInt(n)).filter(n => !isNaN(n));
+            // Load unified research order (new format: o=1,2,-1,3,-2)
+            let orderParam = params.get('o');
+            if (orderParam) {
+                const orderNumbers = orderParam.split(',').map(n => parseInt(n)).filter(n => !isNaN(n));
                 
-                // Convert numbers back to tech IDs and validate
-                techNumbers.forEach(techIndex => {
-                    if (techIndex >= 0 && techIndex < techData.techs.length) {
-                        const techId = techData.techs[techIndex].id;
-                        const tech = techData.techs[techIndex];
-                        
-                        // Add prerequisites first
-                        const prereqsToAdd = getAllPrerequisites(techId);
-                        prereqsToAdd.forEach(prereqId => {
-                            if (!researchedTechs.includes(prereqId)) {
-                                researchedTechs.push(prereqId);
-                                researchOrder.push(Date.now());
+                // Process each item in the order
+                orderNumbers.forEach(num => {
+                    if (num >= 0) {
+                        // Positive number = main tech
+                        if (num < techData.techs.length) {
+                            const techId = techData.techs[num].id;
+                            
+                            // Add prerequisites first
+                            const prereqsToAdd = getAllPrerequisites(techId);
+                            prereqsToAdd.forEach(prereqId => {
+                                if (!researchedTechs.includes(prereqId)) {
+                                    researchedTechs.push(prereqId);
+                                    researchOrder.push(prereqId);
+                                }
+                            });
+                            
+                            // Add the tech itself
+                            if (!researchedTechs.includes(techId)) {
+                                researchedTechs.push(techId);
+                                researchOrder.push(techId);
                             }
-                        });
-                        
-                        // Add the tech itself
-                        if (!researchedTechs.includes(techId)) {
-                            researchedTechs.push(techId);
-                            researchOrder.push(Date.now());
+                        }
+                    } else {
+                        // Negative number = bonus tech (convert -1 to index 0, -2 to index 1, etc.)
+                        const bonusIndex = (-num) - 1;
+                        if (bonusIndex >= 0 && bonusIndex < techData.bonusTechs.length) {
+                            const bonusTechId = techData.bonusTechs[bonusIndex].id;
+                            if (!researchedBonusTechs.includes(bonusTechId)) {
+                                researchedBonusTechs.push(bonusTechId);
+                                researchOrder.push(bonusTechId);
+                            }
                         }
                     }
                 });
-            }
-            
-            // Load bonus techs (new format: b=1,2,3, old format: bonus=1,2,3 for backward compatibility)
-            let bonusParam = params.get('b') || params.get('bonus');
-            if (bonusParam) {
-                const bonusNumbers = bonusParam.split(',').map(n => parseInt(n)).filter(n => !isNaN(n));
+            } else {
+                // Backwards compatibility: Load main techs and bonus techs separately
+                let techsParam = params.get('t') || params.get('techs');
+                if (techsParam) {
+                    const techNumbers = techsParam.split(',').map(n => parseInt(n)).filter(n => !isNaN(n));
+                    
+                    // Convert numbers back to tech IDs and validate
+                    techNumbers.forEach(techIndex => {
+                        if (techIndex >= 0 && techIndex < techData.techs.length) {
+                            const techId = techData.techs[techIndex].id;
+                            
+                            // Add prerequisites first
+                            const prereqsToAdd = getAllPrerequisites(techId);
+                            prereqsToAdd.forEach(prereqId => {
+                                if (!researchedTechs.includes(prereqId)) {
+                                    researchedTechs.push(prereqId);
+                                    researchOrder.push(prereqId);
+                                }
+                            });
+                            
+                            // Add the tech itself
+                            if (!researchedTechs.includes(techId)) {
+                                researchedTechs.push(techId);
+                                researchOrder.push(techId);
+                            }
+                        }
+                    });
+                }
                 
-                bonusNumbers.forEach(bonusIndex => {
-                    if (bonusIndex >= 0 && bonusIndex < techData.bonusTechs.length) {
-                        const bonusTechId = techData.bonusTechs[bonusIndex].id;
-                        if (!researchedBonusTechs.includes(bonusTechId)) {
-                            researchedBonusTechs.push(bonusTechId);
+                // Load bonus techs (old format - they get added after their parent tech)
+                let bonusParam = params.get('b') || params.get('bonus');
+                if (bonusParam) {
+                    const bonusNumbers = bonusParam.split(',').map(n => parseInt(n)).filter(n => !isNaN(n));
+                    
+                    bonusNumbers.forEach(bonusIndex => {
+                        if (bonusIndex >= 0 && bonusIndex < techData.bonusTechs.length) {
+                            const bonusTechId = techData.bonusTechs[bonusIndex].id;
+                            if (!researchedBonusTechs.includes(bonusTechId)) {
+                                researchedBonusTechs.push(bonusTechId);
+                                // In backwards compatibility mode, add after parent tech
+                                const parentTech = techData.bonusTechs[bonusIndex].parent;
+                                const parentIndex = researchOrder.findIndex(id => id === parentTech);
+                                if (parentIndex !== -1) {
+                                    researchOrder.splice(parentIndex + 1, 0, bonusTechId);
+                                } else {
+                                    researchOrder.push(bonusTechId);
+                                }
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
             
             // Update displays
@@ -3199,6 +3266,32 @@ ${bonusCardsInfo.trim()}
                 drawConnections();
             }, 50);
         }, { passive: true });
+
+        // Tooltip functions
+        function showTooltip(event, tooltipId) {
+            const tooltip = document.getElementById(tooltipId);
+            if (tooltip) {
+                tooltip.style.display = 'block';
+                tooltip.style.left = event.pageX + 10 + 'px';
+                tooltip.style.top = event.pageY - 10 + 'px';
+                
+                // Adjust position if tooltip would go off screen
+                const rect = tooltip.getBoundingClientRect();
+                if (rect.right > window.innerWidth) {
+                    tooltip.style.left = (event.pageX - rect.width - 10) + 'px';
+                }
+                if (rect.bottom > window.innerHeight) {
+                    tooltip.style.top = (event.pageY - rect.height - 10) + 'px';
+                }
+            }
+        }
+
+        function hideTooltip() {
+            const tooltips = document.querySelectorAll('[id$="-logic"]');
+            tooltips.forEach(tooltip => {
+                tooltip.style.display = 'none';
+            });
+        }
 
         // Initialize the tech tree when page loads
         window.addEventListener('load', initializeTechTree);
