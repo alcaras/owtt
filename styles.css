@@ -50,8 +50,8 @@ body {
     width: 300px;
     background: rgba(0, 0, 0, 0.5);
     border-left: 2px solid #8b6914;
-    padding: 20px;
-    overflow-y: auto;
+    padding: 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -60,6 +60,20 @@ body {
     height: 100vh;
     z-index: 100;
     transition: right 0.3s ease;
+}
+
+.sidebar-scrollable {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    padding-bottom: 10px;
+}
+
+.sidebar-actions {
+    background: rgba(0, 0, 0, 0.7);
+    border-top: 2px solid #8b6914;
+    padding: 15px 20px;
+    margin-top: auto;
 }
 
 .sidebar h2 {
@@ -117,22 +131,25 @@ body {
     background: linear-gradient(135deg, #d4af37, #f4e27a);
     border: 1px solid #8b6914;
     border-radius: 5px;
-    padding: 8px;
+    padding: 10px;
     margin-bottom: 15px;
     text-align: center;
     color: #2c1810;
     font-weight: bold;
-    font-size: 1em;
+    font-size: 1.1em;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .tech-order-list {
-    flex: 1;
-    overflow-y: auto;
     min-height: 50px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 5px;
     padding: 5px;
+    margin-bottom: 10px;
 }
 
 .tech-order-item {
@@ -965,18 +982,26 @@ body {
         width: 100%;
         height: auto;
         max-height: 75vh;
-        overflow-y: auto;
-        overflow-x: hidden;
+        overflow: hidden;
         border-top: 2px solid #8b6914;
         border-left: none;
         z-index: 9999;
         background: rgba(20, 15, 10, 0.98);
-        padding: 15px;
-        padding-top: 40px;
+        padding: 0;
         box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.8);
         display: flex;
         flex-direction: column;
         transition: bottom 0.3s ease;
+    }
+    
+    .sidebar-scrollable {
+        padding: 15px;
+        padding-top: 40px;
+    }
+    
+    .sidebar-actions {
+        background: rgba(10, 8, 5, 0.95);
+        padding: 10px 15px;
     }
     
     .sidebar.mobile-visible {
@@ -1085,14 +1110,6 @@ body {
         padding: 8px;
     }
     
-    .tech-order-list {
-        flex: 1 1 auto;
-        max-height: 35vh;
-        min-height: 150px;
-        overflow-y: auto;
-        overflow-x: hidden;
-        display: block;
-    }
     
     /* Mobile button row layout */
     .mobile-button-row {
@@ -1167,8 +1184,15 @@ body {
 @media (max-width: 600px) {
     .sidebar {
         max-height: 70vh;
+    }
+    
+    .sidebar-scrollable {
         padding: 10px;
         padding-top: 35px;
+    }
+    
+    .sidebar-actions {
+        padding: 8px 10px;
     }
     
     .main-container {
@@ -1250,10 +1274,6 @@ body {
         font-size: 1em;
     }
     
-    .tech-order-list {
-        max-height: 30vh;
-        min-height: 120px;
-    }
     
     .tech-order-item {
         padding: 4px;

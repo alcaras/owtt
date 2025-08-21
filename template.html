@@ -37,46 +37,50 @@
 
     <div class="sidebar" id="sidebar">
         <button class="mobile-close-button" onclick="toggleSidebar()">×</button>
-        <div class="share-section">
-            <button class="share-button" onclick="shareBuild()">Share Build</button>
+        <div class="sidebar-scrollable">
+            <div class="share-section">
+                <button class="share-button" onclick="shareBuild()">Share Build</button>
+            </div>
+            
+            <div class="nation-section">
+                <h2>Nation</h2>
+                <select class="nation-select" id="nationSelect" onchange="selectNation()">
+                    <option value="">No Nation</option>
+                    <option value="NATION_AKSUM">Aksum</option>
+                    <option value="NATION_ASSYRIA">Assyria</option>
+                    <option value="NATION_BABYLONIA">Babylonia</option>
+                    <option value="NATION_CARTHAGE">Carthage</option>
+                    <option value="NATION_EGYPT">Egypt</option>
+                    <option value="NATION_GREECE">Greece</option>
+                    <option value="NATION_HITTITE">Hittites</option>
+                    <option value="NATION_KUSH">Kush</option>
+                    <option value="NATION_PERSIA">Persia</option>
+                    <option value="NATION_ROME">Rome</option>
+                </select>
+            </div>
+            
+            <h2>Research Order</h2>
+            <button class="simulate-button desktop-only" onclick="openSimulationPanel()">🎲 Simulate Research</button>
+            <div class="mobile-stats-row">
+                <div class="total-cost" id="totalCost">0 🧪</div>
+                <div class="total-laws" id="totalLaws">Laws: 0</div>
+            </div>
+            <div class="tech-order-list" id="techOrderList"></div>
         </div>
         
-        <div class="nation-section">
-            <h2>Nation</h2>
-            <select class="nation-select" id="nationSelect" onchange="selectNation()">
-                <option value="">No Nation</option>
-                <option value="NATION_AKSUM">Aksum</option>
-                <option value="NATION_ASSYRIA">Assyria</option>
-                <option value="NATION_BABYLONIA">Babylonia</option>
-                <option value="NATION_CARTHAGE">Carthage</option>
-                <option value="NATION_EGYPT">Egypt</option>
-                <option value="NATION_GREECE">Greece</option>
-                <option value="NATION_HITTITE">Hittites</option>
-                <option value="NATION_KUSH">Kush</option>
-                <option value="NATION_PERSIA">Persia</option>
-                <option value="NATION_ROME">Rome</option>
-            </select>
-        </div>
-        
-        <h2>Research Order</h2>
-        <button class="simulate-button desktop-only" onclick="openSimulationPanel()">🎲 Simulate Research</button>
-        <div class="mobile-stats-row">
-            <div class="total-cost" id="totalCost">0 🧪</div>
-            <div class="total-laws" id="totalLaws">Laws: 0</div>
-        </div>
-        <div class="tech-order-list" id="techOrderList"></div>
-        
-        <div class="desktop-button-group">
-            <button class="redo-button" onclick="redoLastAction()" style="display: none;">Redo</button>
-            <button class="undo-button" onclick="undoLastAction()">Undo</button>
-            <button class="clear-button" onclick="clearBuild()">Clear All</button>
-        </div>
-        
-        <div class="mobile-button-row">
-            <button class="simulate-button" onclick="openSimulationPanel()">🎲</button>
-            <button class="undo-button" onclick="undoLastAction()">Undo</button>
-            <button class="redo-button" onclick="redoLastAction()" style="display: none;">Redo</button>
-            <button class="clear-button" onclick="clearBuild()">Clear</button>
+        <div class="sidebar-actions">
+            <div class="desktop-button-group">
+                <button class="redo-button" onclick="redoLastAction()" style="display: none;">Redo</button>
+                <button class="undo-button" onclick="undoLastAction()">Undo</button>
+                <button class="clear-button" onclick="clearBuild()">Clear All</button>
+            </div>
+            
+            <div class="mobile-button-row">
+                <button class="simulate-button" onclick="openSimulationPanel()">🎲</button>
+                <button class="undo-button" onclick="undoLastAction()">Undo</button>
+                <button class="redo-button" onclick="redoLastAction()" style="display: none;">Redo</button>
+                <button class="clear-button" onclick="clearBuild()">Clear</button>
+            </div>
         </div>
     </div>
 
