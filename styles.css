@@ -127,6 +127,10 @@ body {
 .tech-order-list {
     flex: 1;
     overflow-y: auto;
+    min-height: 50px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    padding: 5px;
 }
 
 .tech-order-item {
@@ -942,10 +946,12 @@ body {
     }
     
     .tech-order-list {
-        flex: 1;
+        flex: 1 1 auto;
         max-height: 180px;
+        min-height: 80px;
         overflow-y: auto;
         overflow-x: hidden;
+        display: block;
     }
     
     .tech-order-item {
@@ -990,7 +996,8 @@ body {
 @media (max-width: 600px) {
     .sidebar {
         height: auto;
-        max-height: 55vh;
+        max-height: 60vh;
+        min-height: 300px;
         padding: 10px;
     }
     
