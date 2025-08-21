@@ -600,7 +600,9 @@
                 prereqsToAdd.forEach(prereqId => {
                     if (!researchedTechs.includes(prereqId)) {
                         researchedTechs.push(prereqId);
-                        researchOrder.push(techId);
+                        if (!researchOrder.includes(prereqId)) {
+                            researchOrder.push(prereqId);
+                        }
                         addedTechs.push(prereqId);
                     }
                 });
@@ -608,7 +610,9 @@
                 // Add the clicked tech itself if not already added
                 if (!researchedTechs.includes(techId)) {
                     researchedTechs.push(techId);
-                    researchOrder.push(techId);
+                    if (!researchOrder.includes(techId)) {
+                        researchOrder.push(techId);
+                    }
                     addedTechs.push(techId);
                 }
                 
@@ -1159,14 +1163,18 @@
                 prereqsToAdd.forEach(prereqId => {
                     if (!researchedTechs.includes(prereqId)) {
                         researchedTechs.push(prereqId);
-                        researchOrder.push(techId);
+                        if (!researchOrder.includes(prereqId)) {
+                            researchOrder.push(prereqId);
+                        }
                         completedTechs.push(prereqId); // Mark prereqs as completed too
                     }
                 });
                 
                 // Add and complete the tech itself
                 researchedTechs.push(techId);
-                researchOrder.push(techId);
+                if (!researchOrder.includes(techId)) {
+                    researchOrder.push(techId);
+                }
                 completedTechs.push(techId);
             } else {
                 // Toggle completion state
