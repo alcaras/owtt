@@ -39,7 +39,7 @@
     <div class="sidebar" id="sidebar">
         <!-- Sidebar Toggle Button -->
         <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
-            <span class="toggle-icon" id="toggleIcon">◀</span>
+            <span class="toggle-icon" id="toggleIcon">▶</span>
         </button>
         <button class="mobile-close-button" onclick="toggleSidebar()">×</button>
         
@@ -1746,11 +1746,11 @@
                 if (sidebar.classList.contains('collapsed')) {
                     sidebar.classList.remove('collapsed');
                     mainContainer.classList.remove('sidebar-collapsed');
-                    toggleIcon.textContent = '◀';
+                    toggleIcon.textContent = '▶';
                 } else {
                     sidebar.classList.add('collapsed');
                     mainContainer.classList.add('sidebar-collapsed');
-                    toggleIcon.textContent = '▶';
+                    toggleIcon.textContent = '◀';
                 }
                 // Redraw connections after sidebar toggle with a small delay for animation
                 setTimeout(() => {
