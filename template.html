@@ -138,6 +138,7 @@
 
         // localStorage functions
         function saveToLocalStorage() {
+            invalidateSimulation();
             const state = {
                 researchedTechs: researchedTechs,
                 researchOrder: researchOrder,
@@ -695,6 +696,7 @@
             if (undoHistory.length === 0) return;
             
             const action = undoHistory.pop();
+            invalidateSimulation();
             
             // Add to redo history
             redoHistory.push(action);
@@ -757,6 +759,7 @@
             if (redoHistory.length === 0) return;
             
             const action = redoHistory.pop();
+            invalidateSimulation();
             
             // Add back to undo history
             undoHistory.push(action);
@@ -1753,6 +1756,8 @@
                 return; // Don't clear if disabled
             }
             
+            invalidateSimulation();
+            
             // Save state before clearing for undo
             const previousTechs = researchedTechs.slice();
             const previousOrder = researchOrder.slice();
@@ -1836,6 +1841,7 @@
             const select = document.getElementById('nationSelect');
             const previousNation = selectedNation;
             selectedNation = select.value;
+            invalidateSimulation();
             
             // Handle previous nation's techs and bonus cards
             if (previousNation && nationData.startingTechs[previousNation]) {
@@ -1911,11 +1917,8 @@
         }
 
         // Simulation functions
-        // Simulation caching variables
-        let lastSimulatedTechs = null;
-        let lastSimulatedBonusTechs = null;
-        let lastSimulatedNation = null;
-        let cachedSimulationResults = null;
+        // Simple simulation tracking
+        let simulationIsCurrentForTechTree = false;
 
         function openSimulationPanel() {
             if (researchedTechs.length === 0) {
@@ -1926,24 +1929,13 @@
             document.getElementById('simulationOverlay').style.display = 'block';
             document.getElementById('simulationPanel').style.display = 'block';
             
-            // Check if tech selection has changed since last simulation
-            const currentTechsKey = JSON.stringify({
-                techs: [...researchedTechs].sort(),
-                bonusTechs: [...researchedBonusTechs].sort(),
-                nation: selectedNation
-            });
-            
-            const lastTechsKey = lastSimulatedTechs ? JSON.stringify({
-                techs: [...lastSimulatedTechs].sort(),
-                bonusTechs: [...lastSimulatedBonusTechs].sort(),
-                nation: lastSimulatedNation
-            }) : null;
-            
-            if (cachedSimulationResults && currentTechsKey === lastTechsKey) {
-                // Tech selection hasn't changed, show cached results
-                displayCachedResults();
+            // Check if we need to run a new simulation
+            if (simulationIsCurrentForTechTree) {
+                console.log('🎯 Simulation is current, no need to re-run');
                 return;
             }
+            
+            console.log('🔄 Running new simulation for current tech tree');
             
             // Tech selection changed, need to run new simulation
             // Initialize with progress bars
@@ -1996,14 +1988,9 @@
             }, 100);
         }
 
-        function displayCachedResults() {
-            // Show cached simulation results immediately
-            if (cachedSimulationResults) {
-                const container = document.getElementById('simulationResults');
-                if (container) {
-                    container.innerHTML = cachedSimulationResults;
-                }
-            }
+        // Function to invalidate simulation when tech tree changes
+        function invalidateSimulation() {
+            simulationIsCurrentForTechTree = false;
         }
 
         function closeSimulationPanel() {
@@ -2108,16 +2095,8 @@
                 });
             }
             
-            // Cache the current simulation state and results
-            lastSimulatedTechs = [...researchedTechs];
-            lastSimulatedBonusTechs = [...researchedBonusTechs];
-            lastSimulatedNation = selectedNation;
-            
-            // Cache the final HTML results
-            const cacheContainer = document.getElementById('simulationResults');
-            if (cacheContainer) {
-                cachedSimulationResults = cacheContainer.innerHTML;
-            }
+            // Mark simulation as current for this tech tree
+            simulationIsCurrentForTechTree = true;
         }
         
         function updateVariantDisplay(variantIndex, variantName, results, globalMin, globalMax) {
@@ -2133,18 +2112,44 @@
             const stdDevLeftPercent = globalRange > 0 ? ((rangeMin - globalMin) / globalRange) * 100 : 45;
             const stdDevRightPercent = globalRange > 0 ? ((rangeMax - globalMin) / globalRange) * 100 : 55;
             
-            // Build missed bonus cards string
-            let missedCardsInfo = '';
-            if (results.successRate < 1 && results.missedBonusCards && Object.keys(results.missedBonusCards).length > 0) {
-                const missedEntries = Object.entries(results.missedBonusCards).sort((a, b) => b[1] - a[1]);
-                const missedList = missedEntries
-                    .slice(0, 3) // Show top 3
-                    .map(([cardId, count]) => {
-                        const bonus = techData.bonusTechs.find(t => t.id === cardId);
-                        const percentage = Math.round((count / 1000) * 100);
-                        return `${bonus?.name || cardId} (${percentage}%)`;
+            // Debug bonus card combinations
+            console.log(`🎁 Bonus card combinations for ${variantName}:`, results.bonusCardCombinations);
+            
+            // Build bonus card breakdown string
+            let bonusCardsInfo = '';
+            const totalRuns = 1000;
+            const runsWithCombinations = results.bonusCardCombinations ? 
+                Object.values(results.bonusCardCombinations).reduce((sum, count) => sum + count, 0) : 0;
+            const runsWithAllCards = totalRuns - runsWithCombinations;
+            
+            console.log(`📊 ${variantName}: ${runsWithAllCards} runs with all cards, ${runsWithCombinations} runs with combinations`);
+            
+            if (runsWithCombinations > 0) {
+                // Some runs had to choose between bonus cards
+                const breakdown = [];
+                
+                if (runsWithAllCards > 0) {
+                    const allCardsPercent = Math.round((runsWithAllCards / totalRuns) * 100);
+                    breakdown.push(`${allCardsPercent}% all cards`);
+                }
+                
+                if (results.bonusCardCombinations && Object.keys(results.bonusCardCombinations).length > 0) {
+                    const combinationEntries = Object.entries(results.bonusCardCombinations).sort((a, b) => b[1] - a[1]);
+                    combinationEntries.slice(0, 3).forEach(([combinationKey, count]) => {
+                        const cardIds = combinationKey.split('+');
+                        const cardNames = cardIds.map(cardId => {
+                            const bonus = techData.bonusTechs.find(t => t.id === cardId);
+                            return bonus?.name || cardId;
+                        });
+                        const percentage = Math.round((count / totalRuns) * 100);
+                        breakdown.push(`${percentage}% chose between ${cardNames.join(' + ')}`);
                     });
-                missedCardsInfo = ` <span style="font-weight: normal;">(discarded: ${missedList.join(', ')})</span>`;
+                }
+                
+                bonusCardsInfo = ` <span style="font-weight: normal;">(${breakdown.join(', ')})</span>`;
+                console.log(`📝 ${variantName} breakdown:`, breakdown.join(', '));
+            } else {
+                console.log(`✅ ${variantName}: All runs got all bonus cards`);
             }
             
             // Update the variant's header
@@ -2156,7 +2161,7 @@
                         <span>${variantName} <span style="font-weight: normal;">(<span style="color: var(--light-blue);">${Math.round(results.avg)}</span> <span style="color: var(--primary-gold);">± ${Math.round(results.stdDev)}</span>, range: <span style="color: var(--primary-green);">${results.min}</span>-<span style="color: var(--light-red);">${results.max}</span>)</span></span>
                         <div style="text-align: right;">
                             <span style="color: ${results.successRate >= 0.95 ? 'var(--primary-green)' : results.successRate >= 0.8 ? 'var(--primary-gold)' : 'var(--light-red)'};">
-                                ${Math.round(results.successRate * 100)}% all bonus cards${missedCardsInfo}
+                                ${Math.round(results.successRate * 100)}% all bonus cards${bonusCardsInfo}
                             </span>
                         </div>
                     `;
@@ -2302,13 +2307,13 @@
             console.log(`🔍 DEBUG: Bonus techs: ${researchedBonusTechs.length}`);
             
             // Enable detailed debugging for Scholar simulations only
-            window.debugSimulation = hasScholar;
+            window.debugSimulation = false; // Disabled to reduce spam
             // Special debug mode for Stone Boost issue
-            window.debugStoneBoost = hasScholar;
+            window.debugStoneBoost = false;
             
             for (let sim = 0; sim < numSimulations; sim++) {
                 if (sim === 0) {
-                    window.verboseFirstTurn = true; // Extra verbose logging for first turn
+                    window.verboseFirstTurn = false; // Disabled to reduce spam
                 } else if (sim === 100) {
                     window.debugSimulation = false; // Turn off debugging after first 100 runs
                     window.debugStoneBoost = false; // Turn off Stone Boost debugging after first 100 runs
@@ -2327,7 +2332,8 @@
                     results.push({ 
                         cost: result.cost, 
                         scholarRedraws: result.scholarRedraws, 
-                        scholarRedrawsSuccessful: result.scholarRedrawsSuccessful 
+                        scholarRedrawsSuccessful: result.scholarRedrawsSuccessful,
+                        bonusCardCombination: result.bonusCardCombination
                     });
                 }
             }
@@ -2380,17 +2386,16 @@
                 return acc;
             }, {});
             
-            // Track which specific bonus cards are missed
-            const missedBonusCards = {};
-            failedRuns.forEach(fail => {
-                if (fail.reason === 'missed_bonus_cards' && fail.missedCards) {
-                    fail.missedCards.forEach(cardId => {
-                        missedBonusCards[cardId] = (missedBonusCards[cardId] || 0) + 1;
-                    });
+            // Track bonus card combinations that had to be split (from ALL runs)
+            const bonusCardCombinations = {};
+            results.forEach(run => {
+                if (run.bonusCardCombination) {
+                    const combinationKey = run.bonusCardCombination.join('+');
+                    bonusCardCombinations[combinationKey] = (bonusCardCombinations[combinationKey] || 0) + 1;
                 }
             });
             
-            return { min, max, avg, stdDev, successRate, failureReasons, results, scholarStats, missedBonusCards };
+            return { min, max, avg, stdDev, successRate, failureReasons, results, scholarStats, bonusCardCombinations };
         }
 
         function isStartingTech(techId) {
@@ -2825,6 +2830,19 @@
                 
                 // Handle discarded cards - bonus cards are permanently removed
                 const removedThisTurn = [];
+                const bonusCardsInHand = hand.filter(tech => tech.isBonus);
+                let bonusCardCombination = null;
+                
+                // If we had multiple bonus cards in hand, track the combination
+                if (bonusCardsInHand.length > 1) {
+                    bonusCardCombination = bonusCardsInHand.map(tech => tech.id).sort();
+                    if (window.debugSimulation) {
+                        console.log(`⚠️ Multiple bonus cards in hand: ${bonusCardsInHand.map(t => t.name).join(' + ')}`);
+                        console.log(`  Selected: ${bestChoice.name}`);
+                        console.log(`  Discarded: ${bonusCardsInHand.filter(t => t.id !== bestChoice.id).map(t => t.name).join(', ')}`);
+                    }
+                }
+                
                 hand.forEach(tech => {
                     if (tech.id !== bestChoice.id) {
                         if (tech.isBonus) {
@@ -2858,6 +2876,7 @@
                 return { 
                     cost: bestChoice.cost, 
                     removedBonusCards: removedThisTurn.length > 0 ? removedThisTurn : null,
+                    bonusCardCombination: bonusCardCombination,
                     redrawStats
                 };
             }
@@ -3014,7 +3033,7 @@
                                 <span>${variant.name} <span style="font-weight: normal;">(<span style="color: var(--light-blue);">${Math.round(results.avg)}</span> <span style="color: var(--primary-gold);">± ${Math.round(results.stdDev)}</span>, range: <span style="color: var(--primary-green);">${results.min}</span>-<span style="color: var(--light-red);">${results.max}</span>)</span></span>
                                 <div style="text-align: right;">
                                     <span style="color: ${results.successRate >= 0.95 ? 'var(--primary-green)' : results.successRate >= 0.8 ? 'var(--primary-gold)' : 'var(--light-red)'};">
-                                        ${Math.round(results.successRate * 100)}% all bonus cards${missedCardsInfo}
+                                        ${Math.round(results.successRate * 100)}% all bonus cards${bonusCardsInfo}
                                     </span>
                                 </div>
                             </div>
