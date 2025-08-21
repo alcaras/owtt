@@ -103,10 +103,6 @@
             Running 1000 simulations for each Scholar/Oracle combination to compare variance in research costs.
         </p>
         
-        <div class="simulation-buttons" style="margin-bottom: 15px; text-align: center;">
-            <button class="sim-run-button" onclick="runSimulation()">Run All Simulations</button>
-        </div>
-        
         <div class="simulation-comparison" id="simulationResults">
             <div class="comparison-loading" id="simulationLoading" style="display: none;">
                 🔄 Running simulations... This may take a few moments.
@@ -1521,6 +1517,26 @@
             tooltip.classList.add('show');
         }
 
+        function animateConnectionsDuringSidebarToggle() {
+            // Redraw connections smoothly during the animation
+            const animationDuration = 300; // Match CSS transition duration
+            const startTime = performance.now();
+            
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                drawConnections();
+                
+                if (elapsed < animationDuration) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Final redraw to ensure perfect positioning
+                    drawConnections();
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const mainContainer = document.querySelector('.main-container');
@@ -1547,10 +1563,8 @@
                     mainContainer.classList.add('sidebar-collapsed');
                     toggleIcon.textContent = '◀';
                 }
-                // Redraw connections after sidebar toggle with a small delay for animation
-                setTimeout(() => {
-                    drawConnections();
-                }, 350);
+                // Animate connections during sidebar toggle
+                animateConnectionsDuringSidebarToggle();
             }
         }
 
