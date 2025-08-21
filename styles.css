@@ -767,7 +767,7 @@ body {
     background: rgba(0, 0, 0, 0.5);
     border-left: 2px solid #8b6914;
     padding: 0;
-    overflow: hidden;
+    overflow: visible; /* Changed to visible to show toggle button */
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -776,6 +776,11 @@ body {
     height: 100vh;
     z-index: 100;
     transition: right 0.3s ease;
+}
+
+/* Inner container to handle overflow */
+.sidebar > *:not(.sidebar-toggle) {
+    overflow: hidden;
 }
 
 /* Sidebar toggle button for desktop - attached to sidebar */
@@ -1009,7 +1014,7 @@ body {
         width: 100%;
         height: auto;
         max-height: 75vh;
-        overflow: hidden;
+        overflow: hidden; /* Keep hidden on mobile */
         border-top: 2px solid #8b6914;
         border-left: none;
         z-index: 9999;

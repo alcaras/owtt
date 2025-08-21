@@ -53,9 +53,6 @@
                 <button class="share-button" onclick="shareBuild()">Share Build</button>
             </div>
             
-            <h2>Research Order</h2>
-            <div class="tech-order-list" id="techOrderList"></div>
-            
             <div class="nation-section">
                 <h2>Nation</h2>
                 <select class="nation-select" id="nationSelect" onchange="selectNation()">
@@ -72,6 +69,9 @@
                     <option value="NATION_ROME">Rome</option>
                 </select>
             </div>
+            
+            <h2>Research Order</h2>
+            <div class="tech-order-list" id="techOrderList"></div>
         </div>
         
         <div class="sidebar-actions">
@@ -1871,6 +1871,11 @@
             document.getElementById('simulationOverlay').style.display = 'block';
             document.getElementById('simulationPanel').style.display = 'block';
             document.getElementById('simulationResults').style.display = 'none';
+            
+            // Automatically run the simulation when panel opens
+            setTimeout(() => {
+                runSimulation();
+            }, 100);
         }
 
         function closeSimulationPanel() {
