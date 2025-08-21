@@ -2164,8 +2164,8 @@
         async function runSimulationAsync() {
             const variants = [
                 { scholar: false, oracle: false, name: "Base", index: 0 },
-                { scholar: true, oracle: false, name: "Scholar Only", index: 1 },
-                { scholar: false, oracle: true, name: "Oracle Only", index: 2 },
+                { scholar: false, oracle: true, name: "Oracle Only", index: 1 },
+                { scholar: true, oracle: false, name: "Scholar Only", index: 2 },
                 { scholar: true, oracle: true, name: "Scholar + Oracle", index: 3 }
             ];
             
@@ -2206,7 +2206,8 @@
                 container.innerHTML = html;
             }
             
-            const allResults = [];
+            // Base simulation will set the global scale for all variants
+            let globalMin, globalMax;
             
             for (const variant of variants) {
                 // Run simulation with progress updates
@@ -2235,8 +2236,18 @@
                         }
                         
                         if (completed >= totalSims) {
-                            // At 100%, get final results but don't update display yet
+                            // At 100%, get final results and update display immediately
                             const finalResults = simulateResearchPath(variant.scholar, variant.oracle, 1000);
+                            
+                            // First variant (Base) sets the global scale
+                            if (variant.index === 0) {
+                                globalMin = finalResults.min;
+                                globalMax = finalResults.max;
+                            }
+                            
+                            // Update display immediately using Base's scale for all variants
+                            updateVariantDisplay(variant.index, variant.name, finalResults, globalMin, globalMax);
+                            
                             resolve(finalResults);
                         } else {
                             setTimeout(runBatch, 10);
@@ -2245,22 +2256,6 @@
                     
                     runBatch();
                 });
-                
-                allResults.push({
-                    name: variant.name,
-                    results: results
-                });
-            }
-            
-            // Now update all variants with consistent global scale
-            const allMins = allResults.map(r => r.results.min);
-            const allMaxs = allResults.map(r => r.results.max);
-            const globalMin = Math.min(...allMins);
-            const globalMax = Math.max(...allMaxs);
-            
-            // Update each variant with the global scale
-            for (let i = 0; i < variants.length; i++) {
-                updateVariantDisplay(variants[i].index, variants[i].name, allResults[i].results, globalMin, globalMax);
             }
         }
         
