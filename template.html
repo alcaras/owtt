@@ -1964,28 +1964,61 @@
                 { scholar: true, oracle: true, name: "Scholar + Oracle", index: 3 }
             ];
             
-            for (const variant of variants) {
-                const row = document.getElementById(`simRow${variant.index}`);
-                const progressBar = document.getElementById(`progress${variant.index}`);
-                
-                // Update status to "Running..."
-                row.innerHTML = `
-                    <td class="comparison-variant">${variant.name}</td>
-                    <td><div class="progress-bar"><div class="progress-fill" id="progress${variant.index}" style="width: 0%;">0%</div></div></td>
-                    <td colspan="5">Running simulation...</td>
+            // Immediately switch to bar chart display with progress bars
+            const container = document.getElementById('simulationResults');
+            if (container) {
+                let html = `
+                    <div style="color: #d4af37; font-size: 1.1em; margin-bottom: 15px; text-align: center;">
+                        📊 Research Cost Comparison (1000 runs each)
+                    </div>
+                    <div style="background: rgba(139, 105, 20, 0.15); padding: 15px; border-radius: 8px; border: 1px solid #8b6914;">
                 `;
                 
-                // Run simulation in batches with progress updates
-                await new Promise(resolve => {
+                for (const variant of variants) {
+                    html += `
+                        <div id="variant${variant.index}" style="margin-bottom: 8px; padding: 8px; background: rgba(0,0,0,0.3); border-radius: 5px;">
+                            <div style="color: #d4af37; font-weight: bold; margin-bottom: 4px; font-size: 0.95em;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                    <span>${variant.name}</span>
+                                    <div style="text-align: right;">
+                                        <span style="color: var(--light-blue);">Running...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Progress bar area that will become the final visualization -->
+                            <div id="barArea${variant.index}" style="position: relative; height: 45px; margin: 10px 0;">
+                                <!-- Progress bar (will be replaced with final bars at 100%) -->
+                                <div id="progressContainer${variant.index}" style="position: absolute; top: 18px; width: 100%; height: 20px; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid #444;">
+                                    <div class="progress-fill" id="progress${variant.index}" style="width: 0%; height: 100%; background: linear-gradient(135deg, #3498db, #2980b9); transition: width 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8em; border-radius: 10px;">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += '</div>';
+                container.innerHTML = html;
+            }
+            
+            const allResults = [];
+            
+            for (const variant of variants) {
+                // Run simulation with progress updates
+                const results = await new Promise(resolve => {
                     const totalSims = 1000;
-                    const batchSize = 50; // Run 50 sims at a time
+                    const batchSize = 50;
                     let completed = 0;
-                    let allResults = [];
+                    let allBatchResults = [];
                     
                     function runBatch() {
                         const currentBatch = Math.min(batchSize, totalSims - completed);
-                        const batchResults = simulateResearchPath(variant.scholar, variant.oracle, currentBatch);
-                        allResults = allResults.concat(batchResults);
+                        const batchSimResults = simulateResearchPath(variant.scholar, variant.oracle, currentBatch);
+                        
+                        if (batchSimResults.results && Array.isArray(batchSimResults.results)) {
+                            allBatchResults = allBatchResults.concat(batchSimResults.results);
+                        }
+                        
                         completed += currentBatch;
                         
                         // Update progress bar
@@ -1997,35 +2030,122 @@
                         }
                         
                         if (completed >= totalSims) {
-                            // Calculate final statistics
-                            const average = Math.round(allResults.reduce((a, b) => a + b, 0) / allResults.length);
-                            const min = Math.min(...allResults);
-                            const max = Math.max(...allResults);
-                            const stdDev = Math.round(Math.sqrt(allResults.reduce((sq, n) => sq + Math.pow(n - average, 2), 0) / allResults.length));
-                            const expectedMin = Math.max(min, average - stdDev);
-                            const expectedMax = Math.min(max, average + stdDev);
+                            // At 100%, get final results and update this variant's display
+                            const finalResults = simulateResearchPath(variant.scholar, variant.oracle, 1000);
                             
-                            // Update row with final results
-                            row.classList.remove('grayed-out');
-                            row.innerHTML = `
-                                <td class="comparison-variant">${variant.name}</td>
-                                <td><span class="progress-complete">✓ Complete</span></td>
-                                <td>${min.toLocaleString()}</td>
-                                <td>${max.toLocaleString()}</td>
-                                <td><strong>${average.toLocaleString()}</strong></td>
-                                <td>${stdDev.toLocaleString()}</td>
-                                <td>${expectedMin.toLocaleString()} - ${expectedMax.toLocaleString()}</td>
-                            `;
+                            // Update the variant immediately with final visualization
+                            updateVariantDisplay(variant.index, variant.name, finalResults);
                             
-                            resolve();
+                            resolve(finalResults);
                         } else {
-                            // Continue with next batch
                             setTimeout(runBatch, 10);
                         }
                     }
                     
                     runBatch();
                 });
+                
+                allResults.push({
+                    name: variant.name,
+                    results: results
+                });
+            }
+            
+            // All variants are already updated individually, no need for final display update
+        }
+        
+        function updateVariantDisplay(variantIndex, variantName, results) {
+            // Calculate global range for this result set (simplified for single variant)
+            const range = results.max - results.min;
+            
+            // Calculate bar widths as percentages
+            const minPercent = 0; // Min is always at the left
+            const maxPercent = 100; // Max is always at the right
+            const avgPercent = range > 0 ? ((results.avg - results.min) / range) * 100 : 50;
+            const rangeMin = Math.max(results.min, Math.round(results.avg - results.stdDev));
+            const rangeMax = Math.min(results.max, Math.round(results.avg + results.stdDev));
+            const stdDevLeftPercent = range > 0 ? ((rangeMin - results.min) / range) * 100 : 45;
+            const stdDevRightPercent = range > 0 ? ((rangeMax - results.min) / range) * 100 : 55;
+            
+            // Build missed bonus cards string
+            let missedCardsInfo = '';
+            if (results.successRate < 1 && results.missedBonusCards && Object.keys(results.missedBonusCards).length > 0) {
+                const missedEntries = Object.entries(results.missedBonusCards).sort((a, b) => b[1] - a[1]);
+                const missedList = missedEntries
+                    .slice(0, 3) // Show top 3
+                    .map(([cardId, count]) => {
+                        const bonus = techData.bonusTechs.find(t => t.id === cardId);
+                        const percentage = Math.round((count / 1000) * 100);
+                        return `${bonus?.name || cardId} (${percentage}%)`;
+                    });
+                missedCardsInfo = ` <span style="font-weight: normal;">(failed: ${missedList.join(', ')})</span>`;
+            }
+            
+            // Update the variant's header
+            const variantElement = document.getElementById(`variant${variantIndex}`);
+            if (variantElement) {
+                const headerDiv = variantElement.querySelector('div:first-child div');
+                if (headerDiv) {
+                    headerDiv.innerHTML = `
+                        <span>${variantName} <span style="font-weight: normal;">(<span style="color: var(--light-blue);">${Math.round(results.avg)}</span> <span style="color: var(--primary-gold);">± ${Math.round(results.stdDev)}</span>, range: <span style="color: var(--primary-green);">${results.min}</span>-<span style="color: var(--light-red);">${results.max}</span>)</span></span>
+                        <div style="text-align: right;">
+                            <span style="color: ${results.successRate >= 0.95 ? 'var(--primary-green)' : results.successRate >= 0.8 ? 'var(--primary-gold)' : 'var(--light-red)'};">
+                                ${Math.round(results.successRate * 100)}% success${missedCardsInfo}
+                            </span>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Replace the progress bar with the final visualization
+            const barArea = document.getElementById(`barArea${variantIndex}`);
+            if (barArea) {
+                // Generate label HTML
+                const labels = [
+                    { value: results.min, percent: minPercent, color: 'var(--primary-green)', type: 'min' },
+                    { value: Math.round(results.avg), percent: avgPercent, color: 'var(--light-blue)', type: 'avg' },
+                    { value: results.max, percent: maxPercent, color: 'var(--light-red)', type: 'max' }
+                ].sort((a, b) => a.percent - b.percent);
+                
+                let labelHtml = '';
+                const minSpacing = 5;
+                let lastShownLabel = null;
+                
+                for (let i = 0; i < labels.length; i++) {
+                    const label = labels[i];
+                    if (lastShownLabel && 
+                        Math.abs(label.percent - lastShownLabel.percent) < minSpacing && 
+                        Math.abs(label.value - lastShownLabel.value) < 50) {
+                        continue;
+                    }
+                    
+                    labelHtml += `<div style="position: absolute; top: 0; left: ${label.percent}%; transform: translateX(-50%); color: ${label.color}; font-size: 0.75em; font-weight: bold;">
+                        ${label.value}
+                    </div>`;
+                    
+                    lastShownLabel = label;
+                }
+                
+                barArea.innerHTML = `
+                    ${labelHtml}
+                    <!-- Bar chart -->
+                    <div style="position: absolute; top: 18px; width: 100%; height: 20px; background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid #444;">
+                        <!-- Min-Max range bar (light gray) -->
+                        <div style="position: absolute; top: 6px; left: ${minPercent}%; width: ${maxPercent - minPercent}%; height: 8px; background: rgba(128,128,128,0.4); border-radius: 4px;"></div>
+                        
+                        <!-- StdDev range bar (gold) -->
+                        <div style="position: absolute; top: 3px; left: ${stdDevLeftPercent}%; width: ${stdDevRightPercent - stdDevLeftPercent}%; height: 14px; background: var(--primary-gold); opacity: 0.6; border-radius: 7px;"></div>
+                        
+                        <!-- Average line (blue) -->
+                        <div style="position: absolute; top: 2px; left: ${avgPercent}%; width: 3px; height: 16px; background: var(--light-blue); border-radius: 1px;"></div>
+                        
+                        <!-- Min marker (green) -->
+                        <div style="position: absolute; top: 2px; left: ${minPercent}%; width: 3px; height: 16px; background: var(--primary-green); border-radius: 1px;"></div>
+                        
+                        <!-- Max marker (red) -->
+                        <div style="position: absolute; top: 2px; left: ${maxPercent}%; width: 3px; height: 16px; background: var(--light-red); border-radius: 1px;"></div>
+                    </div>
+                `;
             }
         }
         
@@ -2818,7 +2938,7 @@
                             const percentage = Math.round((count / 1000) * 100); // Percentage of total runs
                             return `${bonus?.name || cardId} (${percentage}%)`;
                         });
-                    missedCardsInfo = ` (failed: ${missedList.join(', ')})`;
+                    missedCardsInfo = ` <span style="font-weight: normal;">(failed: ${missedList.join(', ')})</span>`;
                 }
                 
                 html += `
