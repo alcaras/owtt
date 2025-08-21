@@ -816,6 +816,14 @@ body {
     display: none; /* Hidden by default, shown on mobile */
 }
 
+.desktop-button-group {
+    display: block; /* Shown by default on desktop */
+}
+
+.simulate-button.desktop-only {
+    display: block;
+}
+
 /* Hide interactive elements on touch devices */
 @media (pointer: coarse), (hover: none) {
     /* Hide prerequisite arrows on mobile */
@@ -1108,15 +1116,13 @@ body {
         flex: 0 0 auto;
     }
     
-    /* Hide desktop button styles on mobile */
-    .simulate-button:not(.mobile-button-row .simulate-button) {
+    /* Hide desktop buttons on mobile, show mobile buttons */
+    .desktop-button-group {
         display: none;
     }
     
-    .undo-button:not(.mobile-button-row .undo-button),
-    .redo-button:not(.mobile-button-row .redo-button),
-    .clear-button:not(.mobile-button-row .clear-button) {
-        margin-top: 0;
+    .simulate-button.desktop-only {
+        display: none;
     }
     
     .tech-order-item {

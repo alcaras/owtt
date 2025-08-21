@@ -59,11 +59,18 @@
         </div>
         
         <h2>Research Order</h2>
+        <button class="simulate-button desktop-only" onclick="openSimulationPanel()">🎲 Simulate Research</button>
         <div class="mobile-stats-row">
-            <div class="total-cost" id="totalCost">Total Cost: 0</div>
-            <div class="total-laws" id="totalLaws">Laws Available: 0</div>
+            <div class="total-cost" id="totalCost">0 🧪</div>
+            <div class="total-laws" id="totalLaws">Laws: 0</div>
         </div>
         <div class="tech-order-list" id="techOrderList"></div>
+        
+        <div class="desktop-button-group">
+            <button class="redo-button" onclick="redoLastAction()" style="display: none;">Redo</button>
+            <button class="undo-button" onclick="undoLastAction()">Undo</button>
+            <button class="clear-button" onclick="clearBuild()">Clear All</button>
+        </div>
         
         <div class="mobile-button-row">
             <button class="simulate-button" onclick="openSimulationPanel()">🎲</button>
@@ -1050,14 +1057,14 @@
         }
         
         function updateUndoRedoButtons() {
-            const undoButton = document.querySelector('.undo-button');
-            const redoButton = document.querySelector('.redo-button');
+            const undoButtons = document.querySelectorAll('.undo-button');
+            const redoButtons = document.querySelectorAll('.redo-button');
             
-            // Update undo button
-            if (undoButton) {
+            // Update undo buttons
+            undoButtons.forEach(undoButton => {
                 if (undoHistory.length === 0) {
                     undoButton.classList.add('disabled');
-                    undoButton.textContent = '← Undo';
+                    undoButton.textContent = 'Undo';
                 } else {
                     undoButton.classList.remove('disabled');
                     const lastAction = undoHistory[undoHistory.length - 1];
@@ -1088,48 +1095,19 @@
                             actionText += 'Last action';
                     }
                     
-                    undoButton.textContent = actionText;
+                    undoButton.textContent = 'Undo';
                 }
-            }
+            });
             
-            // Update redo button
-            if (redoButton) {
+            // Update redo buttons
+            redoButtons.forEach(redoButton => {
                 if (redoHistory.length === 0) {
                     redoButton.style.display = 'none';
                 } else {
-                    redoButton.style.display = 'block';
+                    redoButton.style.display = '';
                     redoButton.classList.remove('disabled');
-                    const nextAction = redoHistory[redoHistory.length - 1];
-                    
-                    // Create descriptive text for the next action
-                    let actionText = '→ Redo: ';
-                    switch(nextAction.type) {
-                        case 'addTech':
-                            actionText += `Add ${nextAction.data.techName}`;
-                            break;
-                        case 'removeTech':
-                            actionText += `Remove ${nextAction.data.techName}`;
-                            break;
-                        case 'addBonusTech':
-                            actionText += `Add ${nextAction.data.bonusTechName}`;
-                            break;
-                        case 'removeBonusTech':
-                            actionText += `Remove ${nextAction.data.bonusTechName}`;
-                            break;
-                        case 'toggleCompletion':
-                            actionText += nextAction.data.wasCompleted ? 'Unmark' : 'Mark';
-                            actionText += ` ${nextAction.data.techName}`;
-                            break;
-                        case 'clearAll':
-                            actionText += `Clear ${nextAction.data.clearedCount} tech${nextAction.data.clearedCount !== 1 ? 's' : ''}`;
-                            break;
-                        default:
-                            actionText += 'Last action';
-                    }
-                    
-                    redoButton.textContent = actionText;
                 }
-            }
+            });
         }
         
         function findInsertionIndex(techId) {
@@ -1472,16 +1450,18 @@
                 }
             });
             
-            totalCostElement.textContent = `Total Cost: ${totalCost}`;
-            totalLawsElement.textContent = `Laws Available: ${totalLaws}`;
+            totalCostElement.textContent = `${totalCost} 🧪`;
+            totalLawsElement.textContent = `Laws: ${totalLaws}`;
             
-            // Update clear button state
-            const clearButton = document.querySelector('.clear-button');
-            if (researchedTechs.length === 0 && researchedBonusTechs.length === 0) {
-                clearButton.classList.add('disabled');
-            } else {
-                clearButton.classList.remove('disabled');
-            }
+            // Update clear button state for both desktop and mobile
+            const clearButtons = document.querySelectorAll('.clear-button');
+            clearButtons.forEach(button => {
+                if (researchedTechs.length === 0 && researchedBonusTechs.length === 0) {
+                    button.classList.add('disabled');
+                } else {
+                    button.classList.remove('disabled');
+                }
+            });
         }
 
         let connections = []; // Store line objects for cleanup
@@ -1903,8 +1883,10 @@
         }
 
         function clearBuild() {
-            const clearButton = document.querySelector('.clear-button');
-            if (clearButton.classList.contains('disabled')) {
+            // Check if any clear button is disabled
+            const clearButtons = document.querySelectorAll('.clear-button');
+            const anyDisabled = Array.from(clearButtons).some(btn => btn.classList.contains('disabled'));
+            if (anyDisabled) {
                 return; // Don't clear if disabled
             }
             
