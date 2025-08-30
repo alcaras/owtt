@@ -555,7 +555,7 @@
             
             // Load state: URL params take priority over localStorage
             const urlParams = new URLSearchParams(window.location.search);
-            const hasUrlParams = urlParams.has('n') || urlParams.has('nation') || urlParams.has('t') || urlParams.has('techs') || urlParams.has('b') || urlParams.has('bonus');
+            const hasUrlParams = urlParams.has('n') || urlParams.has('nation') || urlParams.has('t') || urlParams.has('techs') || urlParams.has('b') || urlParams.has('bonus') || urlParams.has('o');
             
             if (hasUrlParams) {
                 // Load from URL if present (for sharing links)
@@ -1979,7 +1979,29 @@
                         // Negative number = bonus tech (convert -1 to index 0, -2 to index 1, etc.)
                         const bonusIndex = (-num) - 1;
                         if (bonusIndex >= 0 && bonusIndex < techData.bonusTechs.length) {
-                            const bonusTechId = techData.bonusTechs[bonusIndex].id;
+                            const bonusTech = techData.bonusTechs[bonusIndex];
+                            const bonusTechId = bonusTech.id;
+                            
+                            // Add the parent tech and its prerequisites first
+                            if (bonusTech.parent && !researchedTechs.includes(bonusTech.parent)) {
+                                const prereqsToAdd = getAllPrerequisites(bonusTech.parent);
+                                prereqsToAdd.forEach(prereqId => {
+                                    if (!researchedTechs.includes(prereqId)) {
+                                        researchedTechs.push(prereqId);
+                                        if (!researchOrder.includes(prereqId)) {
+                                            researchOrder.push(prereqId);
+                                        }
+                                    }
+                                });
+                                
+                                // Add the parent tech itself
+                                researchedTechs.push(bonusTech.parent);
+                                if (!researchOrder.includes(bonusTech.parent)) {
+                                    researchOrder.push(bonusTech.parent);
+                                }
+                            }
+                            
+                            // Now add the bonus tech
                             if (!researchedBonusTechs.includes(bonusTechId)) {
                                 researchedBonusTechs.push(bonusTechId);
                                 researchOrder.push(bonusTechId);
