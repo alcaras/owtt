@@ -102,7 +102,7 @@
         <p style="color: #f4e4c1; margin-bottom: 15px; text-align: center; font-size: 0.9em;">
             Running 1000 simulations for each Scholar/Oracle combination to compare variance in research costs.
             <br>
-            <a href="#" onclick="return false;" onmouseenter="showTooltip(event, 'simulation-logic')" onmouseleave="hideTooltip()" style="color: var(--primary-gold); text-decoration: underline; font-size: 0.85em;">💡 Simulation Logic</a>
+            <a href="#" onclick="return false;" onmouseenter="showTooltip(event, 'simulation-logic')" onmouseleave="hideLogicTooltips()" style="color: var(--primary-gold); text-decoration: underline; font-size: 0.85em;">💡 Simulation Logic</a>
         </p>
         
         <div id="simulation-logic" style="display: none; position: absolute; background: rgba(20, 15, 10, 0.95); border: 1px solid #8b6914; border-radius: 5px; padding: 10px; font-size: 0.8em; color: #f4e4c1; max-width: 400px; z-index: 10002; box-shadow: 0 4px 12px rgba(0,0,0,0.8);">
@@ -3264,7 +3264,7 @@ ${bonusCardsInfo.trim()}
             }
         }
 
-        function hideTooltip() {
+        function hideLogicTooltips() {
             const tooltips = document.querySelectorAll('[id$="-logic"]');
             tooltips.forEach(tooltip => {
                 tooltip.style.display = 'none';
