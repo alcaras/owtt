@@ -10,6 +10,8 @@ import xml.etree.ElementTree as ET
 import json
 import re
 import os
+import subprocess
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 import argparse
@@ -892,6 +894,61 @@ class OldWorldParser:
         }
 
 
+def fetch_game_version() -> str:
+    """Fetch the latest game version from Mohawk's GitHub build notes."""
+    try:
+        result = subprocess.run(
+            ["gh", "api", "repos/MohawkGames/main_buildnotes/contents"],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode != 0:
+            return ""
+
+        files = json.loads(result.stdout)
+        # Find the latest "Old World Release update" file
+        release_files = [f["name"] for f in files if f["name"].startswith("Old World Release update")]
+        if not release_files:
+            return ""
+
+        latest = sorted(release_files)[-1]
+
+        # Fetch the file content
+        result = subprocess.run(
+            ["gh", "api", f"repos/MohawkGames/main_buildnotes/contents/{latest}"],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode != 0:
+            return ""
+
+        import base64
+        file_data = json.loads(result.stdout)
+        content = base64.b64decode(file_data["content"]).decode("utf-8")
+
+        # First line format: "Main Branch 1.0.82189 Release 2026-02-18"
+        first_line = content.split("\n")[0].strip()
+        parts = first_line.split()
+        # Extract version and date
+        version = None
+        date = None
+        for part in parts:
+            if re.match(r'\d+\.\d+\.\d+', part):
+                version = part
+            if re.match(r'\d{4}-\d{2}-\d{2}', part):
+                date = part
+
+        if version and date:
+            # Format date nicely
+            dt = datetime.strptime(date, "%Y-%m-%d")
+            formatted_date = dt.strftime("%b %d, %Y")
+            return f"Old World v{version} ({formatted_date})"
+        elif version:
+            return f"Old World v{version}"
+    except Exception as e:
+        print(f"Warning: Could not fetch game version: {e}")
+
+    return ""
+
+
 def generate_html(data: Dict, template_path: str = None, output_path: str = "index.html"):
     """Generate the complete HTML file from parsed data using simple template placeholders"""
     
@@ -952,9 +1009,20 @@ def generate_html(data: Dict, template_path: str = None, output_path: str = "ind
             nationSpecificBonuses: {json.dumps(data['nationData']['nationSpecificBonuses'], indent=16).replace('{', '{', 1)}
         }};"""
     
+    # Fetch game version
+    game_version = fetch_game_version()
+    if game_version:
+        print(f"Game version: {game_version}")
+    else:
+        print("Warning: Could not detect game version")
+        game_version = "Old World"
+    generated_date = datetime.now().strftime("%b %d, %Y")
+    version_html = f'{game_version} | Generated {generated_date}'
+
     # Replace template placeholders with actual data
     html_template = html_template.replace("{{TECH_DATA}}", tech_data_block)
     html_template = html_template.replace("{{NATION_DATA}}", nation_data_block)
+    html_template = html_template.replace("{{GAME_VERSION}}", version_html)
     
     # Write the output file
     with open(output_path, 'w') as f:
