@@ -240,5 +240,59 @@ class TestHTMLGeneration(unittest.TestCase):
         self.assertEqual(len(bonus_ids), 53)
 
 
+class TestTemplateBugs(unittest.TestCase):
+    """Tests for known template bugs - verify source code patterns."""
+
+    @classmethod
+    def setUpClass(cls):
+        with open("template.html") as f:
+            cls.template = f.read()
+
+    # =========================================================================
+    # Bug 1: Nation swap pushes timestamps instead of tech IDs into researchOrder
+    # =========================================================================
+
+    def test_no_timestamp_in_research_order(self):
+        """selectNation should push tech IDs, not Date.now() timestamps, into researchOrder."""
+        # The bug: newResearchOrder.push(Date.now() - 10000)
+        nation_func = self.template.split("function selectNation")[1].split("\n        function ")[0]
+        self.assertNotIn("Date.now()", nation_func,
+                         "selectNation should not use Date.now() for research order entries")
+
+    def test_starting_techs_pushed_as_ids(self):
+        """Starting techs added during nation selection should be tech IDs in researchOrder."""
+        # After the fix, newResearchOrder should receive techId, not timestamps
+        nation_func = self.template.split("function selectNation")[1].split("\n        function ")[0]
+        self.assertIn("newResearchOrder.push(techId)", nation_func,
+                       "selectNation should push techId into newResearchOrder")
+
+    # =========================================================================
+    # Bug 2: researchOrder uses .slice() instead of .filter() when removing techs
+    # =========================================================================
+
+    def test_research_order_filtered_not_sliced(self):
+        """When removing old nation techs, researchOrder should be filtered, not sliced."""
+        nation_func = self.template.split("function selectNation")[1].split("\n        function ")[0]
+        # Should NOT have: researchOrder = researchOrder.slice(0, researchedTechs.length)
+        self.assertNotIn("researchOrder.slice(0,", nation_func,
+                         "Should not slice researchOrder by length")
+        self.assertNotIn("researchOrder = researchOrder.slice(0", nation_func,
+                         "Should not slice researchOrder by length")
+
+    # =========================================================================
+    # Bug 3: URL params not saved to localStorage (old build persists)
+    # =========================================================================
+
+    def test_url_load_saves_to_localstorage(self):
+        """After loading from URL params, state should be saved to localStorage."""
+        # Find the init section where URL vs localStorage is decided
+        init_func = self.template.split("function initializeTechTree")[1].split("\n        function ")[0]
+        # After loadFromUrl(), saveToLocalStorage() should be called
+        url_section = init_func[init_func.find("loadFromUrl()"):]
+        # Within the next ~10 lines after loadFromUrl, should save to localStorage
+        self.assertIn("saveToLocalStorage()", init_func,
+                       "initializeTechTree should call saveToLocalStorage after loading state")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

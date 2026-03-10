@@ -557,11 +557,13 @@
             if (hasUrlParams) {
                 // Load from URL if present (for sharing links)
                 loadFromUrl();
+                // Save URL state to localStorage so it persists on reload
+                saveToLocalStorage();
             } else {
                 // Load from localStorage if no URL params
                 loadFromLocalStorage();
             }
-            
+
             // Update URL to reflect current state (whether loaded from URL or localStorage)
             updateURL();
             
@@ -2223,7 +2225,9 @@
                 
                 // Remove techs that aren't dependencies
                 researchedTechs = researchedTechs.filter(techId => !techsToRemove.includes(techId));
-                researchOrder = researchOrder.slice(0, researchedTechs.length);
+                researchOrder = researchOrder.filter(techId =>
+                    researchedTechs.includes(techId) || researchedBonusTechs.includes(techId)
+                );
                 completedTechs = completedTechs.filter(techId => !techsToRemove.includes(techId));
                 
                 // Also remove bonus techs whose parent was removed
@@ -2244,7 +2248,7 @@
                 startingTechs.forEach(techId => {
                     if (!researchedTechs.includes(techId)) {
                         newResearchedTechs.push(techId);
-                        newResearchOrder.push(Date.now() - 10000); // Earlier timestamp
+                        newResearchOrder.push(techId);
                     }
                 });
                 
