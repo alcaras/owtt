@@ -7,6 +7,7 @@ a single HTML file with an interactive tech tree visualization.
 """
 
 import xml.etree.ElementTree as ET
+import hashlib
 import json
 import re
 import os
@@ -15,6 +16,21 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 import argparse
+
+
+# Version history: maps version hash -> { main: [tech_ids], bonus: [bonus_ids] }
+# When the tech list changes, snapshot the previous version here before regenerating.
+# This allows old shared URLs to be translated to current tech indices.
+VERSION_HISTORY = {
+    # No previous versions yet - this is the first snapshot
+}
+
+
+def compute_version_hash(techs, bonus_techs):
+    """Compute a short 4-char hex hash from the ordered tech ID lists."""
+    ids = [t["id"] for t in techs] + ["|"] + [t["id"] for t in bonus_techs]
+    combined = ",".join(ids)
+    return hashlib.sha256(combined.encode()).hexdigest()[:4]
 
 
 class OldWorldParser:
@@ -1019,10 +1035,19 @@ def generate_html(data: Dict, template_path: str = None, output_path: str = "ind
     generated_date = datetime.now().strftime("%b %d, %Y")
     version_html = f'{game_version} | Generated {generated_date}'
 
+    # Compute version hash for URL stability
+    version_hash = compute_version_hash(data["techs"], data["bonusTechs"])
+    print(f"Version hash: {version_hash}")
+
+    version_hash_block = f'const currentVersionHash = "{version_hash}";'
+    version_maps_block = f'const versionMaps = {json.dumps(VERSION_HISTORY)};'
+
     # Replace template placeholders with actual data
     html_template = html_template.replace("{{TECH_DATA}}", tech_data_block)
     html_template = html_template.replace("{{NATION_DATA}}", nation_data_block)
     html_template = html_template.replace("{{GAME_VERSION}}", version_html)
+    html_template = html_template.replace("{{VERSION_HASH}}", version_hash_block)
+    html_template = html_template.replace("{{VERSION_HISTORY}}", version_maps_block)
     
     # Write the output file
     with open(output_path, 'w') as f:

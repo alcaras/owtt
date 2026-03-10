@@ -9,6 +9,10 @@
 
 </head>
 <body>
+    <div class="version-warning" id="versionWarning" style="display: none;">
+        <span id="versionWarningText"></span>
+        <button onclick="dismissVersionWarning()">x</button>
+    </div>
     <div class="main-container">
         <div class="tech-tree-wrapper">
             <div class="tech-cost-headers">
@@ -139,6 +143,10 @@
         // Complete tech tree data from game files with correct prerequisites and unlocks
         {{TECH_DATA}}
 
+        // Version hash for URL stability across game updates
+        {{VERSION_HASH}}
+        {{VERSION_HISTORY}}
+
         let researchedTechs = [];
         let researchOrder = [];
         let researchedBonusTechs = [];
@@ -168,7 +176,10 @@
 
         function updateURL() {
             const urlParts = [];
-            
+
+            // Add version hash for URL stability across updates
+            urlParts.push(`v=${currentVersionHash}`);
+
             // Add nation if selected (using numeric index)
             if (selectedNation) {
                 const nationIndex = nationLookup.findIndex(n => n === selectedNation);
@@ -1739,9 +1750,81 @@
             });
         }
 
+        function migrateIndex(num, urlVersion) {
+            // Translate an index from an old version to a tech ID using version maps
+            const map = versionMaps[urlVersion];
+            if (!map) return null;
+
+            if (num >= 0) {
+                // Main tech index
+                if (num < map.main.length) {
+                    return { type: 'main', id: map.main[num] };
+                }
+            } else {
+                // Bonus tech index (-1 = index 0, -2 = index 1, etc.)
+                const bonusIndex = (-num) - 1;
+                if (bonusIndex >= 0 && bonusIndex < map.bonus.length) {
+                    return { type: 'bonus', id: map.bonus[bonusIndex] };
+                }
+            }
+            return null;
+        }
+
+        function showVersionWarning(message) {
+            const warning = document.getElementById('versionWarning');
+            const text = document.getElementById('versionWarningText');
+            text.textContent = message;
+            warning.style.display = 'block';
+        }
+
+        function dismissVersionWarning() {
+            document.getElementById('versionWarning').style.display = 'none';
+        }
+
+        function resolveTechId(num, urlVersion) {
+            // Resolve a URL index to a tech ID, handling version migration
+            let skipped = false;
+
+            if (urlVersion && urlVersion !== currentVersionHash && versionMaps[urlVersion]) {
+                // Migrate from old version
+                const migrated = migrateIndex(num, urlVersion);
+                if (!migrated) return { id: null, skipped: true };
+
+                // Check if the tech still exists in current data
+                if (migrated.type === 'main') {
+                    const exists = techData.techs.find(t => t.id === migrated.id);
+                    if (!exists) return { id: null, skipped: true };
+                } else {
+                    const exists = techData.bonusTechs.find(t => t.id === migrated.id);
+                    if (!exists) return { id: null, skipped: true };
+                }
+                return { id: migrated.id, type: migrated.type, skipped: false };
+            }
+
+            // Current version or no version - use indices directly
+            if (num >= 0) {
+                if (num < techData.techs.length) {
+                    return { id: techData.techs[num].id, type: 'main', skipped: false };
+                }
+            } else {
+                const bonusIndex = (-num) - 1;
+                if (bonusIndex >= 0 && bonusIndex < techData.bonusTechs.length) {
+                    return { id: techData.bonusTechs[bonusIndex].id, type: 'bonus', skipped: false };
+                }
+            }
+            return { id: null, skipped: true };
+        }
+
         function loadFromUrl() {
             const params = new URLSearchParams(window.location.search);
-            
+            const urlVersion = params.get('v') || null;
+            let skippedCount = 0;
+
+            // Check for version mismatch
+            if (urlVersion && urlVersion !== currentVersionHash && !versionMaps[urlVersion]) {
+                showVersionWarning('This link may be from an unrecognized version and might not load correctly.');
+            }
+
             // Load nation first (new format: n=index, old format: nation=NAME for backward compatibility)
             let nationParam = params.get('n');
             if (nationParam !== null) {
@@ -1756,11 +1839,11 @@
                     selectedNation = nationParam;
                 }
             }
-            
+
             if (selectedNation) {
                 const select = document.getElementById('nationSelect');
                 select.value = selectedNation;
-                
+
                 // Add starting techs
                 if (nationData.startingTechs[selectedNation]) {
                     const startingTechs = nationData.startingTechs[selectedNation];
@@ -1772,65 +1855,65 @@
                     });
                 }
             }
-            
+
             // Load unified research order (new format: o=1,2,-1,3,-2)
             let orderParam = params.get('o');
             if (orderParam) {
                 const orderNumbers = orderParam.split(',').map(n => parseInt(n)).filter(n => !isNaN(n));
-                
+
                 // Process each item in the order
                 orderNumbers.forEach(num => {
-                    if (num >= 0) {
-                        // Positive number = main tech
-                        if (num < techData.techs.length) {
-                            const techId = techData.techs[num].id;
-                            
-                            // Add prerequisites first
-                            const prereqsToAdd = getAllPrerequisites(techId);
+                    const resolved = resolveTechId(num, urlVersion);
+                    if (resolved.skipped) {
+                        skippedCount++;
+                        return;
+                    }
+
+                    if (resolved.type === 'main') {
+                        const techId = resolved.id;
+
+                        // Add prerequisites first
+                        const prereqsToAdd = getAllPrerequisites(techId);
+                        prereqsToAdd.forEach(prereqId => {
+                            if (!researchedTechs.includes(prereqId)) {
+                                researchedTechs.push(prereqId);
+                                researchOrder.push(prereqId);
+                            }
+                        });
+
+                        // Add the tech itself
+                        if (!researchedTechs.includes(techId)) {
+                            researchedTechs.push(techId);
+                            researchOrder.push(techId);
+                        }
+                    } else if (resolved.type === 'bonus') {
+                        const bonusTechId = resolved.id;
+                        const bonusTech = techData.bonusTechs.find(t => t.id === bonusTechId);
+                        if (!bonusTech) { skippedCount++; return; }
+
+                        // Add the parent tech and its prerequisites first
+                        if (bonusTech.parent && !researchedTechs.includes(bonusTech.parent)) {
+                            const prereqsToAdd = getAllPrerequisites(bonusTech.parent);
                             prereqsToAdd.forEach(prereqId => {
                                 if (!researchedTechs.includes(prereqId)) {
                                     researchedTechs.push(prereqId);
-                                    researchOrder.push(prereqId);
+                                    if (!researchOrder.includes(prereqId)) {
+                                        researchOrder.push(prereqId);
+                                    }
                                 }
                             });
-                            
-                            // Add the tech itself
-                            if (!researchedTechs.includes(techId)) {
-                                researchedTechs.push(techId);
-                                researchOrder.push(techId);
+
+                            // Add the parent tech itself
+                            researchedTechs.push(bonusTech.parent);
+                            if (!researchOrder.includes(bonusTech.parent)) {
+                                researchOrder.push(bonusTech.parent);
                             }
                         }
-                    } else {
-                        // Negative number = bonus tech (convert -1 to index 0, -2 to index 1, etc.)
-                        const bonusIndex = (-num) - 1;
-                        if (bonusIndex >= 0 && bonusIndex < techData.bonusTechs.length) {
-                            const bonusTech = techData.bonusTechs[bonusIndex];
-                            const bonusTechId = bonusTech.id;
-                            
-                            // Add the parent tech and its prerequisites first
-                            if (bonusTech.parent && !researchedTechs.includes(bonusTech.parent)) {
-                                const prereqsToAdd = getAllPrerequisites(bonusTech.parent);
-                                prereqsToAdd.forEach(prereqId => {
-                                    if (!researchedTechs.includes(prereqId)) {
-                                        researchedTechs.push(prereqId);
-                                        if (!researchOrder.includes(prereqId)) {
-                                            researchOrder.push(prereqId);
-                                        }
-                                    }
-                                });
-                                
-                                // Add the parent tech itself
-                                researchedTechs.push(bonusTech.parent);
-                                if (!researchOrder.includes(bonusTech.parent)) {
-                                    researchOrder.push(bonusTech.parent);
-                                }
-                            }
-                            
-                            // Now add the bonus tech
-                            if (!researchedBonusTechs.includes(bonusTechId)) {
-                                researchedBonusTechs.push(bonusTechId);
-                                researchOrder.push(bonusTechId);
-                            }
+
+                        // Now add the bonus tech
+                        if (!researchedBonusTechs.includes(bonusTechId)) {
+                            researchedBonusTechs.push(bonusTechId);
+                            researchOrder.push(bonusTechId);
                         }
                     }
                 });
@@ -1887,6 +1970,12 @@
                 }
             }
             
+            // Show warning if techs were skipped during version migration
+            if (skippedCount > 0) {
+                const plural = skippedCount === 1 ? 'technology was' : 'technologies were';
+                showVersionWarning(`This build was shared from an older version. ${skippedCount} ${plural} no longer available and skipped.`);
+            }
+
             // Update displays
             initializeBonusTechs();
             updateTechStates();

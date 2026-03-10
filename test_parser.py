@@ -240,6 +240,79 @@ class TestHTMLGeneration(unittest.TestCase):
         self.assertEqual(len(bonus_ids), 53)
 
 
+class TestVersionHash(unittest.TestCase):
+    """Tests for version hash and URL versioning system."""
+
+    @classmethod
+    def setUpClass(cls):
+        from generate_tech_tree import OldWorldParser, compute_version_hash
+        cls.parser = OldWorldParser("XML/Infos")
+        cls.parser.parse_all()
+        cls.data = cls.parser.export_data()
+        cls.compute_version_hash = staticmethod(compute_version_hash)
+
+    def test_compute_version_hash_returns_4_hex_chars(self):
+        """Version hash should be 4 hex characters."""
+        h = self.compute_version_hash(self.data["techs"], self.data["bonusTechs"])
+        self.assertEqual(len(h), 4)
+        self.assertTrue(all(c in "0123456789abcdef" for c in h))
+
+    def test_version_hash_is_deterministic(self):
+        """Same input should produce same hash."""
+        h1 = self.compute_version_hash(self.data["techs"], self.data["bonusTechs"])
+        h2 = self.compute_version_hash(self.data["techs"], self.data["bonusTechs"])
+        self.assertEqual(h1, h2)
+
+    def test_version_hash_changes_with_different_techs(self):
+        """Different tech lists should produce different hashes."""
+        h1 = self.compute_version_hash(self.data["techs"], self.data["bonusTechs"])
+        # Modify techs
+        modified = self.data["techs"][:-1]  # Remove last tech
+        h2 = self.compute_version_hash(modified, self.data["bonusTechs"])
+        self.assertNotEqual(h1, h2)
+
+    def test_version_hash_in_generated_html(self):
+        """Generated HTML should contain the version hash constant."""
+        from generate_tech_tree import generate_html, compute_version_hash
+        generate_html(self.data, output_path="test_output.html")
+        with open("test_output.html") as f:
+            html = f.read()
+        h = compute_version_hash(self.data["techs"], self.data["bonusTechs"])
+        self.assertIn(f'const currentVersionHash = "{h}"', html)
+
+    def test_version_history_in_generated_html(self):
+        """Generated HTML should contain the version history object."""
+        with open("test_output.html") as f:
+            html = f.read()
+        self.assertIn("const versionMaps =", html)
+
+    def test_url_includes_version_param(self):
+        """updateURL should include v= parameter."""
+        with open("template.html") as f:
+            template = f.read()
+        update_func = template.split("function updateURL")[1].split("\n        function ")[0]
+        self.assertIn("currentVersionHash", update_func)
+
+    def test_load_from_url_handles_version_migration(self):
+        """loadFromUrl should check version hash and migrate if needed."""
+        with open("template.html") as f:
+            template = f.read()
+        load_func = template.split("function loadFromUrl")[1].split("\n        function ")[0]
+        self.assertIn("versionMaps", load_func)
+
+    def test_warning_banner_exists(self):
+        """Template should have a version warning banner element."""
+        with open("template.html") as f:
+            template = f.read()
+        self.assertIn("versionWarning", template)
+
+    @classmethod
+    def tearDownClass(cls):
+        import os
+        if os.path.exists("test_output.html"):
+            os.remove("test_output.html")
+
+
 class TestTemplateBugs(unittest.TestCase):
     """Tests for known template bugs - verify source code patterns."""
 

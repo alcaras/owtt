@@ -254,6 +254,32 @@ body {
     color: #999;
 }
 
+.version-warning {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+    background: rgba(180, 140, 20, 0.95);
+    color: #1a1a0a;
+    padding: 8px 40px 8px 15px;
+    font-size: 0.85em;
+    text-align: center;
+}
+
+.version-warning button {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #1a1a0a;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+}
+
 .sidebar-version {
     padding: 8px 15px;
     font-size: 0.75em;
