@@ -43,8 +43,8 @@ The extracted data is embedded as JavaScript objects:
 
 ```javascript
 const techData = {
-    techs: [ /* 87 main technologies */ ],
-    bonusTechs: [ /* 51 bonus technologies including 20 nation-specific */ ]
+    techs: [ /* 49 main technologies (46 regular + 3 victory) */ ],
+    bonusTechs: [ /* 53 bonus technologies including 20 nation-specific */ ]
 };
 
 const nationData = {
@@ -65,6 +65,9 @@ const nationData = {
 ## Feature Implementation Notes
 
 ### Nation Selection
+- Nation-specific bonus cards require culture levels instead of tech prerequisites:
+  - Tier 1 (cost 200): Requires CULTURE_STRONG
+  - Tier 2 (cost 600): Requires CULTURE_LEGENDARY
 - Starting techs are automatically added when selecting a nation
 - Starting techs show as "FREE" with crossed-out costs
 - Starting techs are always marked as completed (green) and cannot be uncompleted

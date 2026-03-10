@@ -470,7 +470,7 @@
                 });
             } else {
                 // Add the parent tech and all its prerequisites first
-                if (!researchedTechs.includes(bonusTech.parent)) {
+                if (bonusTech.parent && !researchedTechs.includes(bonusTech.parent)) {
                     // Add prerequisites of the parent tech using proper insertion order
                     const prereqsToAdd = getAllPrerequisites(bonusTech.parent);
                     prereqsToAdd.forEach(prereqId => {
@@ -481,7 +481,7 @@
                             researchOrder.splice(insertIndex, 0, prereqId);
                         }
                     });
-                    
+
                     // Add the parent tech itself in the correct position
                     const parentInsertIndex = findInsertionIndex(bonusTech.parent);
                     researchedTechs.splice(parentInsertIndex, 0, bonusTech.parent);
@@ -546,7 +546,7 @@
                             badge.textContent = overallIndex + 1;
                             node.appendChild(badge);
                         }
-                    } else if (researchedTechs.includes(bonusTech.parent)) {
+                    } else if (bonusTech.cultureRequired || researchedTechs.includes(bonusTech.parent)) {
                         node.classList.add('available');
                     }
                 }
@@ -555,17 +555,26 @@
 
         function showBonusTooltip(event, bonusTech) {
             const tooltip = document.getElementById('tooltip');
-            const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
-            const parentName = parentTech ? parentTech.name : bonusTech.parent;
-            
+            let requirementText;
+            if (bonusTech.cultureRequired) {
+                const cultureName = bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
+                requirementText = `<p><strong>Requires:</strong> ${cultureName}</p>`;
+            } else if (bonusTech.parent) {
+                const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
+                const parentName = parentTech ? parentTech.name : bonusTech.parent;
+                requirementText = `<p><strong>Requires:</strong> ${parentName}</p>`;
+            } else {
+                requirementText = '';
+            }
+
             tooltip.innerHTML = `
                 <h3>${bonusTech.name}</h3>
                 <p><strong>Cost:</strong> ${bonusTech.cost} Science</p>
-                <p><strong>Requires:</strong> ${parentName}</p>
+                ${requirementText}
                 <p><strong>Bonus:</strong> ${bonusTech.bonus}</p>
                 <p style="margin-top: 8px; font-style: italic; color: #a09080;">Click to add/remove • Right-click to mark completed</p>
             `;
-            
+
             positionTooltip(event, tooltip);
         }
 
@@ -1209,7 +1218,7 @@
             if (!bonusTech) return;
             
             // Ensure parent tech is researched first
-            if (!researchedTechs.includes(bonusTech.parent)) {
+            if (bonusTech.parent && !researchedTechs.includes(bonusTech.parent)) {
                 quickToggleCompletion(bonusTech.parent);
             }
             
@@ -1449,17 +1458,26 @@
         
         function showResearchOrderBonusTooltip(event, bonusTech, isCompleted) {
             const tooltip = document.getElementById('tooltip');
-            const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
-            const parentName = parentTech ? parentTech.name : bonusTech.parent;
-            
-            let actionText = isCompleted 
+            let requirementText;
+            if (bonusTech.cultureRequired) {
+                const cultureName = bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
+                requirementText = `<p><strong>Requires:</strong> ${cultureName}</p>`;
+            } else if (bonusTech.parent) {
+                const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
+                const parentName = parentTech ? parentTech.name : bonusTech.parent;
+                requirementText = `<p><strong>Requires:</strong> ${parentName}</p>`;
+            } else {
+                requirementText = '';
+            }
+
+            let actionText = isCompleted
                 ? '<p style="margin-top: 8px; font-style: italic; color: #a09080;">✓ Completed • Click to mark as not completed</p>'
                 : '<p style="margin-top: 8px; font-style: italic; color: #a09080;">Click to mark as completed</p>';
-            
+
             tooltip.innerHTML = `
                 <h3>${bonusTech.name}</h3>
                 <p><strong>Cost:</strong> ${bonusTech.cost} Science</p>
-                <p><strong>Requires:</strong> ${parentName}</p>
+                ${requirementText}
                 <p><strong>Bonus:</strong> ${bonusTech.bonus}</p>
                 ${actionText}
             `;
@@ -1574,28 +1592,37 @@
 
         function showBonusTooltip(event, bonusTech) {
             const tooltip = document.getElementById('tooltip');
-            
-            // Find parent tech
-            const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
-            const parentName = parentTech ? parentTech.name : bonusTech.parent;
-            
+
+            // Find parent tech or culture requirement
+            let requirementText;
+            if (bonusTech.cultureRequired) {
+                const cultureName = bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
+                requirementText = `<p><strong>Requires:</strong> ${cultureName}</p>`;
+            } else if (bonusTech.parent) {
+                const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
+                const parentName = parentTech ? parentTech.name : bonusTech.parent;
+                requirementText = `<p><strong>Parent Tech:</strong> ${parentName}</p>`;
+            } else {
+                requirementText = '';
+            }
+
             // Determine the appropriate emoji based on bonus content
             let bonusEmoji = '💎';
             if (bonusTech.bonus.includes('Stone') || bonusTech.bonus.includes('Iron') || bonusTech.bonus.includes('Food')) {
                 bonusEmoji = '📦'; // Resources
             } else if (bonusTech.bonus.includes('Worker') || bonusTech.bonus.includes('Science')) {
                 bonusEmoji = '🔬'; // Science/Workers
-            } else if (bonusTech.bonus.includes('Courtier') || bonusTech.bonus.includes('General') || 
+            } else if (bonusTech.bonus.includes('Courtier') || bonusTech.bonus.includes('General') ||
                       bonusTech.bonus.includes('Governor') || bonusTech.bonus.includes('Spymaster')) {
                 bonusEmoji = '👤'; // Courtiers
             } else if (bonusTech.bonus.includes('+1') || bonusTech.bonus.includes('+2')) {
                 bonusEmoji = '⚔️'; // Units
             }
-            
+
             tooltip.innerHTML = `
                 <h3>${bonusTech.name}</h3>
                 <p><strong>Cost:</strong> ${bonusTech.cost} 🧪</p>
-                <p><strong>Parent Tech:</strong> ${parentName}</p>
+                ${requirementText}
                 <div class="unlocks-list">
                     <h4>Bonus:</h4>
                     <ul><li>${bonusEmoji} ${bonusTech.bonus}</li></ul>

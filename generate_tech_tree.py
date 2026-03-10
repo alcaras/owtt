@@ -243,6 +243,11 @@ class OldWorldParser:
         if advice_tag is not None and advice_tag.text:
             desc = self.text_data.get(advice_tag.text, "")
         
+        # Check if disabled (skip entirely)
+        is_disabled = self.get_bool_value(tech_node, "bDisable")
+        if is_disabled:
+            return None
+
         # Check if it's a bonus tech
         is_bonus = (
             self.get_bool_value(tech_node, "bHide") or
@@ -263,7 +268,13 @@ class OldWorldParser:
             for nation in nation_node.findall("zValue"):
                 if nation.text:
                     nation_valid.append(nation.text)
-        
+
+        # Get culture requirement (replaces tech prereqs for nation bonus techs)
+        culture_valid = None
+        culture_node = tech_node.find("CultureValid")
+        if culture_node is not None and culture_node.text:
+            culture_valid = culture_node.text
+
         return {
             "id": tech_id,
             "name": name,
@@ -275,7 +286,8 @@ class OldWorldParser:
             "unlocks": unlocks,
             "isBonus": is_bonus,
             "bonusDiscover": bonus_discover,
-            "nationValid": nation_valid
+            "nationValid": nation_valid,
+            "cultureValid": culture_valid
         }
     
     def parse_nations(self):
@@ -623,11 +635,15 @@ class OldWorldParser:
                     "parent": parent,
                     "bonus": bonus_text
                 }
-                
+
                 # Add nation field if nation-specific
                 if tech.get("nationValid"):
                     bonus_tech["nation"] = tech["nationValid"][0]
-                    
+
+                # Add culture requirement if present
+                if tech.get("cultureValid"):
+                    bonus_tech["cultureRequired"] = tech["cultureValid"]
+
                 bonus_techs.append(bonus_tech)
             elif should_exclude and any(vic in tech["id"] for vic in ["ECONOMIC_REFORM", "MILITARY_PRESTIGE", "INDUSTRIAL_PROGRESS"]):
                 # Victory techs should be main techs, not bonus cards
@@ -902,10 +918,18 @@ def generate_html(data: Dict, template_path: str = None, output_path: str = "ind
     # Format bonus tech data
     bonus_entries = []
     for bonus in data["bonusTechs"]:
+        parts = [
+            f'id: "{bonus["id"]}"',
+            f'name: "{bonus["name"]}"',
+            f'cost: {bonus["cost"]}',
+            f'parent: "{bonus.get("parent", "") or ""}"',
+            f'bonus: "{bonus.get("bonus", "")}"',
+        ]
         if bonus.get("nation"):
-            bonus_entry = f"""                {{ id: "{bonus['id']}", name: "{bonus['name']}", cost: {bonus['cost']}, parent: "{bonus.get('parent', '')}", bonus: "{bonus.get('bonus', '')}", nation: "{bonus['nation']}" }}"""
-        else:
-            bonus_entry = f"""                {{ id: "{bonus['id']}", name: "{bonus['name']}", cost: {bonus['cost']}, parent: "{bonus.get('parent', '')}", bonus: "{bonus.get('bonus', '')}" }}"""
+            parts.append(f'nation: "{bonus["nation"]}"')
+        if bonus.get("cultureRequired"):
+            parts.append(f'cultureRequired: "{bonus["cultureRequired"]}"')
+        bonus_entry = "                { " + ", ".join(parts) + " }"
         bonus_entries.append(bonus_entry)
     
     # Build the JavaScript data structures

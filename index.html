@@ -216,34 +216,31 @@
                 { id: "TECH_JURISPRUDENCE_BONUS_MINISTER", name: "Free Minister", cost: 600, parent: "TECH_JURISPRUDENCE", bonus: "+1 Minister" },
                 { id: "TECH_VAULTING_BONUS_HAPPINESS", name: "Happiness Boost", cost: 400, parent: "TECH_VAULTING", bonus: "Happiness Boost" },
                 { id: "TECH_BODKIN_ARROW_BONUS_LONGBOWMAN", name: "Free Longbowman", cost: 400, parent: "TECH_MANOR", bonus: "+2 Longbowman" },
-                { id: "TECH_WINDLASS_BONUS_CROSSBOWMAN", name: "Free Crossbowman", cost: 400, parent: "TECH_HYDRAULICS", bonus: "+2 Crossbowman" },
                 { id: "TECH_FISCAL_POLICY_BONUS_MERCHANT", name: "Free Merchant", cost: 1000, parent: "TECH_FISCAL_POLICY", bonus: "Free Merchant" },
                 { id: "TECH_INFANTRY_SQUARE_BONUS_SOLDIER", name: "Free Court Soldier", cost: 1000, parent: "TECH_INFANTRY_SQUARE", bonus: "Free Court Soldier" },
                 { id: "TECH_CHAIN_DRIVE_BONUS_MERCHANT", name: "Free Merchant", cost: 1000, parent: "TECH_CHAIN_DRIVE", bonus: "Free Merchant" },
-                { id: "TECH_BATTERING_RAM_BONUS", name: "Free Battering Ram", cost: 100, parent: "TECH_SPOKED_WHEEL", bonus: "+1 Battering Ram", nation: "NATION_ASSYRIA" },
-                { id: "TECH_SIEGE_TOWER_BONUS", name: "Free Siege Tower", cost: 600, parent: "TECH_WINDLASS", bonus: "+2 Siege Tower", nation: "NATION_ASSYRIA" },
-                { id: "TECH_AKKADIAN_ARCHER_BONUS", name: "Free Akkadian Archer", cost: 100, parent: "TECH_FORESTRY", bonus: "+1 Akkadian Archer", nation: "NATION_BABYLONIA" },
-                { id: "TECH_CIMMERIAN_ARCHER_BONUS", name: "Free Cimmerian Archer", cost: 600, parent: "TECH_BODKIN_ARROW", bonus: "+2 Cimmerian Archer", nation: "NATION_BABYLONIA" },
-                { id: "TECH_AFRICAN_ELEPHANT_BONUS", name: "Free African Elephant", cost: 100, parent: "TECH_STEEL", bonus: "+1 African Elephant", nation: "NATION_CARTHAGE" },
-                { id: "TECH_TURRETED_ELEPHANT_BONUS", name: "Free Turreted Elephant", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Turreted Elephant", nation: "NATION_CARTHAGE" },
-                { id: "TECH_LIGHT_CHARIOT_BONUS", name: "Free Light Chariot", cost: 100, parent: "TECH_SPOKED_WHEEL", bonus: "+1 Light Chariot", nation: "NATION_EGYPT" },
-                { id: "TECH_MOUNTED_LANCER_BONUS", name: "Free Mounted Lancer", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Mounted Lancer", nation: "NATION_EGYPT" },
-                { id: "TECH_HOPLITE_BONUS", name: "Free Hoplite", cost: 100, parent: "TECH_PHALANX", bonus: "+1 Hoplite", nation: "NATION_GREECE" },
-                { id: "TECH_PHALANGITE_BONUS", name: "Free Phalangite", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Phalangite", nation: "NATION_GREECE" },
-                { id: "TECH_PALTON_CAVALRY_BONUS", name: "Free Palton Cavalry", cost: 100, parent: "TECH_FORESTRY", bonus: "+1 Palton Cavalry", nation: "NATION_PERSIA" },
-                { id: "TECH_CATAPHRACT_ARCHER_BONUS", name: "Free Cataphract Archer", cost: 600, parent: "TECH_WINDLASS", bonus: "+2 Cataphract Archer", nation: "NATION_PERSIA" },
-                { id: "TECH_HASTATUS_BONUS", name: "Free Hastatus", cost: 100, parent: "TECH_STEEL", bonus: "+1 Hastatus", nation: "NATION_ROME" },
-                { id: "TECH_LEGIONARY_BONUS", name: "Free Legionary", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Legionary", nation: "NATION_ROME" },
-                { id: "TECH_HITTITE_CHARIOT_1_BONUS", name: "Free Hittite Chariot", cost: 100, parent: "TECH_SPOKED_WHEEL", bonus: "+1 Hittite Chariot", nation: "NATION_HITTITE" },
-                { id: "TECH_HITTITE_CHARIOT_2_BONUS", name: "Free Hittite Chariot", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Hittite Chariot", nation: "NATION_HITTITE" },
-                { id: "TECH_MEDJAY_ARCHER_BONUS", name: "Free Medjay", cost: 100, parent: "TECH_FORESTRY", bonus: "+1 Medjay", nation: "NATION_KUSH" },
-                { id: "TECH_BEJA_ARCHER_BONUS", name: "Free Beja Archer", cost: 600, parent: "TECH_BODKIN_ARROW", bonus: "+2 Beja Archer", nation: "NATION_KUSH" },
-                { id: "TECH_DMT_WARRIOR_BONUS", name: "Free Dmt Warrior", cost: 100, parent: "TECH_STEEL", bonus: "+1 Dmt Warrior", nation: "NATION_AKSUM" },
-                { id: "TECH_SHOTELAI_BONUS", name: "Free Shotelai", cost: 600, parent: "TECH_MARTIAL_CODE", bonus: "+2 Shotelai", nation: "NATION_AKSUM" },
-                { id: "TECH_RESOURCE_SILK_BONUS", name: "Silk", cost: 200, parent: "TECH_COINAGE", bonus: "Silk" },
-                { id: "TECH_RESOURCE_PORCELAIN_BONUS", name: "Porcelain", cost: 600, parent: "TECH_LATEEN_SAIL", bonus: "Porcelain" },
+                { id: "TECH_BATTERING_RAM_BONUS", name: "Free Battering Ram", cost: 200, parent: "", bonus: "+1 Battering Ram", nation: "NATION_ASSYRIA", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_SIEGE_TOWER_BONUS", name: "Free Siege Tower", cost: 600, parent: "", bonus: "+2 Siege Tower", nation: "NATION_ASSYRIA", cultureRequired: "CULTURE_LEGENDARY" },
+                { id: "TECH_AKKADIAN_ARCHER_BONUS", name: "Free Akkadian Archer", cost: 200, parent: "", bonus: "+1 Akkadian Archer", nation: "NATION_BABYLONIA", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_CIMMERIAN_ARCHER_BONUS", name: "Free Cimmerian Archer", cost: 600, parent: "", bonus: "+2 Cimmerian Archer", nation: "NATION_BABYLONIA", cultureRequired: "CULTURE_LEGENDARY" },
+                { id: "TECH_AFRICAN_ELEPHANT_BONUS", name: "Free African Elephant", cost: 200, parent: "", bonus: "+1 African Elephant", nation: "NATION_CARTHAGE", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_TURRETED_ELEPHANT_BONUS", name: "Free Turreted Elephant", cost: 600, parent: "", bonus: "+2 Turreted Elephant", nation: "NATION_CARTHAGE", cultureRequired: "CULTURE_LEGENDARY" },
+                { id: "TECH_LIGHT_CHARIOT_BONUS", name: "Free Light Chariot", cost: 200, parent: "", bonus: "+1 Light Chariot", nation: "NATION_EGYPT", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_MOUNTED_LANCER_BONUS", name: "Free Mounted Lancer", cost: 600, parent: "", bonus: "+2 Mounted Lancer", nation: "NATION_EGYPT", cultureRequired: "CULTURE_LEGENDARY" },
+                { id: "TECH_HOPLITE_BONUS", name: "Free Hoplite", cost: 200, parent: "", bonus: "+1 Hoplite", nation: "NATION_GREECE", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_PHALANGITE_BONUS", name: "Free Phalangite", cost: 600, parent: "", bonus: "+2 Phalangite", nation: "NATION_GREECE", cultureRequired: "CULTURE_LEGENDARY" },
+                { id: "TECH_PALTON_CAVALRY_BONUS", name: "Free Palton Cavalry", cost: 200, parent: "", bonus: "+1 Palton Cavalry", nation: "NATION_PERSIA", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_CATAPHRACT_ARCHER_BONUS", name: "Free Cataphract Archer", cost: 600, parent: "", bonus: "+2 Cataphract Archer", nation: "NATION_PERSIA", cultureRequired: "CULTURE_LEGENDARY" },
+                { id: "TECH_HASTATUS_BONUS", name: "Free Hastatus", cost: 200, parent: "", bonus: "+1 Hastatus", nation: "NATION_ROME", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_LEGIONARY_BONUS", name: "Free Legionary", cost: 600, parent: "", bonus: "+2 Legionary", nation: "NATION_ROME", cultureRequired: "CULTURE_LEGENDARY" },
+                { id: "TECH_HITTITE_CHARIOT_1_BONUS", name: "Free Hittite Chariot", cost: 200, parent: "", bonus: "+1 Hittite Chariot", nation: "NATION_HITTITE", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_HITTITE_CHARIOT_2_BONUS", name: "Free Hittite Chariot", cost: 600, parent: "", bonus: "+2 Hittite Chariot", nation: "NATION_HITTITE", cultureRequired: "CULTURE_LEGENDARY" },
+                { id: "TECH_MEDJAY_ARCHER_BONUS", name: "Free Medjay", cost: 200, parent: "", bonus: "+1 Medjay", nation: "NATION_KUSH", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_BEJA_ARCHER_BONUS", name: "Free Beja Archer", cost: 600, parent: "", bonus: "+2 Beja Archer", nation: "NATION_KUSH", cultureRequired: "CULTURE_LEGENDARY" },
+                { id: "TECH_DMT_WARRIOR_BONUS", name: "Free Dmt Warrior", cost: 200, parent: "", bonus: "+1 Dmt Warrior", nation: "NATION_AKSUM", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_SHOTELAI_BONUS", name: "Free Shotelai", cost: 600, parent: "", bonus: "+2 Shotelai", nation: "NATION_AKSUM", cultureRequired: "CULTURE_LEGENDARY" },
+                { id: "TECH_RESOURCE_PORCELAIN_BONUS", name: "Porcelain", cost: 200, parent: "TECH_COINAGE", bonus: "Porcelain" },
                 { id: "TECH_RESOURCE_EXOTIC_FUR_BONUS", name: "Exotic Furs", cost: 100, parent: "TECH_SPOKED_WHEEL", bonus: "Exotic Furs" },
-                { id: "TECH_RESOURCE_EBONY_BONUS", name: "Ebony", cost: 100, parent: "TECH_FORESTRY", bonus: "Ebony" },
                 { id: "TECH_RESOURCE_PERFUME_BONUS", name: "Perfume", cost: 200, parent: "TECH_ARCHITECTURE", bonus: "Perfume" }
             ]
         };
@@ -675,7 +672,7 @@
                 });
             } else {
                 // Add the parent tech and all its prerequisites first
-                if (!researchedTechs.includes(bonusTech.parent)) {
+                if (bonusTech.parent && !researchedTechs.includes(bonusTech.parent)) {
                     // Add prerequisites of the parent tech using proper insertion order
                     const prereqsToAdd = getAllPrerequisites(bonusTech.parent);
                     prereqsToAdd.forEach(prereqId => {
@@ -686,7 +683,7 @@
                             researchOrder.splice(insertIndex, 0, prereqId);
                         }
                     });
-                    
+
                     // Add the parent tech itself in the correct position
                     const parentInsertIndex = findInsertionIndex(bonusTech.parent);
                     researchedTechs.splice(parentInsertIndex, 0, bonusTech.parent);
@@ -751,7 +748,7 @@
                             badge.textContent = overallIndex + 1;
                             node.appendChild(badge);
                         }
-                    } else if (researchedTechs.includes(bonusTech.parent)) {
+                    } else if (bonusTech.cultureRequired || researchedTechs.includes(bonusTech.parent)) {
                         node.classList.add('available');
                     }
                 }
@@ -760,17 +757,26 @@
 
         function showBonusTooltip(event, bonusTech) {
             const tooltip = document.getElementById('tooltip');
-            const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
-            const parentName = parentTech ? parentTech.name : bonusTech.parent;
-            
+            let requirementText;
+            if (bonusTech.cultureRequired) {
+                const cultureName = bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
+                requirementText = `<p><strong>Requires:</strong> ${cultureName}</p>`;
+            } else if (bonusTech.parent) {
+                const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
+                const parentName = parentTech ? parentTech.name : bonusTech.parent;
+                requirementText = `<p><strong>Requires:</strong> ${parentName}</p>`;
+            } else {
+                requirementText = '';
+            }
+
             tooltip.innerHTML = `
                 <h3>${bonusTech.name}</h3>
                 <p><strong>Cost:</strong> ${bonusTech.cost} Science</p>
-                <p><strong>Requires:</strong> ${parentName}</p>
+                ${requirementText}
                 <p><strong>Bonus:</strong> ${bonusTech.bonus}</p>
                 <p style="margin-top: 8px; font-style: italic; color: #a09080;">Click to add/remove • Right-click to mark completed</p>
             `;
-            
+
             positionTooltip(event, tooltip);
         }
 
@@ -1414,7 +1420,7 @@
             if (!bonusTech) return;
             
             // Ensure parent tech is researched first
-            if (!researchedTechs.includes(bonusTech.parent)) {
+            if (bonusTech.parent && !researchedTechs.includes(bonusTech.parent)) {
                 quickToggleCompletion(bonusTech.parent);
             }
             
@@ -1654,17 +1660,26 @@
         
         function showResearchOrderBonusTooltip(event, bonusTech, isCompleted) {
             const tooltip = document.getElementById('tooltip');
-            const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
-            const parentName = parentTech ? parentTech.name : bonusTech.parent;
-            
-            let actionText = isCompleted 
+            let requirementText;
+            if (bonusTech.cultureRequired) {
+                const cultureName = bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
+                requirementText = `<p><strong>Requires:</strong> ${cultureName}</p>`;
+            } else if (bonusTech.parent) {
+                const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
+                const parentName = parentTech ? parentTech.name : bonusTech.parent;
+                requirementText = `<p><strong>Requires:</strong> ${parentName}</p>`;
+            } else {
+                requirementText = '';
+            }
+
+            let actionText = isCompleted
                 ? '<p style="margin-top: 8px; font-style: italic; color: #a09080;">✓ Completed • Click to mark as not completed</p>'
                 : '<p style="margin-top: 8px; font-style: italic; color: #a09080;">Click to mark as completed</p>';
-            
+
             tooltip.innerHTML = `
                 <h3>${bonusTech.name}</h3>
                 <p><strong>Cost:</strong> ${bonusTech.cost} Science</p>
-                <p><strong>Requires:</strong> ${parentName}</p>
+                ${requirementText}
                 <p><strong>Bonus:</strong> ${bonusTech.bonus}</p>
                 ${actionText}
             `;
@@ -1779,28 +1794,37 @@
 
         function showBonusTooltip(event, bonusTech) {
             const tooltip = document.getElementById('tooltip');
-            
-            // Find parent tech
-            const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
-            const parentName = parentTech ? parentTech.name : bonusTech.parent;
-            
+
+            // Find parent tech or culture requirement
+            let requirementText;
+            if (bonusTech.cultureRequired) {
+                const cultureName = bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
+                requirementText = `<p><strong>Requires:</strong> ${cultureName}</p>`;
+            } else if (bonusTech.parent) {
+                const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
+                const parentName = parentTech ? parentTech.name : bonusTech.parent;
+                requirementText = `<p><strong>Parent Tech:</strong> ${parentName}</p>`;
+            } else {
+                requirementText = '';
+            }
+
             // Determine the appropriate emoji based on bonus content
             let bonusEmoji = '💎';
             if (bonusTech.bonus.includes('Stone') || bonusTech.bonus.includes('Iron') || bonusTech.bonus.includes('Food')) {
                 bonusEmoji = '📦'; // Resources
             } else if (bonusTech.bonus.includes('Worker') || bonusTech.bonus.includes('Science')) {
                 bonusEmoji = '🔬'; // Science/Workers
-            } else if (bonusTech.bonus.includes('Courtier') || bonusTech.bonus.includes('General') || 
+            } else if (bonusTech.bonus.includes('Courtier') || bonusTech.bonus.includes('General') ||
                       bonusTech.bonus.includes('Governor') || bonusTech.bonus.includes('Spymaster')) {
                 bonusEmoji = '👤'; // Courtiers
             } else if (bonusTech.bonus.includes('+1') || bonusTech.bonus.includes('+2')) {
                 bonusEmoji = '⚔️'; // Units
             }
-            
+
             tooltip.innerHTML = `
                 <h3>${bonusTech.name}</h3>
                 <p><strong>Cost:</strong> ${bonusTech.cost} 🧪</p>
-                <p><strong>Parent Tech:</strong> ${parentName}</p>
+                ${requirementText}
                 <div class="unlocks-list">
                     <h4>Bonus:</h4>
                     <ul><li>${bonusEmoji} ${bonusTech.bonus}</li></ul>
