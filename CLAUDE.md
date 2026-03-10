@@ -30,7 +30,9 @@ The `generate_tech_tree.py` parser automatically:
 1. **Extracts Technologies**: Reads all techs from `tech.xml` including costs, positions, and prerequisites
 2. **Parses Unlocks**: Scans unit.xml, improvement.xml, law.xml, and project.xml to find what each tech unlocks
 3. **Identifies Bonus Cards**: Separates bonus techs from main techs based on flags (`bHide`, `bTrash`, `bNoFree`)
-4. **Handles Special Cases**: 
+4. **Filters Disabled Techs**: Skips techs with `bDisable="1"` (e.g., removed Crossbowman Windlass, Silk, Ebony bonuses)
+5. **Parses Culture Requirements**: Reads `CultureValid` field for nation bonus techs (CULTURE_STRONG/CULTURE_LEGENDARY)
+6. **Handles Special Cases**:
    - Victory techs (Economic Reform, Military Prestige, Industrial Progress) are main techs
    - Resource bonuses (luxuries) are included as bonus cards
    - Event bonuses are excluded from display
@@ -111,6 +113,7 @@ const nationData = {
 - State includes: `researchedTechs`, `researchOrder`, `researchedBonusTechs`, `completedTechs`, `selectedNation`
 - State is restored on page reload unless URL parameters are present
 - URL parameters take priority over localStorage for sharing links
+- When loading from URL params, state is immediately saved to localStorage so it persists on reload
 - Starting techs are properly maintained during nation selection and page reloads
 
 ## Data Accuracy
@@ -168,7 +171,8 @@ The project was developed using:
 ├── template.html          # Template with {{TECH_DATA}} and {{NATION_DATA}} placeholders
 ├── index.html             # Generated application (output of parser)
 ├── generate_tech_tree.py  # Parser that converts XML files to HTML
-├── README.md              # User documentation  
+├── test_parser.py         # Test suite for parser and template bugs
+├── README.md              # User documentation
 ├── CLAUDE.md              # This development guide
 ├── XML/Infos/             # Old World game files (not included in repo)
 └── .gitignore             # Excludes game files and temp files
