@@ -93,7 +93,7 @@
                 <button class="clear-button" onclick="clearBuild()">Clear</button>
             </div>
         </div>
-        <div class="sidebar-version">Old World v1.0.82189 (Feb 18, 2026) | Generated Mar 09, 2026</div>
+        <div class="sidebar-version">Old World | Generated Mar 18, 2026</div>
     </div>
 
     <div class="tooltip" id="tooltip"></div>
@@ -1360,11 +1360,11 @@
         
         function toggleTechCompletion(techId) {
             // Don't allow toggling starting techs
-            if (selectedNation && nationData.startingTechs[selectedNation] && 
+            if (selectedNation && nationData.startingTechs[selectedNation] &&
                 nationData.startingTechs[selectedNation].includes(techId)) {
                 return;
             }
-            
+
             const index = completedTechs.indexOf(techId);
             if (index > -1) {
                 // Remove from completed
@@ -1373,7 +1373,9 @@
                 // Add to completed
                 completedTechs.push(techId);
             }
-            
+
+            simulationIsCurrentForTechTree = false;
+
             // Update displays
             updateTechStates();
             updateOrderList();
@@ -1394,7 +1396,7 @@
                         completedTechs.push(prereqId); // Mark prereqs as completed too
                     }
                 });
-                
+
                 // Add and complete the tech itself
                 researchedTechs.push(techId);
                 if (!researchOrder.includes(techId)) {
@@ -1405,7 +1407,9 @@
                 // Toggle completion state
                 toggleTechCompletion(techId);
             }
-            
+
+            simulationIsCurrentForTechTree = false;
+
             updateTechStates();
             updateBonusTechStates();
             updateOrderList();
@@ -1422,7 +1426,9 @@
                 // Add to completed
                 completedTechs.push(bonusTechId);
             }
-            
+
+            simulationIsCurrentForTechTree = false;
+
             // Update displays
             updateBonusTechStates();
             updateOrderList();
@@ -1450,7 +1456,9 @@
                     completedTechs.push(bonusTechId);
                 }
             }
-            
+
+            simulationIsCurrentForTechTree = false;
+
             updateTechStates();
             updateBonusTechStates();
             updateOrderList();
@@ -1472,6 +1480,8 @@
             
             let totalCost = 0;
             let totalLaws = 0;
+            let remainingCost = 0;
+            let remainingLaws = 0;
             let itemIndex = 1;
             
             // Use the actual research order array
@@ -1499,12 +1509,18 @@
                 
                 if (!isStartingTech) {
                     totalCost += tech.cost;
+                    if (!completedTechs.includes(techId)) {
+                        remainingCost += tech.cost;
+                    }
                 }
-                
+
                 // Count laws from this tech
                 const hasLaws = tech.unlocks && tech.unlocks.laws && tech.unlocks.laws.length > 0;
                 if (hasLaws) {
                     totalLaws += tech.unlocks.laws.length;
+                    if (!isStartingTech && !completedTechs.includes(techId)) {
+                        remainingLaws += tech.unlocks.laws.length;
+                    }
                 }
                 
                 const listItem = document.createElement('div');
@@ -1552,6 +1568,9 @@
                     const bonusTechId = item.id;
                     const bonusTech = techData.bonusTechs.find(t => t.id === bonusTechId);
                     totalCost += bonusTech.cost;
+                    if (!completedTechs.includes(bonusTechId)) {
+                        remainingCost += bonusTech.cost;
+                    }
                     
                     const listItem = document.createElement('div');
                     const isCompleted = completedTechs.includes(bonusTechId);
@@ -1588,10 +1607,12 @@
                 }
             });
             
-            totalCostElement.textContent = `${totalCost} 🧪`;
-            totalLawsElement.textContent = `Laws: ${totalLaws}`;
-            if (totalCostMobileElement) totalCostMobileElement.textContent = `${totalCost} 🧪`;
-            if (totalLawsMobileElement) totalLawsMobileElement.textContent = `Laws: ${totalLaws}`;
+            const costDisplay = remainingCost < totalCost ? `${remainingCost} / ${totalCost} 🧪` : `${totalCost} 🧪`;
+            const lawsDisplay = remainingLaws < totalLaws ? `Laws: ${remainingLaws} / ${totalLaws}` : `Laws: ${totalLaws}`;
+            totalCostElement.textContent = costDisplay;
+            totalLawsElement.textContent = lawsDisplay;
+            if (totalCostMobileElement) totalCostMobileElement.textContent = costDisplay;
+            if (totalLawsMobileElement) totalLawsMobileElement.textContent = lawsDisplay;
             
             // Update clear button state for both desktop and mobile
             const clearButtons = document.querySelectorAll('.clear-button');
@@ -2700,23 +2721,25 @@ ${bonusCardsInfo.trim()}
         function simulateResearchPath(hasScholar, hasOracle, numSimulations) {
             const results = [];
             
-            // Build research path from current selections, excluding starting techs
+            // Build research path from current selections, excluding starting techs and completed techs
             const researchPath = [
-                ...researchedTechs.filter(techId => !isStartingTech(techId)),
-                ...researchedBonusTechs
+                ...researchedTechs.filter(techId => !isStartingTech(techId) && !completedTechs.includes(techId)),
+                ...researchedBonusTechs.filter(techId => !completedTechs.includes(techId))
             ];
-            
+
             // Debug: Calculate expected cost and compare to UI
             let expectedCost = 0;
             researchedTechs.forEach(techId => {
-                if (!isStartingTech(techId)) {
+                if (!isStartingTech(techId) && !completedTechs.includes(techId)) {
                     const tech = techData.techs.find(t => t.id === techId);
                     if (tech) expectedCost += tech.cost;
                 }
             });
             researchedBonusTechs.forEach(bonusId => {
-                const bonus = techData.bonusTechs.find(t => t.id === bonusId);
-                if (bonus) expectedCost += bonus.cost;
+                if (!completedTechs.includes(bonusId)) {
+                    const bonus = techData.bonusTechs.find(t => t.id === bonusId);
+                    if (bonus) expectedCost += bonus.cost;
+                }
             });
             
             console.log(`🔍 DEBUG: Expected total cost: ${expectedCost}`);
@@ -2831,7 +2854,7 @@ ${bonusCardsInfo.trim()}
         }
 
         function simulateSingleRun(researchPath, hasScholar, hasOracle) {
-            let completedTechs = new Set();
+            let localCompletedTechs = new Set();
             let removedBonusCards = new Set(); // Track permanently removed bonus cards
             let totalCost = 0;
             let turnCount = 0;
@@ -2850,15 +2873,20 @@ ${bonusCardsInfo.trim()}
             // Add starting techs as already completed
             if (selectedNation && nationData.startingTechs[selectedNation]) {
                 nationData.startingTechs[selectedNation].forEach(techId => {
-                    completedTechs.add(techId);
+                    localCompletedTechs.add(techId);
                 });
                 if (window.debugSimulation) {
-                    console.log(`🏛️ Starting techs: ${Array.from(completedTechs).map(id => {
+                    console.log(`🏛️ Starting techs: ${Array.from(localCompletedTechs).map(id => {
                         const tech = techData.techs.find(t => t.id === id);
                         return tech?.name || id;
                     }).join(', ')}`);
                 }
             }
+
+            // Add UI-completed techs as already completed (same treatment as starting techs)
+            completedTechs.forEach(techId => {
+                localCompletedTechs.add(techId);
+            });
             
             // Separate main techs and bonus cards in research path
             const targetMainTechs = researchPath.filter(id => techData.techs.some(t => t.id === id));
@@ -2867,7 +2895,7 @@ ${bonusCardsInfo.trim()}
             
             
             // Keep researching until all target techs are completed
-            while (!isSubset(targetTechSet, completedTechs) && turnCount < 500) {
+            while (!isSubset(targetTechSet, localCompletedTechs) && turnCount < 500) {
                 turnCount++;
                 
                 // Check if any required bonus cards have been permanently removed
@@ -2888,7 +2916,7 @@ ${bonusCardsInfo.trim()}
                     // First turn with nation: only Tier 1 techs not already owned
                     const tier1TechIds = ["TECH_IRONWORKING", "TECH_STONECUTTING", "TECH_TRAPPING", "TECH_DIVINATION", "TECH_ADMINISTRATION"];
                     availableTechs = techData.techs.filter(tech => {
-                        return tier1TechIds.includes(tech.id) && !completedTechs.has(tech.id) && !isStartingTech(tech.id);
+                        return tier1TechIds.includes(tech.id) && !localCompletedTechs.has(tech.id) && !isStartingTech(tech.id);
                     });
                     
                     // For Kush, also add the Stone Boost card since they start with Stonecutting
@@ -2901,7 +2929,7 @@ ${bonusCardsInfo.trim()}
                     }
                 } else {
                     // Normal turn: get all available techs based on prerequisites
-                    availableTechs = getAvailableTechs(completedTechs, removedBonusCards);
+                    availableTechs = getAvailableTechs(localCompletedTechs, removedBonusCards);
                 }
                 
                 // Only add NEW techs to the draw pile (techs that weren't available before)
@@ -2950,7 +2978,7 @@ ${bonusCardsInfo.trim()}
                 }
                 
                 // Research one tech this turn
-                const result = researchOneTurn(targetTechSet, drawPile, discardPile, completedTechs, hasScholar, hasOracle, turnCount, removedBonusCards, { scholarRedraws, scholarRedrawsSuccessful });
+                const result = researchOneTurn(targetTechSet, drawPile, discardPile, localCompletedTechs, hasScholar, hasOracle, turnCount, removedBonusCards, { scholarRedraws, scholarRedrawsSuccessful });
                 if (result.cost >= 0) {
                     totalCost += result.cost;
                     if (result.removedBonusCards) {
@@ -2974,12 +3002,12 @@ ${bonusCardsInfo.trim()}
             }
             
             // Check final success/failure
-            const success = isSubset(targetTechSet, completedTechs);
-            
+            const success = isSubset(targetTechSet, localCompletedTechs);
+
             if (window.debugSimulation) {
                 console.log(`🏁 Simulation ${success ? 'SUCCESS' : 'FAILED'} after ${turnCount} turns, total cost: ${totalCost}`);
                 if (!success) {
-                    const remaining = Array.from(targetTechSet).filter(id => !completedTechs.has(id));
+                    const remaining = Array.from(targetTechSet).filter(id => !localCompletedTechs.has(id));
                     console.log(`❌ Missing techs: ${remaining.join(', ')}`);
                 }
             }
