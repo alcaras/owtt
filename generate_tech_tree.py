@@ -498,44 +498,44 @@ class OldWorldParser:
                     bonus_text = "+2 Crossbowman"
                 # Nation-specific units
                 elif "BATTERING_RAM" in tech_id_upper:
-                    bonus_text = "+1 Battering Ram"
+                    bonus_text = "+2 Battering Ram"
                 elif "SIEGE_TOWER" in tech_id_upper:
                     bonus_text = "+2 Siege Tower"
                 elif "AKKADIAN" in tech_id_upper:
-                    bonus_text = "+1 Akkadian Archer"
+                    bonus_text = "+2 Akkadian Archer"
                 elif "CIMMERIAN" in tech_id_upper:
                     bonus_text = "+2 Cimmerian Archer"
                 elif "AFRICAN_ELEPHANT" in tech_id_upper:
-                    bonus_text = "+1 African Elephant"
+                    bonus_text = "+2 African Elephant"
                 elif "TURRETED_ELEPHANT" in tech_id_upper:
                     bonus_text = "+2 Turreted Elephant"
                 elif "LIGHT_CHARIOT" in tech_id_upper:
-                    bonus_text = "+1 Light Chariot"
+                    bonus_text = "+2 Light Chariot"
                 elif "MOUNTED_LANCER" in tech_id_upper:
                     bonus_text = "+2 Mounted Lancer"
                 elif "HOPLITE" in tech_id_upper:
-                    bonus_text = "+1 Hoplite"
+                    bonus_text = "+2 Hoplite"
                 elif "PHALANGITE" in tech_id_upper:
                     bonus_text = "+2 Phalangite"
                 elif "HITTITE_CHARIOT" in tech_id_upper:
                     if "1" in tech_id_upper:
-                        bonus_text = "+1 Hittite Chariot"
+                        bonus_text = "+2 Hittite Chariot"
                     else:
                         bonus_text = "+2 Hittite Chariot"
                 elif "MEDJAY" in tech_id_upper:
-                    bonus_text = "+1 Medjay"
+                    bonus_text = "+2 Medjay"
                 elif "BEJA" in tech_id_upper:
                     bonus_text = "+2 Beja Archer"
                 elif "PALTON" in tech_id_upper:
-                    bonus_text = "+1 Palton Cavalry"
+                    bonus_text = "+2 Palton Cavalry"
                 elif "CATAPHRACT" in tech_id_upper:
                     bonus_text = "+2 Cataphract Archer"
                 elif "HASTATUS" in tech_id_upper:
-                    bonus_text = "+1 Hastatus"
+                    bonus_text = "+2 Hastatus"
                 elif "LEGIONARY" in tech_id_upper:
                     bonus_text = "+2 Legionary"
                 elif "DMT" in tech_id_upper:
-                    bonus_text = "+1 Dmt Warrior"
+                    bonus_text = "+2 Dmt Warrior"
                 elif "SHOTELAI" in tech_id_upper:
                     bonus_text = "+2 Shotelai"
                 
