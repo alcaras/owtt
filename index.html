@@ -93,7 +93,7 @@
                 <button class="clear-button" onclick="clearBuild()">Clear</button>
             </div>
         </div>
-        <div class="sidebar-version">Old World v1.0.82741 (Mar 18, 2026) | Generated Mar 18, 2026</div>
+        <div class="sidebar-version">Old World v1.0.83036 (Apr 08, 2026) | Generated Apr 08, 2026</div>
     </div>
 
     <div class="tooltip" id="tooltip"></div>
@@ -182,7 +182,7 @@
                 { id: "TECH_MARTIAL_CODE", name: "Martial Code", cost: 1000, column: 5, row: 2, prereqs: ["TECH_STIRRUPS", "TECH_CITIZENSHIP"], unlocks: { units: [], improvements: [], laws: ["Pilgrimage/Holy War"], projects: ["Towers"] } },
                 { id: "TECH_VAULTING", name: "Vaulting", cost: 600, column: 4, row: 4, prereqs: ["TECH_ARCHITECTURE"], unlocks: { units: [], improvements: ["Cathedral"], laws: ["Iconography/Calligraphy"], projects: [] } },
                 { id: "TECH_BODKIN_ARROW", name: "Bodkin Arrow", cost: 1000, column: 5, row: 5, prereqs: ["TECH_MANOR"], unlocks: { units: ["Longbowman"], improvements: [], laws: [], projects: [] } },
-                { id: "TECH_WINDLASS", name: "Windlass", cost: 1000, column: 5, row: 9, prereqs: ["TECH_MANOR", "TECH_HYDRAULICS"], unlocks: { units: ["Crossbowman"], improvements: [], laws: [], projects: [] } },
+                { id: "TECH_WINDLASS", name: "Windlass", cost: 1000, column: 5, row: 9, prereqs: ["TECH_COINAGE", "TECH_HYDRAULICS"], unlocks: { units: ["Crossbowman"], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_FISCAL_POLICY", name: "Fiscal Policy", cost: 1600, column: 6, row: 1, prereqs: ["TECH_LATEEN_SAIL", "TECH_JURISPRUDENCE"], unlocks: { units: [], improvements: [], laws: ["Coin Debasement/Monetary Reform"], projects: [] } },
                 { id: "TECH_BARDING", name: "Barding", cost: 1600, column: 6, row: 2, prereqs: ["TECH_BATTLELINE", "TECH_MARTIAL_CODE"], unlocks: { units: ["Cataphract"], improvements: [], laws: [], projects: [] } },
                 { id: "TECH_INFANTRY_SQUARE", name: "Infantry Square", cost: 1600, column: 6, row: 7, prereqs: ["TECH_BATTLELINE"], unlocks: { units: ["Pikeman"], improvements: [], laws: [], projects: [] } },
@@ -214,16 +214,16 @@
                 { id: "TECH_MACHINERY_BONUS_ONAGER", name: "Free Onager", cost: 200, parent: "TECH_PORTCULLIS", bonus: "+1 Onager" },
                 { id: "TECH_SCHOLARSHIP_BONUS_SCIENTIST", name: "Free Scientist", cost: 400, parent: "TECH_SCHOLARSHIP", bonus: "Free Scientist" },
                 { id: "TECH_STIRRUPS_BONUS_HORSEMAN", name: "Free Horseman", cost: 200, parent: "TECH_LAND_CONSOLIDATION", bonus: "+1 Horseman" },
-                { id: "TECH_STIRRUPS_BONUS_HORSE_ARCHER", name: "Free Horse Archer", cost: 200, parent: "TECH_LAND_CONSOLIDATION", bonus: "+1 Horse Archer" },
+                { id: "TECH_STIRRUPS_BONUS_HORSE_ARCHER", name: "Free Horse Archer", cost: 200, parent: "TECH_COMPOSITE_BOW", bonus: "+1 Horse Archer" },
                 { id: "TECH_MANOR_BONUS_GOODS", name: "Goods Bonus", cost: 200, parent: "TECH_MACHINERY", bonus: "Luxury Goods" },
-                { id: "TECH_BATTLELINE_BONUS_SOLDIER", name: "Free Court Soldier", cost: 400, parent: "TECH_BATTLELINE", bonus: "Free Court Soldier" },
+                { id: "TECH_BATTLELINE_BONUS_SOLDIER", name: "Free Court Soldier", cost: 300, parent: "TECH_BATTLELINE", bonus: "Free Court Soldier" },
                 { id: "TECH_HYDRAULICS_BONUS_BALLISTA", name: "Free Ballista", cost: 200, parent: "TECH_COMPOSITE_BOW", bonus: "+1 Ballista" },
                 { id: "TECH_JURISPRUDENCE_BONUS_MINISTER", name: "Free Minister", cost: 600, parent: "TECH_JURISPRUDENCE", bonus: "+1 Minister" },
                 { id: "TECH_VAULTING_BONUS_HAPPINESS", name: "Happiness Boost", cost: 400, parent: "TECH_VAULTING", bonus: "Happiness Boost" },
-                { id: "TECH_BODKIN_ARROW_BONUS_LONGBOWMAN", name: "Free Longbowman", cost: 400, parent: "TECH_MANOR", bonus: "+2 Longbowman" },
-                { id: "TECH_FISCAL_POLICY_BONUS_MERCHANT", name: "Free Merchant", cost: 1000, parent: "TECH_FISCAL_POLICY", bonus: "Free Merchant" },
-                { id: "TECH_INFANTRY_SQUARE_BONUS_SOLDIER", name: "Free Court Soldier", cost: 1000, parent: "TECH_INFANTRY_SQUARE", bonus: "Free Court Soldier" },
-                { id: "TECH_CHAIN_DRIVE_BONUS_MERCHANT", name: "Free Merchant", cost: 1000, parent: "TECH_CHAIN_DRIVE", bonus: "Free Merchant" },
+                { id: "TECH_BODKIN_ARROW_BONUS_LONGBOWMAN", name: "Free Longbowman", cost: 300, parent: "TECH_BATTLELINE", bonus: "+2 Longbowman" },
+                { id: "TECH_FISCAL_POLICY_BONUS_MERCHANT", name: "Free Merchant", cost: 300, parent: "TECH_MANOR", bonus: "Free Merchant" },
+                { id: "TECH_INFANTRY_SQUARE_BONUS_SOLDIER", name: "Free Court Soldier", cost: 300, parent: "TECH_STIRRUPS", bonus: "Free Court Soldier" },
+                { id: "TECH_CHAIN_DRIVE_BONUS_MERCHANT", name: "Free Merchant", cost: 300, parent: "TECH_CARTOGRAPHY", bonus: "Free Merchant" },
                 { id: "TECH_BATTERING_RAM_BONUS", name: "Free Battering Ram", cost: 200, parent: "", bonus: "+2 Battering Ram", nation: "NATION_ASSYRIA", cultureRequired: "CULTURE_STRONG" },
                 { id: "TECH_SIEGE_TOWER_BONUS", name: "Free Siege Tower", cost: 600, parent: "", bonus: "+2 Siege Tower", nation: "NATION_ASSYRIA", cultureRequired: "CULTURE_LEGENDARY" },
                 { id: "TECH_AKKADIAN_ARCHER_BONUS", name: "Free Akkadian Archer", cost: 200, parent: "", bonus: "+2 Akkadian Archer", nation: "NATION_BABYLONIA", cultureRequired: "CULTURE_STRONG" },
@@ -246,13 +246,20 @@
                 { id: "TECH_SHOTELAI_BONUS", name: "Free Shotelai", cost: 600, parent: "", bonus: "+2 Shotelai", nation: "NATION_AKSUM", cultureRequired: "CULTURE_LEGENDARY" },
                 { id: "TECH_RESOURCE_PORCELAIN_BONUS", name: "Porcelain", cost: 200, parent: "TECH_COINAGE", bonus: "Porcelain" },
                 { id: "TECH_RESOURCE_EXOTIC_FUR_BONUS", name: "Exotic Furs", cost: 100, parent: "TECH_SPOKED_WHEEL", bonus: "Exotic Furs" },
-                { id: "TECH_RESOURCE_PERFUME_BONUS", name: "Perfume", cost: 200, parent: "TECH_ARCHITECTURE", bonus: "Perfume" }
+                { id: "TECH_RESOURCE_PERFUME_BONUS", name: "Perfume", cost: 200, parent: "TECH_ARCHITECTURE", bonus: "Perfume" },
+                { id: "TECH_MAURYA_ASSAULT_ELEPHANT_BONUS", name: "Free Assault Elephant", cost: 200, parent: "", bonus: "+1 Assault Elephant", nation: "NATION_MAURYA", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_MAURYA_ARMOURED_ELEPHANT_BONUS", name: "Free Armoured Elephant", cost: 600, parent: "", bonus: "+2 Armoured Elephant", nation: "NATION_MAURYA", cultureRequired: "CULTURE_LEGENDARY" },
+                { id: "TECH_YUEZHI_STEPPE_RIDERS_BONUS", name: "Free Steppe Riders", cost: 100, parent: "", bonus: "+2 Steppe Riders", nation: "NATION_YUEZHI", cultureRequired: "CULTURE_DEVELOPING" },
+                { id: "TECH_YUEZHI_KUSHAN_CAVALRY_BONUS", name: "Free Kushan Cavalry", cost: 200, parent: "", bonus: "+2 Kushan Cavalry", nation: "NATION_YUEZHI", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_YUEZHI_KUSHAN_WARLORD_BONUS", name: "Free Kushan Warlord", cost: 600, parent: "", bonus: "+2 Kushan Warlord", nation: "NATION_YUEZHI", cultureRequired: "CULTURE_LEGENDARY" },
+                { id: "TECH_TAMIL_JAVELIN_ELEPHANT_BONUS", name: "Free Javelin Elephant", cost: 200, parent: "", bonus: "+2 Javelin Elephant", nation: "NATION_TAMIL", cultureRequired: "CULTURE_STRONG" },
+                { id: "TECH_TAMIL_ARCHER_ELEPHANT_BONUS", name: "Free Archer Elephant", cost: 600, parent: "", bonus: "+2 Archer Elephant", nation: "NATION_TAMIL", cultureRequired: "CULTURE_LEGENDARY" }
             ]
         };
 
         // Version hash for URL stability across game updates
-        const currentVersionHash = "67b2";
-        const versionMaps = {};
+        const currentVersionHash = "03e3";
+        const versionMaps = {"67b2": {"techs": ["TECH_IRONWORKING", "TECH_STONECUTTING", "TECH_TRAPPING", "TECH_DIVINATION", "TECH_ADMINISTRATION", "TECH_LABOR_FORCE", "TECH_HUSBANDRY", "TECH_DRAMA", "TECH_POLIS", "TECH_MILITARY_DRILL", "TECH_ARISTOCRACY", "TECH_RHETORIC", "TECH_NAVIGATION", "TECH_PHALANX", "TECH_SPOKED_WHEEL", "TECH_FORESTRY", "TECH_STEEL", "TECH_SOVEREIGNTY", "TECH_METAPHYSICS", "TECH_COINAGE", "TECH_CITIZENSHIP", "TECH_PORTCULLIS", "TECH_LAND_CONSOLIDATION", "TECH_COMPOSITE_BOW", "TECH_MONASTICISM", "TECH_MACHINERY", "TECH_SCHOLARSHIP", "TECH_STIRRUPS", "TECH_ARCHITECTURE", "TECH_MANOR", "TECH_BATTLELINE", "TECH_DOCTRINE", "TECH_HYDRAULICS", "TECH_CARTOGRAPHY", "TECH_LATEEN_SAIL", "TECH_JURISPRUDENCE", "TECH_MARTIAL_CODE", "TECH_VAULTING", "TECH_BODKIN_ARROW", "TECH_WINDLASS", "TECH_FISCAL_POLICY", "TECH_BARDING", "TECH_INFANTRY_SQUARE", "TECH_COHORTS", "TECH_CHAIN_DRIVE", "TECH_BALLISTICS", "TECH_ECONOMIC_REFORM", "TECH_MILITARY_PRESTIGE", "TECH_INDUSTRIAL_PROGRESS"], "bonusTechs": ["TECH_STONECUTTING_BONUS_STONE", "TECH_ADMINISTRATION_BONUS_WORKER", "TECH_HUSBANDRY_BONUS_FOOD", "TECH_DRAMA_BONUS_SETTLER", "TECH_ARISTOCRACY_BONUS_BORDERS", "TECH_NAVIGATION_BONUS_BIREME", "TECH_PHALANX_BONUS_ORDERS", "TECH_SPOKED_WHEEL_BONUS_CHARIOT", "TECH_FORESTRY_BONUS_SCIENTIST", "TECH_STEEL_BONUS_TRAINING", "TECH_SOVEREIGNITY_BONUS_CIVICS", "TECH_COINAGE_BONUS_MONEY", "TECH_CITIZENSHIP_BONUS_MINISTER", "TECH_PORTCULLIS_BONUS_MACEMAN", "TECH_LAND_CONSOLIDATION_BONUS_CAMEL_ARCHER", "TECH_LAND_CONSOLIDATION_BONUS_WAR_ELEPHANT", "TECH_COMPOSITE_BOW_BONUS_ARCHER", "TECH_MACHINERY_BONUS_ONAGER", "TECH_SCHOLARSHIP_BONUS_SCIENTIST", "TECH_STIRRUPS_BONUS_HORSEMAN", "TECH_STIRRUPS_BONUS_HORSE_ARCHER", "TECH_MANOR_BONUS_GOODS", "TECH_BATTLELINE_BONUS_SOLDIER", "TECH_HYDRAULICS_BONUS_BALLISTA", "TECH_JURISPRUDENCE_BONUS_MINISTER", "TECH_VAULTING_BONUS_HAPPINESS", "TECH_BODKIN_ARROW_BONUS_LONGBOWMAN", "TECH_FISCAL_POLICY_BONUS_MERCHANT", "TECH_INFANTRY_SQUARE_BONUS_SOLDIER", "TECH_CHAIN_DRIVE_BONUS_MERCHANT", "TECH_BATTERING_RAM_BONUS", "TECH_SIEGE_TOWER_BONUS", "TECH_AKKADIAN_ARCHER_BONUS", "TECH_CIMMERIAN_ARCHER_BONUS", "TECH_AFRICAN_ELEPHANT_BONUS", "TECH_TURRETED_ELEPHANT_BONUS", "TECH_LIGHT_CHARIOT_BONUS", "TECH_MOUNTED_LANCER_BONUS", "TECH_HOPLITE_BONUS", "TECH_PHALANGITE_BONUS", "TECH_PALTON_CAVALRY_BONUS", "TECH_CATAPHRACT_ARCHER_BONUS", "TECH_HASTATUS_BONUS", "TECH_LEGIONARY_BONUS", "TECH_HITTITE_CHARIOT_1_BONUS", "TECH_HITTITE_CHARIOT_2_BONUS", "TECH_MEDJAY_ARCHER_BONUS", "TECH_BEJA_ARCHER_BONUS", "TECH_DMT_WARRIOR_BONUS", "TECH_SHOTELAI_BONUS", "TECH_RESOURCE_PORCELAIN_BONUS", "TECH_RESOURCE_EXOTIC_FUR_BONUS", "TECH_RESOURCE_PERFUME_BONUS"]}};
 
         let researchedTechs = [];
         let researchOrder = [];
@@ -418,6 +425,11 @@
                                 "TECH_STONECUTTING",
                                 "TECH_DIVINATION"
                 ],
+                "NATION_MAURYA": [
+                                "TECH_IRONWORKING",
+                                "TECH_STONECUTTING",
+                                "TECH_ADMINISTRATION"
+                ],
                 "NATION_PERSIA": [
                                 "TECH_IRONWORKING",
                                 "TECH_TRAPPING",
@@ -427,6 +439,15 @@
                                 "TECH_IRONWORKING",
                                 "TECH_STONECUTTING",
                                 "TECH_POLIS"
+                ],
+                "NATION_TAMIL": [
+                                "TECH_DIVINATION",
+                                "TECH_TRAPPING",
+                                "TECH_IRONWORKING"
+                ],
+                "NATION_YUEZHI": [
+                                "TECH_MILITARY_DRILL",
+                                "TECH_HUSBANDRY"
                 ]
 },
             nationSpecificBonuses: {
@@ -469,6 +490,19 @@
                 "NATION_AKSUM": [
                                 "TECH_DMT_WARRIOR_BONUS",
                                 "TECH_SHOTELAI_BONUS"
+                ],
+                "NATION_MAURYA": [
+                                "TECH_MAURYA_ASSAULT_ELEPHANT_BONUS",
+                                "TECH_MAURYA_ARMOURED_ELEPHANT_BONUS"
+                ],
+                "NATION_YUEZHI": [
+                                "TECH_YUEZHI_STEPPE_RIDERS_BONUS",
+                                "TECH_YUEZHI_KUSHAN_CAVALRY_BONUS",
+                                "TECH_YUEZHI_KUSHAN_WARLORD_BONUS"
+                ],
+                "NATION_TAMIL": [
+                                "TECH_TAMIL_JAVELIN_ELEPHANT_BONUS",
+                                "TECH_TAMIL_ARCHER_ELEPHANT_BONUS"
                 ]
 }
         };
@@ -773,7 +807,7 @@
             const tooltip = document.getElementById('tooltip');
             let requirementText;
             if (bonusTech.cultureRequired) {
-                const cultureName = bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
+                const cultureName = bonusTech.cultureRequired === 'CULTURE_DEVELOPING' ? 'Developing Culture' : bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
                 requirementText = `<p><strong>Requires:</strong> ${cultureName}</p>`;
             } else if (bonusTech.parent) {
                 const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
@@ -1693,7 +1727,7 @@
             const tooltip = document.getElementById('tooltip');
             let requirementText;
             if (bonusTech.cultureRequired) {
-                const cultureName = bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
+                const cultureName = bonusTech.cultureRequired === 'CULTURE_DEVELOPING' ? 'Developing Culture' : bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
                 requirementText = `<p><strong>Requires:</strong> ${cultureName}</p>`;
             } else if (bonusTech.parent) {
                 const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
@@ -1829,7 +1863,7 @@
             // Find parent tech or culture requirement
             let requirementText;
             if (bonusTech.cultureRequired) {
-                const cultureName = bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
+                const cultureName = bonusTech.cultureRequired === 'CULTURE_DEVELOPING' ? 'Developing Culture' : bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
                 requirementText = `<p><strong>Requires:</strong> ${cultureName}</p>`;
             } else if (bonusTech.parent) {
                 const parentTech = techData.techs.find(t => t.id === bonusTech.parent);

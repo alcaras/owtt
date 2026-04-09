@@ -73,6 +73,9 @@ class TestParserWithLatestGameData(unittest.TestCase):
             "TECH_HITTITE_CHARIOT_1_BONUS",
             "TECH_MEDJAY_ARCHER_BONUS",
             "TECH_DMT_WARRIOR_BONUS",
+            "TECH_MAURYA_ASSAULT_ELEPHANT_BONUS",
+            "TECH_YUEZHI_KUSHAN_CAVALRY_BONUS",
+            "TECH_TAMIL_JAVELIN_ELEPHANT_BONUS",
         ]
         for tech_id in tier1_ids:
             bonus = self._find_bonus(tech_id)
@@ -96,6 +99,9 @@ class TestParserWithLatestGameData(unittest.TestCase):
             "TECH_HITTITE_CHARIOT_2_BONUS",
             "TECH_BEJA_ARCHER_BONUS",
             "TECH_SHOTELAI_BONUS",
+            "TECH_MAURYA_ARMOURED_ELEPHANT_BONUS",
+            "TECH_YUEZHI_KUSHAN_WARLORD_BONUS",
+            "TECH_TAMIL_ARCHER_ELEPHANT_BONUS",
         ]
         for tech_id in tier2_ids:
             bonus = self._find_bonus(tech_id)
@@ -171,8 +177,8 @@ class TestParserWithLatestGameData(unittest.TestCase):
         self.assertGreaterEqual(len(self.data["bonusTechs"]), 40)
 
     def test_has_nation_data(self):
-        """Should have nation starting tech data."""
-        self.assertGreaterEqual(len(self.data["nationData"]["startingTechs"]), 8)
+        """Should have nation starting tech data including EOTI nations."""
+        self.assertGreaterEqual(len(self.data["nationData"]["startingTechs"]), 11)
 
     def test_victory_techs_are_main(self):
         """Victory techs should be in main techs, not bonus techs."""
@@ -181,6 +187,59 @@ class TestParserWithLatestGameData(unittest.TestCase):
         for vid in ["TECH_ECONOMIC_REFORM", "TECH_MILITARY_PRESTIGE", "TECH_INDUSTRIAL_PROGRESS"]:
             self.assertIn(vid, main_ids, f"{vid} should be a main tech")
             self.assertNotIn(vid, bonus_ids, f"{vid} should not be a bonus tech")
+
+    # =========================================================================
+    # 6. EOTI DLC - Empires of the Indus
+    # =========================================================================
+
+    def test_eoti_nations_exist(self):
+        """EOTI nations (Maurya, Tamil, Yuezhi) should have starting techs."""
+        for nation_id in ["NATION_MAURYA", "NATION_TAMIL", "NATION_YUEZHI"]:
+            self.assertIn(nation_id, self.data["nationData"]["startingTechs"],
+                          f"{nation_id} should be in starting techs")
+
+    def test_eoti_nation_starting_techs(self):
+        """EOTI nations should have correct starting techs."""
+        st = self.data["nationData"]["startingTechs"]
+        self.assertEqual(st["NATION_MAURYA"], ["TECH_IRONWORKING", "TECH_STONECUTTING", "TECH_ADMINISTRATION"])
+        self.assertEqual(st["NATION_TAMIL"], ["TECH_DIVINATION", "TECH_TRAPPING", "TECH_IRONWORKING"])
+        self.assertEqual(st["NATION_YUEZHI"], ["TECH_MILITARY_DRILL", "TECH_HUSBANDRY"])
+
+    def test_eoti_bonus_techs_exist(self):
+        """EOTI nation bonus techs should be in the bonus tech list."""
+        all_ids = [t["id"] for t in self.data["bonusTechs"]]
+        eoti_ids = [
+            "TECH_MAURYA_ASSAULT_ELEPHANT_BONUS",
+            "TECH_MAURYA_ARMOURED_ELEPHANT_BONUS",
+            "TECH_YUEZHI_STEPPE_RIDERS_BONUS",
+            "TECH_YUEZHI_KUSHAN_CAVALRY_BONUS",
+            "TECH_YUEZHI_KUSHAN_WARLORD_BONUS",
+            "TECH_TAMIL_JAVELIN_ELEPHANT_BONUS",
+            "TECH_TAMIL_ARCHER_ELEPHANT_BONUS",
+        ]
+        for tech_id in eoti_ids:
+            self.assertIn(tech_id, all_ids, f"{tech_id} should exist as bonus tech")
+
+    def test_yuezhi_steppe_riders_culture_developing(self):
+        """Yuezhi Steppe Riders should require CULTURE_DEVELOPING."""
+        bonus = self._find_bonus("TECH_YUEZHI_STEPPE_RIDERS_BONUS")
+        self.assertIsNotNone(bonus)
+        self.assertEqual(bonus.get("cultureRequired"), "CULTURE_DEVELOPING")
+
+    def test_eoti_bonus_nation_assignments(self):
+        """EOTI bonus techs should be assigned to correct nations."""
+        for tech_id, nation in [
+            ("TECH_MAURYA_ASSAULT_ELEPHANT_BONUS", "NATION_MAURYA"),
+            ("TECH_MAURYA_ARMOURED_ELEPHANT_BONUS", "NATION_MAURYA"),
+            ("TECH_YUEZHI_STEPPE_RIDERS_BONUS", "NATION_YUEZHI"),
+            ("TECH_YUEZHI_KUSHAN_CAVALRY_BONUS", "NATION_YUEZHI"),
+            ("TECH_YUEZHI_KUSHAN_WARLORD_BONUS", "NATION_YUEZHI"),
+            ("TECH_TAMIL_JAVELIN_ELEPHANT_BONUS", "NATION_TAMIL"),
+            ("TECH_TAMIL_ARCHER_ELEPHANT_BONUS", "NATION_TAMIL"),
+        ]:
+            bonus = self._find_bonus(tech_id)
+            self.assertIsNotNone(bonus, f"{tech_id} should exist")
+            self.assertEqual(bonus.get("nation"), nation, f"{tech_id} should belong to {nation}")
 
 
 class TestHTMLGeneration(unittest.TestCase):
@@ -208,6 +267,7 @@ class TestHTMLGeneration(unittest.TestCase):
         """Generated HTML should contain cultureRequired fields for nation bonuses."""
         self.assertIn('cultureRequired: "CULTURE_STRONG"', self.html)
         self.assertIn('cultureRequired: "CULTURE_LEGENDARY"', self.html)
+        self.assertIn('cultureRequired: "CULTURE_DEVELOPING"', self.html)
 
     def test_html_excludes_disabled_techs(self):
         """Generated HTML should not contain disabled tech IDs."""
@@ -231,13 +291,13 @@ class TestHTMLGeneration(unittest.TestCase):
         self.assertIn('parent: ""', match.group())
 
     def test_bonus_count_in_html(self):
-        """Should have 53 bonus techs (56 original - 3 disabled)."""
+        """Should have 60 bonus techs (53 original + 7 EOTI nation bonuses)."""
         import re
         bonus_ids = re.findall(r'id: "TECH_[^"]*"', self.html)
         # Count only bonus section
         bonus_section = self.html[self.html.find("bonusTechs:"):]
         bonus_ids = re.findall(r'id: "TECH_[^"]*"', bonus_section)
-        self.assertEqual(len(bonus_ids), 53)
+        self.assertEqual(len(bonus_ids), 60)
 
 
 class TestVersionHash(unittest.TestCase):

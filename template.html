@@ -571,7 +571,7 @@
             const tooltip = document.getElementById('tooltip');
             let requirementText;
             if (bonusTech.cultureRequired) {
-                const cultureName = bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
+                const cultureName = bonusTech.cultureRequired === 'CULTURE_DEVELOPING' ? 'Developing Culture' : bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
                 requirementText = `<p><strong>Requires:</strong> ${cultureName}</p>`;
             } else if (bonusTech.parent) {
                 const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
@@ -1491,7 +1491,7 @@
             const tooltip = document.getElementById('tooltip');
             let requirementText;
             if (bonusTech.cultureRequired) {
-                const cultureName = bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
+                const cultureName = bonusTech.cultureRequired === 'CULTURE_DEVELOPING' ? 'Developing Culture' : bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
                 requirementText = `<p><strong>Requires:</strong> ${cultureName}</p>`;
             } else if (bonusTech.parent) {
                 const parentTech = techData.techs.find(t => t.id === bonusTech.parent);
@@ -1627,7 +1627,7 @@
             // Find parent tech or culture requirement
             let requirementText;
             if (bonusTech.cultureRequired) {
-                const cultureName = bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
+                const cultureName = bonusTech.cultureRequired === 'CULTURE_DEVELOPING' ? 'Developing Culture' : bonusTech.cultureRequired === 'CULTURE_STRONG' ? 'Strong Culture' : 'Legendary Culture';
                 requirementText = `<p><strong>Requires:</strong> ${cultureName}</p>`;
             } else if (bonusTech.parent) {
                 const parentTech = techData.techs.find(t => t.id === bonusTech.parent);

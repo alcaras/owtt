@@ -22,7 +22,10 @@ import argparse
 # When the tech list changes, snapshot the previous version here before regenerating.
 # This allows old shared URLs to be translated to current tech indices.
 VERSION_HISTORY = {
-    # No previous versions yet - this is the first snapshot
+    "67b2": {
+        "techs": ["TECH_IRONWORKING", "TECH_STONECUTTING", "TECH_TRAPPING", "TECH_DIVINATION", "TECH_ADMINISTRATION", "TECH_LABOR_FORCE", "TECH_HUSBANDRY", "TECH_DRAMA", "TECH_POLIS", "TECH_MILITARY_DRILL", "TECH_ARISTOCRACY", "TECH_RHETORIC", "TECH_NAVIGATION", "TECH_PHALANX", "TECH_SPOKED_WHEEL", "TECH_FORESTRY", "TECH_STEEL", "TECH_SOVEREIGNTY", "TECH_METAPHYSICS", "TECH_COINAGE", "TECH_CITIZENSHIP", "TECH_PORTCULLIS", "TECH_LAND_CONSOLIDATION", "TECH_COMPOSITE_BOW", "TECH_MONASTICISM", "TECH_MACHINERY", "TECH_SCHOLARSHIP", "TECH_STIRRUPS", "TECH_ARCHITECTURE", "TECH_MANOR", "TECH_BATTLELINE", "TECH_DOCTRINE", "TECH_HYDRAULICS", "TECH_CARTOGRAPHY", "TECH_LATEEN_SAIL", "TECH_JURISPRUDENCE", "TECH_MARTIAL_CODE", "TECH_VAULTING", "TECH_BODKIN_ARROW", "TECH_WINDLASS", "TECH_FISCAL_POLICY", "TECH_BARDING", "TECH_INFANTRY_SQUARE", "TECH_COHORTS", "TECH_CHAIN_DRIVE", "TECH_BALLISTICS", "TECH_ECONOMIC_REFORM", "TECH_MILITARY_PRESTIGE", "TECH_INDUSTRIAL_PROGRESS"],
+        "bonusTechs": ["TECH_STONECUTTING_BONUS_STONE", "TECH_ADMINISTRATION_BONUS_WORKER", "TECH_HUSBANDRY_BONUS_FOOD", "TECH_DRAMA_BONUS_SETTLER", "TECH_ARISTOCRACY_BONUS_BORDERS", "TECH_NAVIGATION_BONUS_BIREME", "TECH_PHALANX_BONUS_ORDERS", "TECH_SPOKED_WHEEL_BONUS_CHARIOT", "TECH_FORESTRY_BONUS_SCIENTIST", "TECH_STEEL_BONUS_TRAINING", "TECH_SOVEREIGNITY_BONUS_CIVICS", "TECH_COINAGE_BONUS_MONEY", "TECH_CITIZENSHIP_BONUS_MINISTER", "TECH_PORTCULLIS_BONUS_MACEMAN", "TECH_LAND_CONSOLIDATION_BONUS_CAMEL_ARCHER", "TECH_LAND_CONSOLIDATION_BONUS_WAR_ELEPHANT", "TECH_COMPOSITE_BOW_BONUS_ARCHER", "TECH_MACHINERY_BONUS_ONAGER", "TECH_SCHOLARSHIP_BONUS_SCIENTIST", "TECH_STIRRUPS_BONUS_HORSEMAN", "TECH_STIRRUPS_BONUS_HORSE_ARCHER", "TECH_MANOR_BONUS_GOODS", "TECH_BATTLELINE_BONUS_SOLDIER", "TECH_HYDRAULICS_BONUS_BALLISTA", "TECH_JURISPRUDENCE_BONUS_MINISTER", "TECH_VAULTING_BONUS_HAPPINESS", "TECH_BODKIN_ARROW_BONUS_LONGBOWMAN", "TECH_FISCAL_POLICY_BONUS_MERCHANT", "TECH_INFANTRY_SQUARE_BONUS_SOLDIER", "TECH_CHAIN_DRIVE_BONUS_MERCHANT", "TECH_BATTERING_RAM_BONUS", "TECH_SIEGE_TOWER_BONUS", "TECH_AKKADIAN_ARCHER_BONUS", "TECH_CIMMERIAN_ARCHER_BONUS", "TECH_AFRICAN_ELEPHANT_BONUS", "TECH_TURRETED_ELEPHANT_BONUS", "TECH_LIGHT_CHARIOT_BONUS", "TECH_MOUNTED_LANCER_BONUS", "TECH_HOPLITE_BONUS", "TECH_PHALANGITE_BONUS", "TECH_PALTON_CAVALRY_BONUS", "TECH_CATAPHRACT_ARCHER_BONUS", "TECH_HASTATUS_BONUS", "TECH_LEGIONARY_BONUS", "TECH_HITTITE_CHARIOT_1_BONUS", "TECH_HITTITE_CHARIOT_2_BONUS", "TECH_MEDJAY_ARCHER_BONUS", "TECH_BEJA_ARCHER_BONUS", "TECH_DMT_WARRIOR_BONUS", "TECH_SHOTELAI_BONUS", "TECH_RESOURCE_PORCELAIN_BONUS", "TECH_RESOURCE_EXOTIC_FUR_BONUS", "TECH_RESOURCE_PERFUME_BONUS"],
+    },
 }
 
 
@@ -52,6 +55,7 @@ class OldWorldParser:
         self.parse_text_infos()
         self.parse_text_nation()
         self.parse_text_bonus()
+        self.parse_text_eoti()
         
         # Parse effect player data for unlocks
         self.parse_effect_player()
@@ -122,6 +126,21 @@ class OldWorldParser:
             if tag is not None and text is not None and tag.text and text.text:
                 self.text_data[tag.text] = self.clean_text(text.text)
     
+    def parse_text_eoti(self):
+        """Parse text-eoti.xml for Empires of the Indus DLC text entries"""
+        file_path = self.xml_dir / "text-eoti.xml"
+        if not file_path.exists():
+            return
+
+        tree = ET.parse(file_path)
+        root = tree.getroot()
+
+        for entry in root.findall(".//Entry"):
+            tag = entry.find("zType")
+            text = entry.find("en-US")
+            if tag is not None and text is not None and tag.text and text.text:
+                self.text_data[tag.text] = self.clean_text(text.text)
+
     def parse_effect_player(self):
         """Parse effectPlayer.xml for tech unlocks"""
         file_path = self.xml_dir / "effectPlayer.xml"
@@ -480,7 +499,7 @@ class OldWorldParser:
                     bonus_text = "+1 Maceman"
                 elif "ONAGER" in tech_id_upper:
                     bonus_text = "+1 Onager"
-                elif "ARCHER" in tech_id_upper and not any(s in tech_id_upper for s in ["CAMEL", "HORSE", "AKKADIAN", "CIMMERIAN", "MEDJAY", "BEJA", "CATAPHRACT"]):
+                elif "ARCHER" in tech_id_upper and not any(s in tech_id_upper for s in ["CAMEL", "HORSE", "AKKADIAN", "CIMMERIAN", "MEDJAY", "BEJA", "CATAPHRACT", "ARCHER_ELEPHANT"]):
                     bonus_text = "+1 Archer"
                 elif "HORSEMAN" in tech_id_upper and "HORSE_ARCHER" not in tech_id_upper:
                     bonus_text = "+1 Horseman"
@@ -538,6 +557,20 @@ class OldWorldParser:
                     bonus_text = "+2 Dmt Warrior"
                 elif "SHOTELAI" in tech_id_upper:
                     bonus_text = "+2 Shotelai"
+                elif "ASSAULT_ELEPHANT" in tech_id_upper:
+                    bonus_text = "+1 Assault Elephant"
+                elif "ARMOURED_ELEPHANT" in tech_id_upper:
+                    bonus_text = "+2 Armoured Elephant"
+                elif "STEPPE_RIDER" in tech_id_upper:
+                    bonus_text = "+2 Steppe Riders"
+                elif "KUSHAN_CAVALRY" in tech_id_upper:
+                    bonus_text = "+2 Kushan Cavalry"
+                elif "KUSHAN_WARLORD" in tech_id_upper:
+                    bonus_text = "+2 Kushan Warlord"
+                elif "JAVELIN_ELEPHANT" in tech_id_upper:
+                    bonus_text = "+2 Javelin Elephant"
+                elif "ARCHER_ELEPHANT" in tech_id_upper:
+                    bonus_text = "+2 Archer Elephant"
                 
                 # Fallback if no pattern matched
                 if not bonus_text:
@@ -584,7 +617,7 @@ class OldWorldParser:
                     bonus_name = "Free Maceman"
                 elif "ONAGER" in tech_id_upper:
                     bonus_name = "Free Onager"
-                elif "ARCHER" in tech_id_upper and not any(special in tech_id_upper for special in ["CAMEL", "HORSE", "AKKADIAN", "CIMMERIAN", "MEDJAY", "BEJA", "CATAPHRACT"]):
+                elif "ARCHER" in tech_id_upper and not any(special in tech_id_upper for special in ["CAMEL", "HORSE", "AKKADIAN", "CIMMERIAN", "MEDJAY", "BEJA", "CATAPHRACT", "ARCHER_ELEPHANT"]):
                     bonus_name = "Free Archer"
                 elif "CAMEL_ARCHER" in tech_id_upper:
                     bonus_name = "Free Camel Archer"
@@ -639,6 +672,20 @@ class OldWorldParser:
                     bonus_name = "Free Dmt Warrior"
                 elif "SHOTELAI" in tech_id_upper:
                     bonus_name = "Free Shotelai"
+                elif "ASSAULT_ELEPHANT" in tech_id_upper:
+                    bonus_name = "Free Assault Elephant"
+                elif "ARMOURED_ELEPHANT" in tech_id_upper:
+                    bonus_name = "Free Armoured Elephant"
+                elif "STEPPE_RIDER" in tech_id_upper:
+                    bonus_name = "Free Steppe Riders"
+                elif "KUSHAN_CAVALRY" in tech_id_upper:
+                    bonus_name = "Free Kushan Cavalry"
+                elif "KUSHAN_WARLORD" in tech_id_upper:
+                    bonus_name = "Free Kushan Warlord"
+                elif "JAVELIN_ELEPHANT" in tech_id_upper:
+                    bonus_name = "Free Javelin Elephant"
+                elif "ARCHER_ELEPHANT" in tech_id_upper:
+                    bonus_name = "Free Archer Elephant"
                 # Resource bonuses  
                 elif "RESOURCE_" in tech["id"]:
                     bonus_name = bonus_text  # Use the luxury name directly
