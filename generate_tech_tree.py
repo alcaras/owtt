@@ -1067,8 +1067,10 @@ def generate_html(data: Dict, template_path: str = None, output_path: str = "ind
         }};"""
     
     # Build nation data block
+    nation_names_list = [{"id": k, "name": v} for k, v in data['nationData']['nationNames'].items()]
     nation_data_block = f"""const nationData = {{
             startingTechs: {json.dumps(data['nationData']['startingTechs'], indent=16).replace('{', '{', 1)},
+            nationNames: {json.dumps(nation_names_list, indent=16)},
             nationSpecificBonuses: {json.dumps(data['nationData']['nationSpecificBonuses'], indent=16).replace('{', '{', 1)}
         }};"""
     

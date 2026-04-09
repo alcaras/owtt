@@ -61,16 +61,6 @@
                 <h2>Nation</h2>
                 <select class="nation-select" id="nationSelect" onchange="selectNation()">
                     <option value="">No Nation</option>
-                    <option value="NATION_AKSUM">Aksum</option>
-                    <option value="NATION_ASSYRIA">Assyria</option>
-                    <option value="NATION_BABYLONIA">Babylonia</option>
-                    <option value="NATION_CARTHAGE">Carthage</option>
-                    <option value="NATION_EGYPT">Egypt</option>
-                    <option value="NATION_GREECE">Greece</option>
-                    <option value="NATION_HITTITE">Hittites</option>
-                    <option value="NATION_KUSH">Kush</option>
-                    <option value="NATION_PERSIA">Persia</option>
-                    <option value="NATION_ROME">Rome</option>
                 </select>
             </div>
             
@@ -272,6 +262,17 @@
         {{NATION_DATA}}
 
         function initializeTechTree() {
+            // Populate nation dropdown from nationData
+            const nationSelect = document.getElementById('nationSelect');
+            nationData.nationNames
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .forEach(n => {
+                    const opt = document.createElement('option');
+                    opt.value = n.id;
+                    opt.textContent = n.name;
+                    nationSelect.appendChild(opt);
+                });
+
             const techTree = document.getElementById('techTree');
             techTree.innerHTML = '';
             
