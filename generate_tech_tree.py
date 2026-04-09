@@ -784,7 +784,8 @@ class OldWorldParser:
             "TECH_SCHOLARSHIP": ["Library"],
             "TECH_VAULTING": ["Cathedral"],
             "TECH_DOCTRINE": ["Temple"],
-            "TECH_HYDRAULICS": ["Mill"],
+            "TECH_HYDRAULICS": ["Watermill"],
+            "TECH_WINDLASS": ["Windmill"],
             "TECH_CARTOGRAPHY": ["Harbor"]
         }
         
