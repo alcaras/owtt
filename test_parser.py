@@ -120,17 +120,17 @@ class TestParserWithLatestGameData(unittest.TestCase):
         self.assertFalse(bonus.get("parent"),
                          "TECH_BATTERING_RAM_BONUS should have no parent tech")
 
-    def test_nation_bonus_tier1_cost_200(self):
-        """Tier 1 nation bonus techs now cost 200 (was 100)."""
+    def test_nation_bonus_tier1_cost_250(self):
+        """Tier 1 nation bonus techs cost 250 (May 2026 patch rebalance)."""
         bonus = self._find_bonus("TECH_BATTERING_RAM_BONUS")
         self.assertIsNotNone(bonus)
-        self.assertEqual(bonus["cost"], 200)
+        self.assertEqual(bonus["cost"], 250)
 
-    def test_nation_bonus_tier2_cost_600(self):
-        """Tier 2 nation bonus techs still cost 600."""
+    def test_nation_bonus_tier2_cost_700(self):
+        """Tier 2 nation bonus techs cost 700 (May 2026 patch rebalance)."""
         bonus = self._find_bonus("TECH_SIEGE_TOWER_BONUS")
         self.assertIsNotNone(bonus)
-        self.assertEqual(bonus["cost"], 600)
+        self.assertEqual(bonus["cost"], 700)
 
     # =========================================================================
     # 3. Porcelain bonus changes

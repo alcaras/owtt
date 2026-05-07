@@ -76,8 +76,8 @@ const versionMaps = {};  // Old version hash -> tech ID lists for URL migration
 
 ### Nation Selection
 - Nation-specific bonus cards require culture levels instead of tech prerequisites:
-  - Tier 1 (cost 200): Requires CULTURE_STRONG
-  - Tier 2 (cost 600): Requires CULTURE_LEGENDARY
+  - Tier 1 (cost 250): Requires CULTURE_STRONG
+  - Tier 2 (cost 700): Requires CULTURE_LEGENDARY
 - Starting techs are automatically added when selecting a nation
 - Starting techs show as "FREE" with crossed-out costs
 - Starting techs are always marked as completed (green) and cannot be uncompleted
