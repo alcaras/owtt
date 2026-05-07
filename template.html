@@ -15,16 +15,7 @@
     </div>
     <div class="main-container">
         <div class="tech-tree-wrapper">
-            <div class="tech-cost-headers">
-                <div class="tech-cost-header">100 🧪</div>
-                <div class="tech-cost-header">150 🧪</div>
-                <div class="tech-cost-header">250 🧪</div>
-                <div class="tech-cost-header">400 🧪</div>
-                <div class="tech-cost-header">700 🧪</div>
-                <div class="tech-cost-header">1100 🧪</div>
-                <div class="tech-cost-header">1600 🧪</div>
-                <div class="tech-cost-header">2000 🧪</div>
-            </div>
+            <div class="tech-cost-headers" id="techCostHeaders"></div>
             <div class="tech-tree" id="techTree"></div>
             
             <div class="bonus-tech-section">
@@ -272,6 +263,20 @@
                     opt.textContent = n.name;
                     nationSelect.appendChild(opt);
                 });
+
+            const headersContainer = document.getElementById('techCostHeaders');
+            headersContainer.innerHTML = '';
+            const costByColumn = {};
+            techData.techs.forEach(tech => {
+                if (costByColumn[tech.column] === undefined) costByColumn[tech.column] = tech.cost;
+            });
+            const numColumns = Math.max(...Object.keys(costByColumn).map(Number)) + 1;
+            for (let col = 0; col < numColumns; col++) {
+                const header = document.createElement('div');
+                header.className = 'tech-cost-header';
+                header.textContent = costByColumn[col] !== undefined ? `${costByColumn[col]} 🧪` : '';
+                headersContainer.appendChild(header);
+            }
 
             const techTree = document.getElementById('techTree');
             techTree.innerHTML = '';
