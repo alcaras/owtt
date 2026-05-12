@@ -312,6 +312,12 @@ class OldWorldParser:
         if culture_node is not None and culture_node.text:
             culture_valid = culture_node.text
 
+        # Sprite name in resources.assets (used to pull bonus-card icons).
+        icon_name = None
+        icon_node = tech_node.find("zIconName")
+        if icon_node is not None and icon_node.text:
+            icon_name = icon_node.text
+
         return {
             "id": tech_id,
             "name": name,
@@ -324,7 +330,8 @@ class OldWorldParser:
             "isBonus": is_bonus,
             "bonusDiscover": bonus_discover,
             "nationValid": nation_valid,
-            "cultureValid": culture_valid
+            "cultureValid": culture_valid,
+            "iconName": icon_name,
         }
     
     def parse_nations(self):
@@ -698,7 +705,7 @@ class OldWorldParser:
                     "name": bonus_name,
                     "cost": tech["cost"],
                     "parent": parent,
-                    "bonus": bonus_text
+                    "bonus": bonus_text,
                 }
 
                 # Add nation field if nation-specific
@@ -708,6 +715,10 @@ class OldWorldParser:
                 # Add culture requirement if present
                 if tech.get("cultureValid"):
                     bonus_tech["cultureRequired"] = tech["cultureValid"]
+
+                # Icon slug for img/icons/bonus/<slug>.png (sourced via extract_bonus_icons.py)
+                if tech.get("iconName"):
+                    bonus_tech["iconName"] = tech["iconName"]
 
                 bonus_techs.append(bonus_tech)
             elif should_exclude and any(vic in tech["id"] for vic in ["ECONOMIC_REFORM", "MILITARY_PRESTIGE", "INDUSTRIAL_PROGRESS"]):
@@ -1051,6 +1062,8 @@ def generate_tech_data_js(data: Dict, output_path: str = "tech-data.js"):
             parts.append(f'nation: "{bonus["nation"]}"')
         if bonus.get("cultureRequired"):
             parts.append(f'cultureRequired: "{bonus["cultureRequired"]}"')
+        if bonus.get("iconName"):
+            parts.append(f'iconName: "{bonus["iconName"]}"')
         bonus_entries.append("    { " + ", ".join(parts) + " }")
 
     nation_names_list = [

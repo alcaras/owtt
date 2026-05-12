@@ -14,28 +14,13 @@
     const slug = tech.id.replace(/^TECH_/,'').toLowerCase();
     return `img/icons/techs/${slug}.png`;
   }
-  // bonus card icon: use yields / specialists / units fallback
+  // Bonus card icon: prefer the per-card sprite extracted from the game's
+  // Unity bundle (img/icons/bonus/<iconName>.png). Falls back to the parent
+  // tech's icon for anything missing.
   function bonusIconPath(bt){
-    const n = bt.name.toLowerCase();
-    if (n.includes('scientist') || n.includes('philosopher')) return 'img/icons/specialists/philosopher.png';
-    if (n.includes('minister')) return 'img/icons/specialists/magistrate.png';
-    if (n.includes('court soldier')) return 'img/icons/specialists/officer.png';
-    if (n.includes('merchant')) return 'img/icons/specialists/shopkeeper.png';
-    if (n.includes('settler') || n.includes('worker')) return 'img/icons/specialists/laborer.png';
-    if (n.includes('food')) return 'img/icons/yields/food.png';
-    if (n.includes('stone')) return 'img/icons/yields/stone.png';
-    if (n.includes('money')) return 'img/icons/yields/money.png';
-    if (n.includes('training')) return 'img/icons/yields/training.png';
-    if (n.includes('civics')) return 'img/icons/yields/civics.png';
-    if (n.includes('orders')) return 'img/icons/yields/orders.png';
-    if (n.includes('happiness')) return 'img/icons/yields/happiness.png';
-    if (n.includes('porcelain')) return 'img/icons/resources/porcelain.png';
-    if (n.includes('perfume')) return 'img/icons/resources/perfume.png';
-    if (n.includes('exotic fur')) return 'img/icons/resources/exotic_fur.png';
-    if (n.includes('border')) return 'img/icons/yields/culture.png';
-    // unit-themed (use parent tech icon as fallback)
+    if (bt.iconName) return `img/icons/bonus/${bt.iconName.toLowerCase()}.png`;
     if (bt.parent){
-      const parent = TD.techs.find(t=>t.id===bt.parent);
+      const parent = TD.techs.find(t => t.id === bt.parent);
       if (parent) return techIconPath(parent);
     }
     return 'img/icons/yields/science.png';
