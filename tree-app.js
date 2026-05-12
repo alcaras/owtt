@@ -256,13 +256,6 @@
 
   function fmt(n){ return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,','); }
 
-  function unlockChip(kind, label){
-    const labels = {
-      unit:'U', imp:'B', law:'L', proj:'P', bonus:'★'
-    };
-    return `<span class="unlock-chip" data-kind="${kind}"><span class="glyph">${labels[kind]||''}</span>${label}</span>`;
-  }
-
   function renderCostHeaders(){
     $costH.innerHTML = '';
     const costByCol = {};
@@ -289,22 +282,29 @@
       node.style.gridColumn = (tech.column+1);
       node.style.gridRow = (tech.row+1);
 
-      const unlocks = [];
-      (tech.unlocks.units||[]).forEach(u=>unlocks.push(unlockChip('unit',u)));
-      (tech.unlocks.improvements||[]).forEach(u=>{ if (u==='Kushite Pyramids' && selectedNation!=='NATION_KUSH') return; unlocks.push(unlockChip('imp',u)); });
-      (tech.unlocks.laws||[]).forEach(u=>unlocks.push(unlockChip('law',u)));
-      (tech.unlocks.projects||[]).forEach(u=>unlocks.push(unlockChip('proj',u)));
-      // attach bonus card names as compact chips
-      TD.bonusTechs.filter(b=>b.parent===tech.id && (!b.nation || b.nation===selectedNation)).forEach(b=>{
-        unlocks.push(unlockChip('bonus', b.name));
-      });
+      // Count unlocks so we can render a tiny summary chip (units / buildings / laws / projects / bonus cards).
+      // Detail lives in the tooltip; this is just an at-a-glance shape.
+      const counts = {
+        u: (tech.unlocks.units || []).length,
+        b: (tech.unlocks.improvements || []).filter(x => x !== 'Kushite Pyramids' || selectedNation === 'NATION_KUSH').length,
+        l: (tech.unlocks.laws || []).length,
+        p: (tech.unlocks.projects || []).length,
+        s: TD.bonusTechs.filter(b => b.parent === tech.id && (!b.nation || b.nation === selectedNation)).length,
+      };
+      const summary = [
+        counts.u && `<span data-kind="unit">U${counts.u > 1 ? counts.u : ''}</span>`,
+        counts.b && `<span data-kind="imp">B${counts.b > 1 ? counts.b : ''}</span>`,
+        counts.l && `<span data-kind="law">L${counts.l > 1 ? counts.l : ''}</span>`,
+        counts.p && `<span data-kind="proj">P${counts.p > 1 ? counts.p : ''}</span>`,
+        counts.s && `<span data-kind="bonus">★${counts.s > 1 ? counts.s : ''}</span>`,
+      ].filter(Boolean).join('');
 
       node.innerHTML = `
         <div class="tech-head">
           <div class="tech-icon"><img src="${techIconPath(tech)}" alt="" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'tech-icon-fallback\\'>${tech.name[0]}</span>';" /></div>
           <div class="tech-name">${tech.name}</div>
         </div>
-        ${unlocks.length?`<div class="tech-unlocks">${unlocks.join('')}</div>`:''}
+        ${summary ? `<div class="tech-summary">${summary}</div>` : ''}
       `;
 
       node.addEventListener('click', ()=>toggleResearch(tech.id));
