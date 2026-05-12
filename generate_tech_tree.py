@@ -421,24 +421,26 @@ class OldWorldParser:
                 }
     
     def parse_bonuses(self):
-        """Parse bonus.xml for bonus tech values"""
-        file_path = self.xml_dir / "bonus.xml"
-        if not file_path.exists():
-            print(f"Warning: {file_path} not found")
-            return
-            
-        tree = ET.parse(file_path)
-        root = tree.getroot()
+        """Parse bonus.xml plus DLC bonus-event-*.xml for bonus tech values."""
+        candidates = [self.xml_dir / "bonus.xml"]
+        candidates += sorted(self.xml_dir.glob("bonus-event*.xml"))
 
         # Lookup keyed by BONUS_* id. Each value captures every shape we know how
         # to format into a human effect string.
         self.bonus_values: Dict[str, Dict] = {}
         raw_entries: Dict[str, ET.Element] = {}
-        for bonus in root.findall(".//Entry"):
-            bonus_type = bonus.find("zType")
-            if bonus_type is None or not bonus_type.text:
+        for file_path in candidates:
+            if not file_path.exists():
                 continue
-            raw_entries[bonus_type.text] = bonus
+            try:
+                root = ET.parse(file_path).getroot()
+            except ET.ParseError:
+                continue
+            for bonus in root.findall(".//Entry"):
+                bonus_type = bonus.find("zType")
+                if bonus_type is None or not bonus_type.text:
+                    continue
+                raw_entries[bonus_type.text] = bonus
 
         def parse_entry(entry: ET.Element) -> Dict:
             data: Dict = {"yields": {}, "units": {}, "courtiers": [], "resources": {},

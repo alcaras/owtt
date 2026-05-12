@@ -54,6 +54,29 @@
 
   function isStarting(techId){ return startingTechsForNation().includes(techId); }
 
+  // Total science needed to reach `techId`: own cost + every unmet prereq.
+  // "Unmet" = not in the user's research order, not completed, not free
+  // (starting tech for the selected nation).
+  function computeTotalCostToReach(techId, startingSet){
+    const have = new Set([
+      ...startingSet,
+      ...researchedTechs,
+      ...completedTechs,
+    ]);
+    const visited = new Set();
+    let total = 0;
+    function visit(id){
+      if (visited.has(id) || have.has(id)) return;
+      visited.add(id);
+      const t = techById.get(id);
+      if (!t) return;
+      total += t.cost;
+      (t.prereqs || []).forEach(visit);
+    }
+    visit(techId);
+    return total;
+  }
+
   function recordUndo(){
     undoStack.push(JSON.stringify({researchedTechs,researchOrder,researchedBonusTechs,completedTechs,selectedNation}));
     if (undoStack.length>30) undoStack.shift();
@@ -342,13 +365,17 @@
         badge.textContent = orderIndexById[tech.id];
         node.appendChild(badge);
       }
-      // cost chip on techs that haven't been learned yet — shows what it would cost to add
+      // Cost chip on techs that haven't been learned yet. Shows the *total*
+      // science needed to reach this tech — including every unmet prereq —
+      // not just the tech's own cost.
       const isStartingTech = startingSet.has(tech.id);
       const isResearched = researchedTechs.includes(tech.id) || completedTechs.includes(tech.id);
       if (!isResearched && !isStartingTech){
+        const totalCost = computeTotalCostToReach(tech.id, startingSet);
         const delta = document.createElement('div');
         delta.className = 'tech-delta';
-        delta.textContent = fmt(tech.cost);
+        delta.textContent = fmt(totalCost);
+        if (totalCost > tech.cost) delta.title = `${fmt(tech.cost)} own · ${fmt(totalCost - tech.cost)} prereqs`;
         node.appendChild(delta);
       }
     });
@@ -466,7 +493,16 @@
                    researchedTechs.includes(tech.id) ? 'On research path' :
                    (tech.prereqs||[]).every(p=>researchedTechs.includes(p)||startingSet.has(p)) ? 'Available' : 'Locked';
     let html = `<h3><img src="${techIconPath(tech)}" alt=""/>${tech.name}</h3>`;
-    html += `<div class="tt-meta">${fmt(tech.cost)} science · ${status}</div>`;
+    let costLine = `${fmt(tech.cost)} science`;
+    const isStartingTech = startingSet.has(tech.id);
+    const isResearched = researchedTechs.includes(tech.id) || completedTechs.includes(tech.id);
+    if (!isResearched && !isStartingTech){
+      const total = computeTotalCostToReach(tech.id, startingSet);
+      if (total > tech.cost){
+        costLine = `${fmt(tech.cost)} own · ${fmt(total)} total with prereqs`;
+      }
+    }
+    html += `<div class="tt-meta">${costLine} · ${status}</div>`;
     const u = tech.unlocks;
     const sections = [];
     if (u.units?.length) sections.push({h:'Units', items:u.units});
@@ -897,12 +933,29 @@
     document.getElementById('redoBtn').addEventListener('click', redo);
     document.getElementById('simulateBtn').addEventListener('click', openSimModal);
     document.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click', closeSimModal));
-    document.getElementById('sidebarToggle').addEventListener('click', ()=>{
-      document.getElementById('sidebar').classList.toggle('open');
-    });
+    // Sidebar toggle. On mobile (sidebar is a bottom sheet) we use the
+    // `.open` class; on desktop the same button collapses/expands the
+    // right-hand panel via a class on <body>.
+    const toggleSidebar = () => {
+      const isMobile = window.matchMedia('(max-width: 900px)').matches;
+      if (isMobile){
+        document.getElementById('sidebar').classList.toggle('open');
+      } else {
+        document.body.classList.toggle('sidebar-collapsed');
+        // Connection lines depend on board width — redraw after layout settles.
+        requestAnimationFrame(()=>requestAnimationFrame(drawConnections));
+        try { localStorage.setItem('owtt-sidebar-collapsed', document.body.classList.contains('sidebar-collapsed') ? '1' : '0'); } catch(e){}
+      }
+    };
+    document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
     document.getElementById('sidebarClose').addEventListener('click', ()=>{
       document.getElementById('sidebar').classList.remove('open');
     });
+    try {
+      if (localStorage.getItem('owtt-sidebar-collapsed') === '1'){
+        document.body.classList.add('sidebar-collapsed');
+      }
+    } catch(e){}
     updateUndoRedoButtons();
     setupTweaks();
     // version line

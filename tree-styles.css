@@ -218,7 +218,16 @@ body::before {
   background: oklch(0.22 0.02 80 / .4);
 }
 .btn-outline:hover { background: oklch(0.28 0.04 80 / .55); border-color: var(--gold-soft); color: var(--gold); }
-.btn-sidebar-toggle { display: none; }
+.btn-sidebar-toggle { display: inline-flex; }
+
+/* Collapsed-sidebar layout: board takes the full row, sidebar slides offscreen.
+   The toggle button stays in the topbar and re-opens it. */
+body.sidebar-collapsed .layout {
+  grid-template-columns: 1fr;
+}
+body.sidebar-collapsed .sidebar {
+  display: none;
+}
 
 /* ============== LAYOUT ============== */
 .layout {
