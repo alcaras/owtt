@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a241a"/>
+      <stop offset="1" stop-color="#15110a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8c878"/>
+      <stop offset="1" stop-color="#a78338"/>
+    </linearGradient>
+  </defs>
+  <!-- background tile (safe-zone friendly for maskable) -->
+  <rect x="0" y="0" width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- shield mark, scaled to fit a maskable safe zone (centered ~80%) -->
+  <g transform="translate(96 96)" fill="url(#gold)">
+    <path d="M160 8 L24 64 V160 c0 74 55 125 130 130 75-5 130-56 130-130 V64 L160 8 zm0 22 L268 76 160 122 52 76 160 30 zM34 92 l116 50 v140 c-68-9-116-58-116-128 V92 zm132 190 V142 l116-50 v62 c0 70-48 119-116 128z"/>
+  </g>
+</svg>

@@ -1,0 +1,16 @@
+{
+  "name": "Old World Tech Tree",
+  "short_name": "OW Tech Tree",
+  "description": "Interactive tech tree planner for the strategy game Old World.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1a160f",
+  "theme_color": "#1a160f",
+  "orientation": "any",
+  "icons": [
+    { "src": "img/app-icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any maskable" },
+    { "src": "img/app-icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
+    { "src": "img/app-icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
+  ]
+}

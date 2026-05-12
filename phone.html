@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#1a1a1a" />
+<title>Old World Tech Tree</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" type="image/svg+xml" href="img/app-icon.svg" />
+<link rel="apple-touch-icon" href="img/app-icon-192.png" />
+<style>
+  :root {
+    color-scheme: dark;
+    --gold: oklch(0.82 0.13 82);
+    --gold-soft: oklch(0.70 0.10 82);
+    --gold-deep: oklch(0.55 0.08 80);
+    --bg-0: oklch(0.13 0.012 80);
+    --bg-1: oklch(0.17 0.012 80);
+    --bg-2: oklch(0.21 0.013 80);
+    --line: oklch(0.30 0.012 80);
+    --text: oklch(0.95 0.008 80);
+    --text-soft: oklch(0.82 0.010 80);
+    --text-muted: oklch(0.62 0.012 80);
+    --state-onpath: oklch(0.70 0.10 252);
+    --state-done: oklch(0.74 0.13 148);
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; min-height: 100vh; min-height: 100dvh;
+    background:
+      radial-gradient(800px 400px at 30% -10%, oklch(0.28 0.03 80 / .55), transparent 60%),
+      radial-gradient(800px 400px at 100% 100%, oklch(0.22 0.02 252 / .35), transparent 60%),
+      var(--bg-0);
+    font-family: "Inter", -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  body { display: flex; flex-direction: column; }
+
+  .ow-topbar {
+    padding: calc(env(safe-area-inset-top) + 12px) 16px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+    background: linear-gradient(to bottom, oklch(0.13 0.013 80), oklch(0.13 0.013 80 / 0));
+    position: sticky; top: 0;
+    z-index: 5;
+    backdrop-filter: blur(12px);
+  }
+  .ow-title {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1;
+    margin: 0;
+  }
+  .ow-title small {
+    display: block;
+    font-family: Inter, sans-serif;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--gold-soft);
+    margin-bottom: 4px;
+  }
+  .ow-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 11px;
+    background: oklch(0.20 0.013 80);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .ow-pill img { width: 14px; height: 14px; opacity: .9; }
+  .ow-pill.is-gold { border-color: var(--gold-deep); color: var(--gold); }
+
+  .ow-nation-trigger-wrap { padding: 2px 16px 14px; }
+  .ow-nation-trigger {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px 6px 10px;
+    background: oklch(0.20 0.013 80);
+    border: 1px solid var(--gold-deep);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    max-width: 220px;
+  }
+  .ow-nation-trigger .label {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-weight: 600;
+  }
+  .ow-nation-trigger .chev {
+    color: var(--gold);
+    font-size: 10px;
+    margin-left: 2px;
+  }
+  .ow-nation-trigger small {
+    display: block;
+    font-size: 8.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    font-weight: 500;
+    line-height: 1.1;
+  }
+  .ow-nation-trigger .label-stack { display: flex; flex-direction: column; align-items: flex-start; }
+  .ow-nation-crest {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 25%, var(--gold), var(--gold-deep));
+    color: oklch(0.16 0.02 80);
+    display: grid; place-items: center;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 700;
+    font-size: 11px;
+    border: 1px solid oklch(0.40 0.02 80);
+  }
+  .ow-nation-crest.is-empty {
+    background: oklch(0.22 0.013 80);
+    color: var(--text-muted);
+    border-color: var(--line);
+  }
+
+  .ow-body {
+    flex: 1;
+    padding: 4px 0 calc(env(safe-area-inset-bottom) + 110px);
+  }
+  .ow-tier { border-top: 1px solid var(--line); }
+  .ow-tier-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px 6px;
+    background: linear-gradient(to bottom, oklch(0.18 0.013 80 / .92), oklch(0.16 0.013 80 / 0));
+    position: sticky;
+    top: calc(env(safe-area-inset-top) + 60px);
+    z-index: 2;
+    backdrop-filter: blur(10px);
+  }
+  .ow-tier-title {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: 17px;
+    margin: 0;
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .ow-tier-title small {
+    font-family: Inter, sans-serif;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .ow-tier-cost {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    display: inline-flex; align-items: center; gap: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ow-tier-cost img { width: 12px; height: 12px; }
+
+  .ow-tier-list {
+    display: flex; flex-direction: column;
+    gap: 6px;
+    padding: 6px 12px 14px;
+  }
+  .ow-tech {
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    background: linear-gradient(to bottom, oklch(0.23 0.013 80), oklch(0.20 0.013 80));
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    touch-action: manipulation;
+  }
+  .ow-tech.locked { opacity: 0.45; }
+  .ow-tech.available {
+    border-color: var(--gold-deep);
+    box-shadow: 0 0 0 1px oklch(0.82 0.13 82 / .35);
+  }
+  .ow-tech.on-path {
+    background: linear-gradient(to bottom, oklch(0.27 0.05 252), oklch(0.22 0.04 252));
+    border-color: var(--state-onpath);
+  }
+  .ow-tech.completed,
+  .ow-tech.starting {
+    background: linear-gradient(to bottom, oklch(0.28 0.06 148), oklch(0.21 0.05 148));
+    border-color: var(--state-done);
+  }
+  .ow-tech-icon {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    background: radial-gradient(circle at 30% 25%, oklch(0.30 0.02 80), oklch(0.18 0.01 80));
+    border: 1px solid oklch(0.36 0.01 80);
+    display: grid; place-items: center;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .ow-tech-icon img { width: 34px; height: 34px; }
+  .ow-tech-icon-fallback {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    color: var(--gold-soft);
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .ow-tech-body { min-width: 0; }
+  .ow-tech-name {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 1.1;
+    margin: 0;
+  }
+  .ow-tech-unlocks {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    line-height: 1.3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .ow-tech-meta {
+    display: flex; flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+  }
+  .ow-tech-cost {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    font-variant-numeric: tabular-nums;
+  }
+  .ow-tech.starting .ow-tech-cost,
+  .ow-tech .ow-tech-cost.is-free { color: var(--state-done); }
+  .ow-tech-order {
+    font-size: 10px;
+    background: var(--gold);
+    color: oklch(0.14 0.02 80);
+    border-radius: 999px;
+    padding: 1px 6px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .ow-tech.completed::after {
+    content: "✓";
+    position: absolute;
+    top: 8px; right: 10px;
+    color: var(--state-done);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .ow-tech.ow-bonus {
+    background: linear-gradient(to bottom, oklch(0.21 0.022 80), oklch(0.18 0.018 80));
+    border-style: dashed;
+    border-color: oklch(0.36 0.04 80);
+  }
+  .ow-tech.ow-bonus.locked { opacity: 0.45; }
+  .ow-tech.ow-bonus .ow-tech-name { font-size: 14.5px; }
+  .ow-tech.ow-bonus .ow-tech-icon { background: radial-gradient(circle at 30% 25%, oklch(0.32 0.06 80), oklch(0.19 0.02 80)); }
+  .ow-sheet-row.is-bonus .ow-sheet-name { color: var(--gold-soft); }
+
+  .ow-fab {
+    position: fixed;
+    right: 16px;
+    bottom: calc(env(safe-area-inset-bottom) + 86px);
+    z-index: 7;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 1px solid var(--gold-deep);
+    background: linear-gradient(to bottom, var(--gold), var(--gold-soft));
+    color: oklch(0.14 0.02 80);
+    display: grid; place-items: center;
+    box-shadow: 0 10px 24px rgba(0,0,0,.5);
+    cursor: pointer;
+  }
+
+  .ow-sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to bottom, oklch(0.14 0.013 80), oklch(0.11 0.012 80));
+    border-top: 1px solid var(--gold-deep);
+    border-radius: 24px 24px 0 0;
+    padding: 8px 16px calc(env(safe-area-inset-bottom) + 24px);
+    z-index: 8;
+    transition: transform .3s ease;
+    transform: translateY(calc(100% - 78px));
+    max-height: 80vh;
+    display: flex; flex-direction: column;
+  }
+  .ow-sheet.is-open {
+    transform: translateY(0);
+  }
+  .ow-sheet-handle {
+    width: 36px; height: 4px;
+    border-radius: 99px;
+    background: oklch(0.50 0.012 80);
+    margin: 4px auto 8px;
+    cursor: pointer;
+  }
+  .ow-sheet-summary {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    padding: 4px 4px 8px;
+    cursor: pointer;
+  }
+  .ow-sheet-summary h3 {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: 18px;
+    margin: 0;
+  }
+  .ow-sheet-summary h3 small {
+    font-family: Inter, sans-serif;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--gold-soft);
+    font-weight: 500;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .ow-sheet-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+  }
+  .ow-sheet-row {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 4px;
+    border-bottom: 1px solid oklch(0.20 0.012 80);
+  }
+  .ow-sheet-row:last-child { border-bottom: none; }
+  .ow-sheet-row.is-completed { opacity: 0.7; }
+  .ow-sheet-num {
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .ow-sheet-name {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 15px;
+  }
+  .ow-sheet-row.is-completed .ow-sheet-name { text-decoration: line-through; color: var(--text-muted); }
+  .ow-sheet-cost {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .ow-sheet-cost.is-free { color: var(--state-done); }
+  .ow-sheet-empty {
+    text-align: center;
+    padding: 28px 12px;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .ow-sheet-actions {
+    display: flex; gap: 8px;
+    padding: 10px 4px 0;
+    border-top: 1px solid var(--line);
+  }
+  .ow-sheet-actions button {
+    flex: 1;
+    background: oklch(0.20 0.013 80);
+    border: 1px solid var(--line);
+    color: var(--text-soft);
+    padding: 9px 12px;
+    border-radius: 8px;
+    font: 600 12px/1 Inter, sans-serif;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ow-sheet-actions button:active { background: oklch(0.24 0.013 80); }
+
+  .ow-modal-scrim {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    backdrop-filter: blur(4px);
+    z-index: 20;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s ease;
+  }
+  .ow-modal-scrim.is-open { opacity: 1; pointer-events: auto; }
+
+  .ow-nation-sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 21;
+    max-height: 80vh;
+    background: linear-gradient(to bottom, oklch(0.18 0.013 80), oklch(0.13 0.012 80));
+    border-top: 1px solid var(--gold-deep);
+    border-radius: 24px 24px 0 0;
+    padding: 8px 0 calc(env(safe-area-inset-bottom) + 24px);
+    transform: translateY(100%);
+    transition: transform .3s ease;
+    display: flex; flex-direction: column;
+    box-shadow: 0 -20px 40px rgba(0,0,0,.6);
+  }
+  .ow-nation-sheet.is-open { transform: translateY(0); }
+  .ow-nation-sheet-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 18px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  .ow-nation-sheet-header h3 {
+    margin: 0;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: 20px;
+  }
+  .ow-nation-sheet-header h3 small {
+    display: block;
+    font-family: Inter, sans-serif;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--gold-soft);
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  .ow-nation-sheet-close {
+    background: oklch(0.22 0.013 80);
+    border: 1px solid var(--line);
+    color: var(--text-soft);
+    width: 30px; height: 30px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    display: grid; place-items: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ow-nation-search {
+    margin: 12px 16px 8px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 12px;
+    background: oklch(0.20 0.013 80);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .ow-nation-search svg { color: var(--text-muted); flex-shrink: 0; }
+  .ow-nation-search input {
+    background: none; border: none; outline: none;
+    color: var(--text); font: inherit; font-size: 14px;
+    flex: 1; min-width: 0;
+  }
+  .ow-nation-search input::placeholder { color: var(--text-muted); }
+  .ow-nation-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 12px 8px;
+  }
+  .ow-nation-row {
+    display: grid;
+    grid-template-columns: 30px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 11px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .ow-nation-row + .ow-nation-row { border-top: 1px solid oklch(0.20 0.012 80); border-radius: 0; }
+  .ow-nation-row:active { background: oklch(0.22 0.013 80); }
+  .ow-nation-row.is-selected {
+    background: linear-gradient(to right, oklch(0.27 0.05 252 / .55), oklch(0.21 0.04 252 / .25));
+    border-radius: 10px;
+  }
+  .ow-nation-row.is-selected + .ow-nation-row { border-top-color: transparent; }
+  .ow-nation-name {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .ow-nation-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+  .ow-nation-check {
+    color: var(--gold);
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .ow-nation-empty-meta { font-style: italic; }
+
+  .ow-hint {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 10.5px;
+    padding: 12px 16px 24px;
+    letter-spacing: 0.06em;
+  }
+
+  /* Desktop visitors get a hint to use the desktop site */
+  @media (min-width: 720px) {
+    body::before {
+      content: "Phone layout · best viewed on mobile, or open the desktop site.";
+      display: block;
+      text-align: center;
+      padding: 8px 16px;
+      background: oklch(0.20 0.04 80 / 0.6);
+      color: var(--gold-soft);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--line);
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="ow-topbar">
+  <h1 class="ow-title"><small>Old World</small>Tech Tree</h1>
+  <div class="ow-pill is-gold" id="totalPill">0<img src="img/icons/yields/science.png" alt="" /></div>
+</header>
+
+<div class="ow-nation-trigger-wrap">
+  <button class="ow-nation-trigger" id="nationTrigger">
+    <span class="ow-nation-crest" id="nationCrest">?</span>
+    <span class="label-stack">
+      <small>Nation</small>
+      <span class="label" id="nationLabel">Choose nation</span>
+    </span>
+    <span class="chev">▾</span>
+  </button>
+</div>
+
+<main class="ow-body" id="body"></main>
+<div class="ow-hint" id="versionHint">Old World · loading…</div>
+
+<button class="ow-fab" id="fab" aria-label="Open plan">
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4">
+    <path d="M4 6h16M4 12h16M4 18h10"/>
+  </svg>
+</button>
+
+<aside class="ow-sheet" id="planSheet">
+  <div class="ow-sheet-handle" id="planHandle"></div>
+  <div class="ow-sheet-summary" id="planSummary">
+    <h3><small>Research Plan</small><span id="planTechCount">0 techs</span></h3>
+    <div class="ow-pill is-gold"><span id="planCost">0</span><img src="img/icons/yields/science.png" alt="" /></div>
+  </div>
+  <div class="ow-sheet-list" id="planList"></div>
+  <div class="ow-sheet-actions">
+    <button id="planClear">Clear plan</button>
+    <button id="planShare">Share link</button>
+  </div>
+</aside>
+
+<div class="ow-modal-scrim" id="nationScrim"></div>
+<aside class="ow-nation-sheet" id="nationSheet">
+  <div class="ow-sheet-handle"></div>
+  <div class="ow-nation-sheet-header">
+    <h3><small>Pick your</small>Nation</h3>
+    <button class="ow-nation-sheet-close" id="nationSheetClose">×</button>
+  </div>
+  <div class="ow-nation-search">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>
+    <input id="nationSearch" placeholder="Search nations…" />
+  </div>
+  <div class="ow-nation-list" id="nationList"></div>
+</aside>
+
+<script src="tech-data.js"></script>
+<script src="phone-app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+</script>
+</body>
+</html>

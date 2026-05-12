@@ -5,6 +5,9 @@ Source/
 old_world_tech_tree.html
 in-game-screenshot.png
 
+# Python build artifacts
+__pycache__/
+
 # System files
 .DS_Store
 *.log

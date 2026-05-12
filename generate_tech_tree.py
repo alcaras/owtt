@@ -1013,30 +1013,31 @@ def fetch_game_version() -> str:
     return ""
 
 
-def generate_html(data: Dict, template_path: str = None, output_path: str = "index.html"):
-    """Generate the complete HTML file from parsed data using simple template placeholders"""
-    
-    # Read the template file
-    if template_path and Path(template_path).exists():
-        with open(template_path, 'r') as f:
-            html_template = f.read()
-    else:
-        # Use template.html as template
-        if Path("template.html").exists():
-            with open("template.html", 'r') as f:
-                html_template = f.read()
-        else:
-            print("Error: No template found")
-            return False
-    
-    # Format tech data for JavaScript
+def generate_tech_data_js(data: Dict, output_path: str = "tech-data.js"):
+    """Emit tech-data.js consumed by index.html and phone.html.
+
+    Exposes window.techData, window.nationData (with nationNames as a list of
+    {id, name}), window.nationLookup, window.currentVersionHash,
+    window.versionMaps, and window.gameVersion.
+    """
+    out = Path(output_path)
+    if out.parent and not out.parent.exists():
+        print(f"Error: parent directory {out.parent} does not exist")
+        return False
+
     tech_entries = []
     for tech in data["techs"]:
         unlocks = tech.get("unlocks", {})
-        tech_entry = f"""                {{ id: "{tech['id']}", name: "{tech['name']}", cost: {tech['cost']}, column: {tech['column']}, row: {tech['row']}, prereqs: {json.dumps(tech['prereqs'])}, unlocks: {{ units: {json.dumps(unlocks.get('units', []))}, improvements: {json.dumps(unlocks.get('improvements', []))}, laws: {json.dumps(unlocks.get('laws', []))}, projects: {json.dumps(unlocks.get('projects', []))} }} }}"""
-        tech_entries.append(tech_entry)
-    
-    # Format bonus tech data
+        tech_entries.append(
+            f'    {{ id: "{tech["id"]}", name: "{tech["name"]}", '
+            f'cost: {tech["cost"]}, column: {tech["column"]}, row: {tech["row"]}, '
+            f'prereqs: {json.dumps(tech["prereqs"])}, '
+            f'unlocks: {{ units: {json.dumps(unlocks.get("units", []))}, '
+            f'improvements: {json.dumps(unlocks.get("improvements", []))}, '
+            f'laws: {json.dumps(unlocks.get("laws", []))}, '
+            f'projects: {json.dumps(unlocks.get("projects", []))} }} }}'
+        )
+
     bonus_entries = []
     for bonus in data["bonusTechs"]:
         parts = [
@@ -1050,66 +1051,51 @@ def generate_html(data: Dict, template_path: str = None, output_path: str = "ind
             parts.append(f'nation: "{bonus["nation"]}"')
         if bonus.get("cultureRequired"):
             parts.append(f'cultureRequired: "{bonus["cultureRequired"]}"')
-        bonus_entry = "                { " + ", ".join(parts) + " }"
-        bonus_entries.append(bonus_entry)
-    
-    # Build the JavaScript data structures
-    techs_js = ",\n".join(tech_entries)
-    bonus_js = ",\n".join(bonus_entries)
-    
-    # Build complete tech data block
-    tech_data_block = f"""const techData = {{
-            techs: [
-{techs_js}
-            ],
-            bonusTechs: [
-{bonus_js}
-            ]
-        }};"""
-    
-    # Build nation data block
-    nation_names_list = [{"id": k, "name": v} for k, v in data['nationData']['nationNames'].items()]
-    nation_data_block = f"""const nationData = {{
-            startingTechs: {json.dumps(data['nationData']['startingTechs'], indent=16).replace('{', '{', 1)},
-            nationNames: {json.dumps(nation_names_list, indent=16)},
-            nationSpecificBonuses: {json.dumps(data['nationData']['nationSpecificBonuses'], indent=16).replace('{', '{', 1)}
-        }};"""
-    
-    # Fetch game version
-    game_version = fetch_game_version()
-    if game_version:
-        print(f"Game version: {game_version}")
-    else:
-        print("Warning: Could not detect game version")
-        game_version = "Old World"
+        bonus_entries.append("    { " + ", ".join(parts) + " }")
+
+    nation_names_list = [
+        {"id": nid, "name": name}
+        for nid, name in data["nationData"]["nationNames"].items()
+    ]
+    nation_lookup = list(data["nationData"]["nationNames"].keys())
+
+    game_version = fetch_game_version() or "Old World"
     generated_date = datetime.now().strftime("%b %d, %Y")
-    version_html = f'{game_version} | Generated {generated_date}'
+    version_string = f"{game_version} | Generated {generated_date}"
 
-    # Compute version hash for URL stability
     version_hash = compute_version_hash(data["techs"], data["bonusTechs"])
-    print(f"Version hash: {version_hash}")
 
-    version_hash_block = f'const currentVersionHash = "{version_hash}";'
-    version_maps_block = f'const versionMaps = {json.dumps(VERSION_HISTORY)};'
+    body = (
+        "// Auto-generated tech data for the redesigned tech tree — do not edit by hand.\n"
+        "// Regenerate via `python3 generate_tech_tree.py --xml-dir XML/Infos`.\n\n"
+        f"window.gameVersion = {json.dumps(version_string)};\n\n"
+        "window.techData = {\n"
+        "  techs: [\n"
+        + ",\n".join(tech_entries) + "\n"
+        "  ],\n"
+        "  bonusTechs: [\n"
+        + ",\n".join(bonus_entries) + "\n"
+        "  ]\n"
+        "};\n\n"
+        f"window.nationLookup = {json.dumps(nation_lookup, indent=2)};\n\n"
+        "window.nationData = {\n"
+        f"  startingTechs: {json.dumps(data['nationData']['startingTechs'], indent=2)},\n"
+        f"  nationNames: {json.dumps(nation_names_list, indent=2)},\n"
+        f"  nationSpecificBonuses: {json.dumps(data['nationData']['nationSpecificBonuses'], indent=2)}\n"
+        "};\n\n"
+        f"window.currentVersionHash = {json.dumps(version_hash)};\n"
+        f"window.versionMaps = {json.dumps(VERSION_HISTORY)};\n"
+    )
 
-    # Replace template placeholders with actual data
-    html_template = html_template.replace("{{TECH_DATA}}", tech_data_block)
-    html_template = html_template.replace("{{NATION_DATA}}", nation_data_block)
-    html_template = html_template.replace("{{GAME_VERSION}}", version_html)
-    html_template = html_template.replace("{{VERSION_HASH}}", version_hash_block)
-    html_template = html_template.replace("{{VERSION_HISTORY}}", version_maps_block)
-    
-    # Write the output file
-    with open(output_path, 'w') as f:
-        f.write(html_template)
-    
-    print(f"Generated {output_path}")
+    with open(out, "w") as f:
+        f.write(body)
+    print(f"Generated {out}")
     return True
 
 
 def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(description="Generate Old World Tech Tree HTML from game files")
+    parser = argparse.ArgumentParser(description="Generate Old World Tech Tree data from game XML files")
     parser.add_argument(
         "--xml-dir",
         default="XML/Infos",
@@ -1117,45 +1103,39 @@ def main():
     )
     parser.add_argument(
         "--output",
-        default="index.html",
-        help="Output HTML file (default: index.html)"
-    )
-    parser.add_argument(
-        "--template",
-        help="HTML template file (uses template.html if not specified)"
+        default="tech-data.js",
+        help="Output JS file consumed by index.html / phone.html (default: tech-data.js)"
     )
     parser.add_argument(
         "--export-json",
-        help="Export parsed data to JSON file for debugging"
+        help="Also export parsed data to JSON for debugging"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Check if XML directory exists
     if not Path(args.xml_dir).exists():
         print(f"Error: XML directory {args.xml_dir} not found")
         print("Please ensure you have the Old World game files in the correct location")
         return 1
-    
+
     # Parse the XML files
-    parser = OldWorldParser(args.xml_dir)
-    parser.parse_all()
-    
+    p = OldWorldParser(args.xml_dir)
+    p.parse_all()
+
     # Export the data
-    data = parser.export_data()
-    
-    # Save JSON if requested
+    data = p.export_data()
+
     if args.export_json:
         with open(args.export_json, 'w') as f:
             json.dump(data, f, indent=2)
         print(f"Exported data to {args.export_json}")
-    
-    # Generate HTML
-    if generate_html(data, args.template, args.output):
-        print("Tech tree generation complete!")
-        return 0
-    else:
+
+    if not generate_tech_data_js(data, args.output):
         return 1
+
+    print("Tech tree generation complete!")
+    return 0
 
 
 if __name__ == "__main__":
