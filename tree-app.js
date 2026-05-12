@@ -956,6 +956,14 @@
         document.body.classList.add('sidebar-collapsed');
       }
     } catch(e){}
+
+    // On touch devices the hover tooltip can stick because mouseleave never
+    // fires. Dismiss it on any tap outside a tech / bonus card, and on a
+    // second tap on the same card.
+    document.addEventListener('touchstart', (e) => {
+      const inTech = e.target.closest('.tech-node, .bonus-card');
+      if (!inTech) hideTooltip();
+    }, { passive: true });
     updateUndoRedoButtons();
     setupTweaks();
     // version line

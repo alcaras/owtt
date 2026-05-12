@@ -315,7 +315,8 @@ body.sidebar-collapsed .sidebar {
   cursor: pointer;
   transition: background .15s, border-color .15s, transform .12s, box-shadow .15s;
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+  /* No overflow:hidden here — the corner order badge sits at top:-8 / left:-8
+     and needs to peek outside the card. The icon panel clips itself instead. */
 }
 .tech-node::after {
   /* hairline gold-leaf inset */
@@ -338,6 +339,9 @@ body.sidebar-collapsed .sidebar {
   align-self: stretch;
   background: oklch(0.16 0.01 80);
   border-right: 1px solid var(--line);
+  /* Clip the icon image to the card's rounded-left corners; the card itself
+     does not use overflow:hidden so the order badge can extend outside. */
+  border-radius: calc(var(--radius-card) - 1px) 0 0 calc(var(--radius-card) - 1px);
   display: grid; place-items: center;
   overflow: hidden;
 }
