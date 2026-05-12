@@ -465,7 +465,14 @@ class OldWorldParser:
                 elif "HAPPINESS" in tech_id_upper:
                     bonus_text = "Happiness Boost"
                 elif "GOODS" in tech_id_upper:
-                    bonus_text = "Luxury Goods"
+                    iron = self.get_bonus_value(tech["id"], "iron")
+                    stone = self.get_bonus_value(tech["id"], "stone")
+                    wood = self.get_bonus_value(tech["id"], "wood")
+                    parts = []
+                    if iron: parts.append(f"+{iron} Iron")
+                    if stone: parts.append(f"+{stone} Stone")
+                    if wood: parts.append(f"+{wood} Wood")
+                    bonus_text = ", ".join(parts) if parts else "Iron, Stone, Wood"
                 elif "MERCHANT" in tech_id_upper:
                     bonus_text = "Free Merchant"
                 elif "SOLDIER" in tech_id_upper:
@@ -610,7 +617,7 @@ class OldWorldParser:
                 elif "HAPPINESS" in tech_id_upper:
                     bonus_name = "Happiness Boost"
                 elif "GOODS" in tech_id_upper:
-                    bonus_name = "Goods Bonus"
+                    bonus_name = "Goods Boost"
                 elif "MERCHANT" in tech_id_upper:
                     bonus_name = "Free Merchant"
                 elif "SOLDIER" in tech_id_upper:

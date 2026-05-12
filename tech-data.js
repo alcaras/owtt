@@ -1,7 +1,7 @@
 // Auto-generated tech data for the redesigned tech tree — do not edit by hand.
 // Regenerate via `python3 generate_tech_tree.py --xml-dir XML/Infos`.
 
-window.gameVersion = "Old World v1.0.83499 (May 06, 2026) | Generated May 11, 2026";
+window.gameVersion = "Old World v1.0.83499 (May 06, 2026) | Generated May 12, 2026";
 
 window.techData = {
   techs: [
@@ -77,7 +77,7 @@ window.techData = {
     { id: "TECH_SCHOLARSHIP_BONUS_SCIENTIST", name: "Free Scientist", cost: 350, parent: "TECH_SCHOLARSHIP", bonus: "Free Scientist", iconName: "BONUS_COURTIER" },
     { id: "TECH_STIRRUPS_BONUS_HORSEMAN", name: "Free Horseman", cost: 200, parent: "TECH_LAND_CONSOLIDATION", bonus: "+1 Horseman", iconName: "BONUS_HORSEMAN" },
     { id: "TECH_STIRRUPS_BONUS_HORSE_ARCHER", name: "Free Horse Archer", cost: 200, parent: "TECH_COMPOSITE_BOW", bonus: "+1 Horse Archer", iconName: "BONUS_HORSE_ARCHER" },
-    { id: "TECH_MANOR_BONUS_GOODS", name: "Goods Bonus", cost: 200, parent: "TECH_MACHINERY", bonus: "Luxury Goods", iconName: "BONUS_GOODS" },
+    { id: "TECH_MANOR_BONUS_GOODS", name: "Goods Boost", cost: 200, parent: "TECH_MACHINERY", bonus: "+400 Iron, +400 Stone, +400 Wood", iconName: "BONUS_GOODS" },
     { id: "TECH_BATTLELINE_BONUS_SOLDIER", name: "Free Court Soldier", cost: 350, parent: "TECH_BATTLELINE", bonus: "Free Court Soldier", iconName: "BONUS_COURTIER" },
     { id: "TECH_HYDRAULICS_BONUS_BALLISTA", name: "Free Ballista", cost: 200, parent: "TECH_COMPOSITE_BOW", bonus: "+1 Ballista", iconName: "BONUS_BALLISTA" },
     { id: "TECH_JURISPRUDENCE_BONUS_MINISTER", name: "Free Minister", cost: 550, parent: "TECH_JURISPRUDENCE", bonus: "+1 Minister", iconName: "BONUS_COURTIER" },
