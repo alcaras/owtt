@@ -152,12 +152,12 @@ body::before {
 .stat {
   display: flex; flex-direction: column;
   align-items: flex-start;
-  padding: 7px 14px;
+  padding: 7px 40px 7px 14px;
   background: var(--bg-elev);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   position: relative;
-  min-width: 92px;
+  min-width: 96px;
 }
 .stat-label {
   font-size: 9px;
@@ -308,7 +308,6 @@ body::before {
   cursor: pointer;
   transition: background .15s, border-color .15s, transform .12s, box-shadow .15s;
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
 }
 .tech-node::after {
   /* hairline gold-leaf inset */
@@ -352,9 +351,9 @@ body::before {
   line-height: 1.15;
   flex: 1;
   min-width: 0;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  hyphens: auto;
+  word-break: normal;
+  overflow-wrap: break-word;
+  hyphens: none;
 }
 
 .tech-unlocks {
@@ -835,26 +834,105 @@ body::before {
 .modal-close:hover { color: var(--text); }
 .modal-desc { color: var(--text-muted); font-size: 12px; margin: 0 0 14px; max-width: 60ch; }
 .modal-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-.modal-table-wrap { flex: 1; overflow: auto; }
-.sim-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.sim-table th, .sim-table td {
-  padding: 8px 10px;
-  text-align: left;
-  border-bottom: 1px solid var(--line);
-  font-family: var(--font-mono);
+.modal-results-wrap { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; }
+.modal-legend {
+  display: flex; flex-wrap: wrap; gap: 14px;
+  font-size: 10.5px; color: var(--text-muted);
+  border-top: 1px solid var(--line);
+  padding-top: 10px; margin-top: 12px;
+  letter-spacing: 0.04em;
 }
-.sim-table th {
-  font-family: var(--font-sans);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--text-muted);
+.modal-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sim-dot { width: 10px; height: 10px; border-radius: 99px; display: inline-block; }
+.sim-dot-band { width: 16px; height: 4px; border-radius: 2px; background: var(--gold-soft); opacity: 0.7; }
+
+:root {
+  --sim-min: oklch(0.74 0.13 148);
+  --sim-avg: oklch(0.70 0.10 252);
+  --sim-max: oklch(0.66 0.16 28);
+}
+
+.sim-row {
+  background: oklch(0.20 0.012 80);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 14px 14px;
+}
+.sim-row-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; margin-bottom: 10px;
+}
+.sim-row-name {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: var(--gold);
   font-weight: 600;
-  background: oklch(0.19 0.012 80);
 }
-.sim-table tbody td:first-child { font-family: var(--font-serif); font-size: 14px; color: var(--gold); }
-.sim-checkbox { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--text-soft); font-size: 12px; cursor: pointer; }
-.sim-checkbox.on { border-color: var(--gold-deep); color: var(--gold); background: oklch(0.22 0.04 80 / .4); }
+.sim-row-status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.sim-row-status.sim-fail { color: var(--state-onpath); }
+.sim-row-stats {
+  display: inline-flex; gap: 10px; align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-soft);
+}
+.sim-stat-avg { font-size: 15px; color: var(--sim-avg); font-weight: 600; }
+.sim-stat-sigma { color: var(--gold-soft); }
+.sim-stat-range { color: var(--text-muted); }
+
+.sim-row-bar {
+  position: relative;
+  height: 18px;
+  background: oklch(0.16 0.01 80);
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  margin-bottom: 18px;
+}
+.sim-band-range {
+  position: absolute; top: 6px; height: 6px;
+  background: oklch(0.42 0.012 80 / .7);
+  border-radius: 3px;
+}
+.sim-band-sigma {
+  position: absolute; top: 2px; height: 14px;
+  background: var(--gold-soft);
+  opacity: 0.42;
+  border-radius: 4px;
+}
+.sim-marker {
+  position: absolute; top: 1px; bottom: 1px;
+  width: 3px;
+  border-radius: 2px;
+  transform: translateX(-50%);
+}
+.sim-marker-min { background: var(--sim-min); }
+.sim-marker-avg { background: var(--sim-avg); }
+.sim-marker-max { background: var(--sim-max); }
+
+.sim-row-axis {
+  position: relative;
+  height: 14px;
+  margin-top: -8px;
+}
+.sim-axis-tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.sim-axis-tick.sim-axis-avg { color: var(--sim-avg); }
+
+.sim-row-bar .sim-progress {
+  position: absolute; inset: 0;
+  background: linear-gradient(to right, oklch(0.35 0.04 252), oklch(0.45 0.04 252));
+  border-radius: 9px;
+  transition: width .15s ease;
+}
 
 /* ============== VERSION WARNING (kept simple) ============== */
 .version-warning {

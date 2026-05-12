@@ -379,8 +379,10 @@
         badge.textContent = orderIndexById[tech.id];
         node.appendChild(badge);
       }
-      // delta cost chip on on-path / completed
-      if ((researchedTechs.includes(tech.id) || completedTechs.includes(tech.id)) && !startingSet.has(tech.id)){
+      // cost chip on techs that haven't been learned yet — shows what it would cost to add
+      const isStartingTech = startingSet.has(tech.id);
+      const isResearched = researchedTechs.includes(tech.id) || completedTechs.includes(tech.id);
+      if (!isResearched && !isStartingTech){
         const delta = document.createElement('div');
         delta.className = 'tech-delta';
         delta.textContent = fmt(tech.cost);
@@ -612,35 +614,94 @@
   async function runSimulation(){
     if (simRunning) return;
     simRunning = true;
-    const tbody = document.querySelector('#simTable tbody');
-    tbody.innerHTML = SIM_VARIANTS
-      .map(v => `<tr data-variant="${v.label}"><td>${v.label}</td><td colspan="5" style="color:var(--text-muted)">running 0 / ${fmt(SIM_RUNS)}…</td></tr>`)
+    const container = document.getElementById('simResults');
+    container.innerHTML = SIM_VARIANTS
+      .map(v => `
+        <div class="sim-row" data-variant="${v.label}">
+          <div class="sim-row-head">
+            <span class="sim-row-name">${v.label}</span>
+            <span class="sim-row-status">running 0 / ${fmt(SIM_RUNS)}…</span>
+          </div>
+          <div class="sim-row-bar">
+            <div class="sim-progress" style="width:0%"></div>
+          </div>
+        </div>`)
       .join('');
 
+    const path = buildSimResearchPath();
+    const results = {};
+    // Sequentially run each variant so the UI can stream progress.
     for (const v of SIM_VARIANTS){
-      if (!simRunning) return; // modal closed
-      const path = buildSimResearchPath();
-      const tr = tbody.querySelector(`tr[data-variant="${CSS.escape(v.label)}"]`);
-      const results = [];
+      if (!simRunning) return;
+      const row = container.querySelector(`.sim-row[data-variant="${CSS.escape(v.label)}"]`);
+      const status = row?.querySelector('.sim-row-status');
+      const progressEl = row?.querySelector('.sim-progress');
+      const runs = [];
       const batch = 100;
       for (let i = 0; i < SIM_RUNS; i += batch){
         if (!simRunning) return;
         await new Promise(r => setTimeout(r, 0));
         const n = Math.min(batch, SIM_RUNS - i);
         for (let j = 0; j < n; j++){
-          results.push(simulateSingleRun(path, v.scholar, v.oracle));
+          runs.push(simulateSingleRun(path, v.scholar, v.oracle));
         }
-        if (tr) tr.children[1].textContent = `running ${fmt(results.length)} / ${fmt(SIM_RUNS)}…`;
+        if (status) status.textContent = `running ${fmt(runs.length)} / ${fmt(SIM_RUNS)}…`;
+        if (progressEl) progressEl.style.width = ((runs.length / SIM_RUNS) * 100) + '%';
       }
-      const s = summarizeSimResults(results);
-      if (!tr) continue;
-      if (s.successRate === 0){
-        tr.innerHTML = `<td>${v.label}</td><td colspan="5" style="color:var(--state-onpath)">no successful runs (path unreachable)</td>`;
-      } else {
-        const rangeNote = s.successRate < 1 ? ` <span style="color:var(--text-muted)">(${Math.round(s.successRate*100)}% success)</span>` : '';
-        tr.innerHTML = `<td>${v.label}</td><td>${fmt(s.min)}</td><td>${fmt(Math.round(s.avg))}</td><td>${fmt(s.max)}</td><td>±${fmt(Math.round(s.stdDev))}</td><td>${fmt(s.min)}–${fmt(s.max)}${rangeNote}</td>`;
-      }
+      results[v.label] = summarizeSimResults(runs);
     }
+
+    if (!simRunning) return;
+
+    // Global scale across successful variants — makes the bars comparable.
+    const succ = SIM_VARIANTS.map(v => results[v.label]).filter(s => s.successRate > 0);
+    const globalMin = succ.length ? Math.min(...succ.map(s => s.min)) : 0;
+    const globalMax = succ.length ? Math.max(...succ.map(s => s.max)) : 0;
+    const range = Math.max(globalMax - globalMin, 1);
+
+    SIM_VARIANTS.forEach(v => {
+      const row = container.querySelector(`.sim-row[data-variant="${CSS.escape(v.label)}"]`);
+      if (!row) return;
+      const s = results[v.label];
+      if (!s || s.successRate === 0){
+        row.innerHTML = `
+          <div class="sim-row-head">
+            <span class="sim-row-name">${v.label}</span>
+            <span class="sim-row-status sim-fail">no successful runs · path unreachable</span>
+          </div>`;
+        return;
+      }
+      const avg = Math.round(s.avg);
+      const sd = Math.round(s.stdDev);
+      const minPct = ((s.min - globalMin) / range) * 100;
+      const maxPct = ((s.max - globalMin) / range) * 100;
+      const avgPct = ((s.avg - globalMin) / range) * 100;
+      const sdLeftPct = ((Math.max(s.min, s.avg - s.stdDev) - globalMin) / range) * 100;
+      const sdRightPct = ((Math.min(s.max, s.avg + s.stdDev) - globalMin) / range) * 100;
+      const succNote = s.successRate < 1 ? ` · ${Math.round(s.successRate*100)}% success` : '';
+      row.innerHTML = `
+        <div class="sim-row-head">
+          <span class="sim-row-name">${v.label}</span>
+          <span class="sim-row-stats">
+            <span class="sim-stat sim-stat-avg">${fmt(avg)}</span>
+            <span class="sim-stat-sigma">±${fmt(sd)}</span>
+            <span class="sim-stat-range">${fmt(s.min)}–${fmt(s.max)}${succNote}</span>
+          </span>
+        </div>
+        <div class="sim-row-bar">
+          <div class="sim-band-range" style="left:${minPct}%;width:${maxPct - minPct}%"></div>
+          <div class="sim-band-sigma" style="left:${sdLeftPct}%;width:${sdRightPct - sdLeftPct}%"></div>
+          <div class="sim-marker sim-marker-min" style="left:${minPct}%" title="min ${fmt(s.min)}"></div>
+          <div class="sim-marker sim-marker-avg" style="left:${avgPct}%" title="avg ${fmt(avg)}"></div>
+          <div class="sim-marker sim-marker-max" style="left:${maxPct}%" title="max ${fmt(s.max)}"></div>
+        </div>
+        <div class="sim-row-axis">
+          <span class="sim-axis-tick" style="left:${minPct}%">${fmt(s.min)}</span>
+          <span class="sim-axis-tick sim-axis-avg" style="left:${avgPct}%">${fmt(avg)}</span>
+          <span class="sim-axis-tick" style="left:${maxPct}%">${fmt(s.max)}</span>
+        </div>`;
+    });
+
     simRunning = false;
   }
 

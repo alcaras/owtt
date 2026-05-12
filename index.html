@@ -94,8 +94,7 @@
   <!-- ============== SIDEBAR ============== -->
   <aside class="sidebar" id="sidebar">
     <header class="sidebar-header">
-      <div class="sidebar-eyebrow">Research Plan</div>
-      <h2 class="sidebar-title">Order of Things</h2>
+      <h2 class="sidebar-title">Research Plan</h2>
       <button class="sidebar-close" id="sidebarClose" aria-label="Close plan">×</button>
     </header>
 
@@ -148,13 +147,12 @@
     </header>
     <p class="modal-desc">1,000 simulated draws per Scholar / Oracle combination. Compares variance in total science required to complete your planned order.</p>
     <div class="modal-options" id="simOptions"></div>
-    <div class="modal-table-wrap">
-      <table class="sim-table" id="simTable">
-        <thead>
-          <tr><th>Variant</th><th>Min</th><th>Avg</th><th>Max</th><th>σ</th><th>Range</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <div class="modal-results-wrap" id="simResults"></div>
+    <div class="modal-legend">
+      <span><i class="sim-dot" style="background:var(--sim-min)"></i>min</span>
+      <span><i class="sim-dot" style="background:var(--sim-avg)"></i>avg</span>
+      <span><i class="sim-dot" style="background:var(--sim-max)"></i>max</span>
+      <span><i class="sim-dot sim-dot-band"></i>±σ band</span>
     </div>
   </div>
 </div>
