@@ -250,8 +250,6 @@
   const $orderCount = document.getElementById('orderCount');
   const $totalCost = document.getElementById('totalCost');
   const $totalLaws = document.getElementById('totalLaws');
-  const $sideCost = document.getElementById('sideCost');
-  const $sideLaws = document.getElementById('sideLaws');
   const $connections = document.getElementById('connections');
 
   function fmt(n){ return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,','); }
@@ -454,8 +452,6 @@
     });
     $totalCost.textContent = fmt(cost);
     $totalLaws.textContent = laws;
-    $sideCost.textContent = fmt(cost);
-    $sideLaws.textContent = laws;
   }
 
   // -------- connections (SVG)

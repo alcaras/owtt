@@ -1,9 +1,8 @@
 // Old World Tech Tree — service worker.
-// Cache-first for shell assets, network-first for tech-data.js so data updates flow.
-// Bump CACHE_VERSION on every deploy if you want to force-refresh; otherwise the
-// new SW replaces the old one when its bytes change (the version line below is
-// auto-tagged with the build's tech-data hash to make that easy).
-const CACHE_VERSION = 'owtt-v1';
+// Network-first for the app shell so deploys reach users without a manual cache
+// bump; cache is fallback for offline. tech-data.js is also network-first.
+// CACHE_VERSION is still bumped per deploy to evict stale precaches cleanly.
+const CACHE_VERSION = 'owtt-v3';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 
@@ -40,28 +39,39 @@ self.addEventListener('activate', e => {
   })());
 });
 
+// Network-first for HTML / JS / CSS / the manifest, so a deploy reaches users
+// without manual hard-refresh. Cache is the offline fallback only. Static
+// assets like icons stay cache-first because they rarely change.
+function isShellRequest(url){
+  const p = url.pathname;
+  return p.endsWith('.html') || p.endsWith('/') ||
+         p.endsWith('.js') || p.endsWith('.css') ||
+         p.endsWith('.webmanifest');
+}
+
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  // Only handle same-origin GETs
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
 
-  // tech-data.js: network-first so a regen reaches users; fallback to cache offline.
-  if (url.pathname.endsWith('/tech-data.js')){
+  if (isShellRequest(url)){
+    const cacheName = url.pathname.endsWith('/tech-data.js') ? DATA_CACHE : SHELL_CACHE;
     e.respondWith((async () => {
       try {
-        const fresh = await fetch(e.request);
-        const cache = await caches.open(DATA_CACHE);
-        cache.put(e.request, fresh.clone());
+        const fresh = await fetch(e.request, { cache: 'no-store' });
+        if (fresh.ok){
+          const cache = await caches.open(cacheName);
+          cache.put(e.request, fresh.clone());
+        }
         return fresh;
       } catch (_) {
         const cached = await caches.match(e.request);
-        return cached || new Response('// offline\n', { headers: { 'Content-Type': 'application/javascript' } });
+        return cached || Response.error();
       }
     })());
     return;
   }
 
-  // Everything else: cache-first; populate the cache on miss.
+  // Static assets (icons, images): cache-first.
   e.respondWith((async () => {
     const cached = await caches.match(e.request);
     if (cached) return cached;

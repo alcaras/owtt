@@ -50,7 +50,6 @@
     <div class="topbar-actions">
       <button class="btn btn-ghost" id="undoBtn" title="Undo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6M3 13a9 9 0 1 0 3-7"/></svg></button>
       <button class="btn btn-ghost" id="redoBtn" title="Redo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6M21 13a9 9 0 1 1-3-7"/></svg></button>
-      <button class="btn btn-ghost" id="clearBtn" title="Clear all">Clear</button>
       <button class="btn btn-primary" id="shareBtn">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8h16v-8M12 3v13m0-13l-4 4m4-4l4 4"/></svg>
         Share
@@ -98,17 +97,6 @@
       <button class="sidebar-close" id="sidebarClose" aria-label="Close plan">×</button>
     </header>
 
-    <div class="sidebar-stats">
-      <div class="stat-card">
-        <div class="stat-card-label">Total science</div>
-        <div class="stat-card-value"><span id="sideCost">0</span><img src="img/icons/yields/science.png" alt="" /></div>
-      </div>
-      <div class="stat-card stat-card-laws">
-        <div class="stat-card-label">Laws unlocked</div>
-        <div class="stat-card-value"><span id="sideLaws">0</span></div>
-      </div>
-    </div>
-
     <div class="sidebar-actions">
       <button class="btn btn-block btn-outline" id="simulateBtn">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4zm0 5l9 4 9-4M3 17l9 4 9-4"/></svg>
@@ -123,6 +111,10 @@
         <div class="order-empty-icon" aria-hidden="true">⌖</div>
         <p>Click any tech to add it. Prerequisites are pulled in automatically.</p>
       </div>
+    </div>
+
+    <div class="sidebar-danger">
+      <button class="sidebar-clear" id="clearBtn" type="button">Clear plan</button>
     </div>
 
     <footer class="sidebar-footer" id="sidebarFooter">
