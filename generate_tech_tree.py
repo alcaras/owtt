@@ -78,56 +78,61 @@ class OldWorldParser:
         print(f"Parsed {len(self.bonus_techs)} bonus technologies")
         print(f"Parsed {len(self.nations)} nations")
         
+    TEXT_FILES = [
+        "text-infos.xml",
+        "text-nation.xml",
+        "text-bonus.xml",
+        "text-eoti.xml",
+        "text-unit.xml",
+        "text-yield.xml",
+        "text-infos-btt.xml",
+        "text-infos-hittite.xml",
+        "text-infos-sap.xml",
+        "text-bonus-btt.xml",
+        "text-bonus-hittite.xml",
+        "text-bonus-sap.xml",
+        "text-bonus-wog.xml",
+        "text-unit-hittite.xml",
+    ]
+
+    def _load_text_file(self, filename: str) -> int:
+        """Load any text-*.xml file. Real schema is <zType>…</zType><en-US>…</en-US>."""
+        file_path = self.xml_dir / filename
+        if not file_path.exists():
+            return 0
+        try:
+            root = ET.parse(file_path).getroot()
+        except ET.ParseError:
+            return 0
+        loaded = 0
+        for entry in root.findall(".//Entry"):
+            key_node = entry.find("zType")
+            text_node = entry.find("en-US")
+            if key_node is None or text_node is None:
+                continue
+            if not key_node.text or not text_node.text:
+                continue
+            self.text_data[key_node.text] = self.clean_text(text_node.text)
+            loaded += 1
+        return loaded
+
     def parse_text_infos(self):
-        """Parse text-infos.xml for tech names and descriptions"""
-        file_path = self.xml_dir / "text-infos.xml"
-        if not file_path.exists():
-            print(f"Warning: {file_path} not found")
-            return
-            
-        tree = ET.parse(file_path)
-        root = tree.getroot()
-        
-        for entry in root.findall(".//Entry"):
-            tag = entry.find("zTag")
-            text = entry.find("zText")
-            if tag is not None and text is not None and tag.text and text.text:
-                self.text_data[tag.text] = self.clean_text(text.text)
-    
+        for f in self.TEXT_FILES:
+            self._load_text_file(f)
+
     def parse_text_nation(self):
-        """Parse text-nation.xml for nation names"""
-        file_path = self.xml_dir / "text-nation.xml"
-        if not file_path.exists():
-            print(f"Warning: {file_path} not found")
-            return
-            
-        tree = ET.parse(file_path)
-        root = tree.getroot()
-        
-        for entry in root.findall(".//Entry"):
-            tag = entry.find("zTag")
-            text = entry.find("zText")
-            if tag is not None and text is not None and tag.text and text.text:
-                self.text_data[tag.text] = self.clean_text(text.text)
-    
+        # Folded into parse_text_infos via TEXT_FILES — kept as a no-op for
+        # backwards-compat with the parse_all() call list.
+        return
+
     def parse_text_bonus(self):
-        """Parse text-bonus.xml for bonus tech descriptions"""
-        file_path = self.xml_dir / "text-bonus.xml"
-        if not file_path.exists():
-            print(f"Warning: {file_path} not found")
-            return
-            
-        tree = ET.parse(file_path)
-        root = tree.getroot()
-        
-        for entry in root.findall(".//Entry"):
-            tag = entry.find("zTag")
-            text = entry.find("zText")
-            if tag is not None and text is not None and tag.text and text.text:
-                self.text_data[tag.text] = self.clean_text(text.text)
-    
+        return
+
     def parse_text_eoti(self):
-        """Parse text-eoti.xml for Empires of the Indus DLC text entries"""
+        # text-eoti.xml is part of TEXT_FILES; the legacy hand-rolled loader
+        # below is kept for compatibility with older versions of the game that
+        # used a slightly different schema (zType + the *first* localized
+        # child). Most modern installs hit the standard loader first.
         file_path = self.xml_dir / "text-eoti.xml"
         if not file_path.exists():
             return
@@ -204,17 +209,59 @@ class OldWorldParser:
         return result
     
     def clean_text(self, text: str) -> str:
-        """Clean game text by removing formatting tags"""
+        """Store a game-text value in a lightly normalized form.
+
+        Old World's localization strings encode grammatical forms with `~`
+        separators (e.g. "Stone~icon(YIELD_STONE)Stone") plus templating
+        macros: `link(TYPE)` / `link(TYPE,N)` / `icon(TYPE)` and curly
+        substitution like `{TEXT_X}`.
+
+        We keep only the first grammatical form here. We do NOT yet resolve
+        `link()` references because the target text may not be loaded yet —
+        callers go through `pretty_text()` to get a fully resolved label.
+        """
         if not text:
             return ""
-        
-        # Remove Old World text formatting tags
+
+        text = text.split("~", 1)[0]
+        # Strip HTML-ish formatting tags but leave link()/icon() macros for
+        # pretty_text() to resolve.
         text = re.sub(r'</?[^>]+>', '', text)
         text = re.sub(r'\{[^}]+\}', '', text)
-        text = text.replace('~', '')
-        text = text.strip()
-        
+        text = re.sub(r'\s+', ' ', text).strip()
         return text
+
+    def pretty_text(self, value: str, _depth: int = 0) -> str:
+        """Resolve a stored text value or a TEXT_* key into a final display
+        string: drops icon() macros and substitutes link(X) / link(X,N) with
+        the resolved label of X."""
+        if not value:
+            return ""
+        # If the caller passed a key (e.g. "TEXT_YIELD_STONE"), dereference.
+        if isinstance(value, str) and value.startswith("TEXT_") and value in self.text_data:
+            value = self.text_data[value]
+
+        # Bound the recursion so a broken loop in localization data can't
+        # infinite-loop the parser.
+        if _depth > 5:
+            return re.sub(r'\b(?:link|icon)\([^)]*\)', '', value).strip()
+
+        def link_sub(m):
+            target = m.group(1).split(",")[0].strip()
+            if not target:
+                return ""
+            key = target if target.startswith("TEXT_") else f"TEXT_{target}"
+            resolved = self.text_data.get(key, "")
+            if resolved:
+                return self.pretty_text(resolved, _depth + 1)
+            # Fall back to a human-ish slug if the target is missing.
+            slug = target.replace("YIELD_", "").replace("UNIT_", "").replace("COURTIER_", "")
+            slug = slug.replace("RESOURCE_", "").replace("TECH_", "")
+            return slug.replace("_", " ").title()
+
+        value = re.sub(r'\blink\(([^)]*)\)', link_sub, value)
+        value = re.sub(r'\bicon\([^)]*\)', '', value)
+        return re.sub(r'\s+', ' ', value).strip()
     
     def parse_techs(self):
         """Parse tech.xml for technology data"""
@@ -270,15 +317,15 @@ class OldWorldParser:
         # Get name and description from text data
         name_tag = tech_node.find("Name")
         if name_tag is not None and name_tag.text:
-            name = self.text_data.get(name_tag.text, tech_id.replace("TECH_", "").replace("_", " ").title())
+            name = self.pretty_text(name_tag.text) or tech_id.replace("TECH_", "").replace("_", " ").title()
         else:
             name = tech_id.replace("TECH_", "").replace("_", " ").title()
-        
+
         # Get description
         desc = ""
         advice_tag = tech_node.find("Advice")
         if advice_tag is not None and advice_tag.text:
-            desc = self.text_data.get(advice_tag.text, "")
+            desc = self.pretty_text(advice_tag.text)
         
         # Check if disabled (skip entirely)
         is_disabled = self.get_bool_value(tech_node, "bDisable")
@@ -382,35 +429,108 @@ class OldWorldParser:
             
         tree = ET.parse(file_path)
         root = tree.getroot()
-        
-        # Create lookup for bonus values
-        self.bonus_values = {}
+
+        # Lookup keyed by BONUS_* id. Each value captures every shape we know how
+        # to format into a human effect string.
+        self.bonus_values: Dict[str, Dict] = {}
+        raw_entries: Dict[str, ET.Element] = {}
         for bonus in root.findall(".//Entry"):
             bonus_type = bonus.find("zType")
             if bonus_type is None or not bonus_type.text:
                 continue
-                
-            bonus_id = bonus_type.text
-            bonus_data = {"yields": {}, "other": {}}
-            
-            # Extract values from aiGlobalYields
-            global_yields = bonus.find("aiGlobalYields")
-            if global_yields is not None:
-                for pair in global_yields.findall("Pair"):
-                    yield_type = pair.find("zIndex")
-                    yield_value = pair.find("iValue")
-                    if yield_type is not None and yield_value is not None:
-                        yield_name = yield_type.text.replace("YIELD_", "").lower()
-                        bonus_data["yields"][yield_name] = int(yield_value.text)
-            
-            self.bonus_values[bonus_id] = bonus_data
-    
+            raw_entries[bonus_type.text] = bonus
+
+        def parse_entry(entry: ET.Element) -> Dict:
+            data: Dict = {"yields": {}, "units": {}, "courtiers": [], "resources": {},
+                          "borderGrowth": 0, "happinessLevels": 0, "all": []}
+            gy = entry.find("aiGlobalYields")
+            if gy is not None:
+                for pair in gy.findall("Pair"):
+                    k, v = pair.find("zIndex"), pair.find("iValue")
+                    if k is not None and v is not None and k.text and v.text:
+                        data["yields"][k.text.replace("YIELD_", "").lower()] = int(v.text)
+            au = entry.find("aiUnits")
+            if au is not None:
+                for pair in au.findall("Pair"):
+                    k, v = pair.find("zIndex"), pair.find("iValue")
+                    if k is not None and v is not None and k.text and v.text:
+                        data["units"][k.text] = int(v.text)
+            ac = entry.find("AddCourtierOther")
+            if ac is not None:
+                for pair in ac.findall("Pair"):
+                    first = pair.find("First")
+                    if first is not None and first.text:
+                        data["courtiers"].append(first.text)
+            ir = entry.find("aeImportResources")
+            if ir is not None:
+                for pair in ir.findall("Pair"):
+                    k, v = pair.find("zIndex"), pair.find("iValue")
+                    if k is not None and v is not None and k.text and v.text:
+                        data["resources"][k.text] = int(v.text)
+            bg = entry.findtext("iBorderGrowth")
+            if bg:
+                data["borderGrowth"] = int(bg)
+            hl = entry.findtext("iHappinessLevels")
+            if hl:
+                data["happinessLevels"] = int(hl)
+            # Indirect city-bonus reference — follow and merge.
+            city = entry.find("aeAllCityBonuses")
+            if city is not None:
+                for z in city.findall("zValue"):
+                    if z.text:
+                        data["all"].append(z.text)
+            return data
+
+        for bid, entry in raw_entries.items():
+            data = parse_entry(entry)
+            # Resolve aeAllCityBonuses references one level deep.
+            for ref in data["all"]:
+                ref_entry = raw_entries.get(ref)
+                if ref_entry is None:
+                    continue
+                sub = parse_entry(ref_entry)
+                for k in ("yields", "units", "resources"):
+                    data[k].update(sub[k])
+                data["courtiers"].extend(sub["courtiers"])
+                data["borderGrowth"] += sub["borderGrowth"]
+                data["happinessLevels"] += sub["happinessLevels"]
+            self.bonus_values[bid] = data
+
     def get_bonus_value(self, tech_id, yield_type):
-        """Get bonus value for a specific tech and yield type"""
+        """Get bonus value for a specific tech and yield type (legacy helper)."""
         bonus_key = f"BONUS_{tech_id}"
-        if bonus_key in self.bonus_values:
-            return self.bonus_values[bonus_key]["yields"].get(yield_type.lower(), 0)
-        return 0
+        return self.bonus_values.get(bonus_key, {}).get("yields", {}).get(yield_type.lower(), 0)
+
+    def format_bonus_effect(self, bonus_discover_id: str) -> str:
+        """Build a human-readable effect string for a BONUS_* entry by reading
+        every shape we know (yields, free units, courtiers, resources, border /
+        happiness from referenced city bonuses)."""
+        data = self.bonus_values.get(bonus_discover_id)
+        if not data:
+            return ""
+
+        def label_for(key: str, slug_fallback: str) -> str:
+            return self.pretty_text(key) or slug_fallback.replace("_", " ").title()
+
+        parts = []
+        for slug, amount in data["yields"].items():
+            label = label_for(f"TEXT_YIELD_{slug.upper()}", slug)
+            parts.append(f"+{amount} {label}")
+        for uid, amount in data["units"].items():
+            label = label_for(f"TEXT_{uid}", uid.replace("UNIT_", ""))
+            parts.append(f"+{amount} {label}")
+        for cid in data["courtiers"]:
+            label = label_for(f"TEXT_{cid}", cid.replace("COURTIER_", ""))
+            parts.append(f"+1 {label}")
+        for rid, amount in data["resources"].items():
+            label = label_for(f"TEXT_{rid}", rid.replace("RESOURCE_", ""))
+            parts.append(f"+{amount} {label}")
+        if data["borderGrowth"]:
+            parts.append(f"+{data['borderGrowth']} Border Growth")
+        if data["happinessLevels"]:
+            parts.append(f"+{data['happinessLevels']} Happiness")
+
+        return ", ".join(parts)
     
     def identify_bonus_techs(self):
         """Separate bonus techs from main techs"""
@@ -431,281 +551,17 @@ class OldWorldParser:
                 # Get parent tech from prerequisites
                 parent = tech["prereqs"][0] if tech.get("prereqs") else None
                 
-                # Determine bonus description
-                tech_id_upper = tech["id"].upper()
+                # Name comes straight from text-infos.xml; effect comes
+                # straight from bonus.xml. The big hardcoded if-elif chains
+                # this used to carry have been removed in favor of the
+                # generic format_bonus_effect helper.
+                bonus_name = tech.get("name") or tech["id"].replace("TECH_", "").replace("_", " ").title()
                 bonus_text = ""
-                if "STONE" in tech_id_upper and "STONECUTTING" in tech_id_upper:
-                    stone_value = self.get_bonus_value(tech["id"], "stone")
-                    bonus_text = f"+{stone_value} Stone" if stone_value > 0 else "+200 Stone"
-                elif "WORKER" in tech_id_upper:
-                    bonus_text = "+1 Worker"
-                elif "FOOD" in tech_id_upper:
-                    food_value = self.get_bonus_value(tech["id"], "food")
-                    bonus_text = f"+{food_value} Food" if food_value > 0 else "+200 Food"
-                elif "SETTLER" in tech_id_upper:
-                    bonus_text = "+1 Settler"
-                elif "BORDERS" in tech_id_upper:
-                    bonus_text = "Border Growth"
-                elif "ORDERS" in tech_id_upper:
-                    orders_value = self.get_bonus_value(tech["id"], "orders")
-                    bonus_text = f"+{orders_value} Orders" if orders_value > 0 else "+20 Orders"
-                elif "MONEY" in tech_id_upper:
-                    money_value = self.get_bonus_value(tech["id"], "money")
-                    bonus_text = f"+{money_value} Money" if money_value > 0 else "+200 Money"
-                elif "MINISTER" in tech_id_upper:
-                    bonus_text = "+1 Minister"
-                elif "SCIENTIST" in tech_id_upper:
-                    bonus_text = "Free Scientist"
-                elif "CIVICS" in tech_id_upper:
-                    civics_value = self.get_bonus_value(tech["id"], "civics")
-                    bonus_text = f"+{civics_value} Civics" if civics_value > 0 else "Civic Points"
-                elif "TRAINING" in tech_id_upper:
-                    training_value = self.get_bonus_value(tech["id"], "training")
-                    bonus_text = f"+{training_value} Training" if training_value > 0 else "Unit Training"
-                elif "HAPPINESS" in tech_id_upper:
-                    bonus_text = "Happiness Boost"
-                elif "GOODS" in tech_id_upper:
-                    iron = self.get_bonus_value(tech["id"], "iron")
-                    stone = self.get_bonus_value(tech["id"], "stone")
-                    wood = self.get_bonus_value(tech["id"], "wood")
-                    parts = []
-                    if iron: parts.append(f"+{iron} Iron")
-                    if stone: parts.append(f"+{stone} Stone")
-                    if wood: parts.append(f"+{wood} Wood")
-                    bonus_text = ", ".join(parts) if parts else "Iron, Stone, Wood"
-                elif "MERCHANT" in tech_id_upper:
-                    bonus_text = "Free Merchant"
-                elif "SOLDIER" in tech_id_upper:
-                    bonus_text = "Free Court Soldier"
-                # Luxury resources
-                elif "RESOURCE_" in tech["id"]:
-                    # Extract resource name from ID
-                    resource_name = tech["id"].replace("TECH_RESOURCE_", "").replace("_BONUS", "")
-                    resource_name = resource_name.replace("_", " ").title()
-                    # Map to proper names
-                    resource_map = {
-                        "Silk": "Silk",
-                        "Porcelain": "Porcelain", 
-                        "Exotic Fur": "Exotic Furs",
-                        "Perfume": "Perfume",
-                        "Exotic Leather": "Exotic Leather",
-                        "Ebony": "Ebony",
-                        "Ivory": "Ivory",
-                        "Lavender": "Lavender",
-                        "Spices": "Spices",
-                        "Wine": "Wine",
-                        "Incense": "Incense",
-                        "Gems": "Gems",
-                        "Pearl": "Pearls",
-                        "Olive": "Olives",
-                        "Dye": "Dye",
-                        "Fur": "Furs",
-                        "Honey": "Honey",
-                        "Salt": "Salt"
-                    }
-                    bonus_text = resource_map.get(resource_name, resource_name)
-                # Unit bonuses - specific patterns
-                elif "BIREME" in tech_id_upper:
-                    bonus_text = "+1 Bireme"
-                elif "CHARIOT" in tech_id_upper and not any(n in tech_id_upper for n in ["LIGHT", "HITTITE"]):
-                    bonus_text = "+1 Chariot"
-                elif "MACEMAN" in tech_id_upper:
-                    bonus_text = "+1 Maceman"
-                elif "ONAGER" in tech_id_upper:
-                    bonus_text = "+1 Onager"
-                elif "ARCHER" in tech_id_upper and not any(s in tech_id_upper for s in ["CAMEL", "HORSE", "AKKADIAN", "CIMMERIAN", "MEDJAY", "BEJA", "CATAPHRACT", "ARCHER_ELEPHANT"]):
-                    bonus_text = "+1 Archer"
-                elif "HORSEMAN" in tech_id_upper and "HORSE_ARCHER" not in tech_id_upper:
-                    bonus_text = "+1 Horseman"
-                elif "HORSE_ARCHER" in tech_id_upper:
-                    bonus_text = "+1 Horse Archer"
-                elif "CAMEL_ARCHER" in tech_id_upper:
-                    bonus_text = "+1 Camel Archer"
-                elif "WAR_ELEPHANT" in tech_id_upper:
-                    bonus_text = "+1 War Elephant"
-                elif "BALLISTA" in tech_id_upper:
-                    bonus_text = "+1 Ballista"
-                elif "LONGBOWMAN" in tech_id_upper:
-                    bonus_text = "+2 Longbowman"
-                elif "CROSSBOWMAN" in tech_id_upper:
-                    bonus_text = "+2 Crossbowman"
-                # Nation-specific units
-                elif "BATTERING_RAM" in tech_id_upper:
-                    bonus_text = "+2 Battering Ram"
-                elif "SIEGE_TOWER" in tech_id_upper:
-                    bonus_text = "+2 Siege Tower"
-                elif "AKKADIAN" in tech_id_upper:
-                    bonus_text = "+2 Akkadian Archer"
-                elif "CIMMERIAN" in tech_id_upper:
-                    bonus_text = "+2 Cimmerian Archer"
-                elif "AFRICAN_ELEPHANT" in tech_id_upper:
-                    bonus_text = "+2 African Elephant"
-                elif "TURRETED_ELEPHANT" in tech_id_upper:
-                    bonus_text = "+2 Turreted Elephant"
-                elif "LIGHT_CHARIOT" in tech_id_upper:
-                    bonus_text = "+2 Light Chariot"
-                elif "MOUNTED_LANCER" in tech_id_upper:
-                    bonus_text = "+2 Mounted Lancer"
-                elif "HOPLITE" in tech_id_upper:
-                    bonus_text = "+2 Hoplite"
-                elif "PHALANGITE" in tech_id_upper:
-                    bonus_text = "+2 Phalangite"
-                elif "HITTITE_CHARIOT" in tech_id_upper:
-                    if "1" in tech_id_upper:
-                        bonus_text = "+2 Hittite Chariot"
-                    else:
-                        bonus_text = "+2 Hittite Chariot"
-                elif "MEDJAY" in tech_id_upper:
-                    bonus_text = "+2 Medjay"
-                elif "BEJA" in tech_id_upper:
-                    bonus_text = "+2 Beja Archer"
-                elif "PALTON" in tech_id_upper:
-                    bonus_text = "+2 Palton Cavalry"
-                elif "CATAPHRACT" in tech_id_upper:
-                    bonus_text = "+2 Cataphract Archer"
-                elif "HASTATUS" in tech_id_upper:
-                    bonus_text = "+2 Hastatus"
-                elif "LEGIONARY" in tech_id_upper:
-                    bonus_text = "+2 Legionary"
-                elif "DMT" in tech_id_upper:
-                    bonus_text = "+2 Dmt Warrior"
-                elif "SHOTELAI" in tech_id_upper:
-                    bonus_text = "+2 Shotelai"
-                elif "ASSAULT_ELEPHANT" in tech_id_upper:
-                    bonus_text = "+1 Assault Elephant"
-                elif "ARMOURED_ELEPHANT" in tech_id_upper:
-                    bonus_text = "+2 Armoured Elephant"
-                elif "STEPPE_RIDER" in tech_id_upper:
-                    bonus_text = "+2 Steppe Riders"
-                elif "KUSHAN_CAVALRY" in tech_id_upper:
-                    bonus_text = "+2 Kushan Cavalry"
-                elif "KUSHAN_WARLORD" in tech_id_upper:
-                    bonus_text = "+2 Kushan Warlord"
-                elif "JAVELIN_ELEPHANT" in tech_id_upper:
-                    bonus_text = "+2 Javelin Elephant"
-                elif "ARCHER_ELEPHANT" in tech_id_upper:
-                    bonus_text = "+2 Archer Elephant"
-                
-                # Fallback if no pattern matched
+                if tech.get("bonusDiscover"):
+                    bonus_text = self.format_bonus_effect(tech["bonusDiscover"])
                 if not bonus_text:
-                    bonus_text = tech.get("name", "Bonus")
-                
-                # Determine cleaner name for bonus card
-                bonus_name = ""
-                if "STONE" in tech_id_upper and "STONECUTTING" in tech_id_upper:
-                    bonus_name = "Stone Boost"
-                elif "WORKER" in tech_id_upper:
-                    bonus_name = "Free Worker"
-                elif "FOOD" in tech_id_upper:
-                    bonus_name = "Food Boost"
-                elif "SETTLER" in tech_id_upper:
-                    bonus_name = "Free Settler"
-                elif "BORDERS" in tech_id_upper:
-                    bonus_name = "Border Boost"
-                elif "ORDERS" in tech_id_upper:
-                    bonus_name = "Orders Boost"
-                elif "MONEY" in tech_id_upper:
-                    bonus_name = "Money Boost"
-                elif "MINISTER" in tech_id_upper:
-                    bonus_name = "Free Minister"
-                elif "SCIENTIST" in tech_id_upper:
-                    bonus_name = "Free Scientist"
-                elif "CIVICS" in tech_id_upper:
-                    bonus_name = "Civics Boost"
-                elif "TRAINING" in tech_id_upper:
-                    bonus_name = "Training Boost"
-                elif "HAPPINESS" in tech_id_upper:
-                    bonus_name = "Happiness Boost"
-                elif "GOODS" in tech_id_upper:
-                    bonus_name = "Goods Boost"
-                elif "MERCHANT" in tech_id_upper:
-                    bonus_name = "Free Merchant"
-                elif "SOLDIER" in tech_id_upper:
-                    bonus_name = "Free Court Soldier"
-                # Unit bonuses
-                elif "BIREME" in tech_id_upper:
-                    bonus_name = "Free Bireme"
-                elif "CHARIOT" in tech_id_upper and not any(nation in tech_id_upper for nation in ["LIGHT", "HITTITE"]):
-                    bonus_name = "Free Chariot"
-                elif "MACEMAN" in tech_id_upper:
-                    bonus_name = "Free Maceman"
-                elif "ONAGER" in tech_id_upper:
-                    bonus_name = "Free Onager"
-                elif "ARCHER" in tech_id_upper and not any(special in tech_id_upper for special in ["CAMEL", "HORSE", "AKKADIAN", "CIMMERIAN", "MEDJAY", "BEJA", "CATAPHRACT", "ARCHER_ELEPHANT"]):
-                    bonus_name = "Free Archer"
-                elif "CAMEL_ARCHER" in tech_id_upper:
-                    bonus_name = "Free Camel Archer"
-                elif "WAR_ELEPHANT" in tech_id_upper:
-                    bonus_name = "Free War Elephant"
-                elif "HORSEMAN" in tech_id_upper and "HORSE_ARCHER" not in tech_id_upper:
-                    bonus_name = "Free Horseman"
-                elif "HORSE_ARCHER" in tech_id_upper:
-                    bonus_name = "Free Horse Archer"
-                elif "BALLISTA" in tech_id_upper:
-                    bonus_name = "Free Ballista"
-                elif "LONGBOWMAN" in tech_id_upper:
-                    bonus_name = "Free Longbowman"
-                elif "CROSSBOWMAN" in tech_id_upper:
-                    bonus_name = "Free Crossbowman"
-                # Nation-specific units
-                elif "BATTERING_RAM" in tech_id_upper:
-                    bonus_name = "Free Battering Ram"
-                elif "SIEGE_TOWER" in tech_id_upper:
-                    bonus_name = "Free Siege Tower"
-                elif "AKKADIAN" in tech_id_upper:
-                    bonus_name = "Free Akkadian Archer"
-                elif "CIMMERIAN" in tech_id_upper:
-                    bonus_name = "Free Cimmerian Archer"
-                elif "AFRICAN_ELEPHANT" in tech_id_upper:
-                    bonus_name = "Free African Elephant"
-                elif "TURRETED_ELEPHANT" in tech_id_upper:
-                    bonus_name = "Free Turreted Elephant"
-                elif "LIGHT_CHARIOT" in tech_id_upper:
-                    bonus_name = "Free Light Chariot"
-                elif "MOUNTED_LANCER" in tech_id_upper:
-                    bonus_name = "Free Mounted Lancer"
-                elif "HOPLITE" in tech_id_upper:
-                    bonus_name = "Free Hoplite"
-                elif "PHALANGITE" in tech_id_upper:
-                    bonus_name = "Free Phalangite"
-                elif "HITTITE_CHARIOT" in tech_id_upper:
-                    bonus_name = "Free Hittite Chariot"
-                elif "MEDJAY" in tech_id_upper:
-                    bonus_name = "Free Medjay"
-                elif "BEJA" in tech_id_upper:
-                    bonus_name = "Free Beja Archer"
-                elif "PALTON" in tech_id_upper:
-                    bonus_name = "Free Palton Cavalry"
-                elif "CATAPHRACT" in tech_id_upper:
-                    bonus_name = "Free Cataphract Archer"
-                elif "HASTATUS" in tech_id_upper:
-                    bonus_name = "Free Hastatus"
-                elif "LEGIONARY" in tech_id_upper:
-                    bonus_name = "Free Legionary"
-                elif "DMT" in tech_id_upper:
-                    bonus_name = "Free Dmt Warrior"
-                elif "SHOTELAI" in tech_id_upper:
-                    bonus_name = "Free Shotelai"
-                elif "ASSAULT_ELEPHANT" in tech_id_upper:
-                    bonus_name = "Free Assault Elephant"
-                elif "ARMOURED_ELEPHANT" in tech_id_upper:
-                    bonus_name = "Free Armoured Elephant"
-                elif "STEPPE_RIDER" in tech_id_upper:
-                    bonus_name = "Free Steppe Riders"
-                elif "KUSHAN_CAVALRY" in tech_id_upper:
-                    bonus_name = "Free Kushan Cavalry"
-                elif "KUSHAN_WARLORD" in tech_id_upper:
-                    bonus_name = "Free Kushan Warlord"
-                elif "JAVELIN_ELEPHANT" in tech_id_upper:
-                    bonus_name = "Free Javelin Elephant"
-                elif "ARCHER_ELEPHANT" in tech_id_upper:
-                    bonus_name = "Free Archer Elephant"
-                # Resource bonuses  
-                elif "RESOURCE_" in tech["id"]:
-                    bonus_name = bonus_text  # Use the luxury name directly
-                else:
-                    # Fallback to tech name
-                    bonus_name = tech.get("name", "Bonus")
+                    bonus_text = tech.get("description", "") or bonus_name
+
                 
                 bonus_tech = {
                     "id": tech["id"],

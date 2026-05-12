@@ -266,10 +266,8 @@
       node.style.gridRow = (tech.row+1);
 
       node.innerHTML = `
-        <div class="tech-head">
-          <div class="tech-icon"><img src="${techIconPath(tech)}" alt="" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'tech-icon-fallback\\'>${tech.name[0]}</span>';" /></div>
-          <div class="tech-name">${tech.name}</div>
-        </div>
+        <div class="tech-icon"><img src="${techIconPath(tech)}" alt="" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'tech-icon-fallback\\'>${tech.name[0]}</span>';" /></div>
+        <div class="tech-name">${tech.name}</div>
       `;
 
       node.addEventListener('click', ()=>toggleResearch(tech.id));
