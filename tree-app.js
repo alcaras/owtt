@@ -297,11 +297,11 @@
         card.className = 'bonus-card';
         card.id = b.id;
         card.innerHTML = `
-          <div class="bonus-card-head">
-            <div class="bonus-card-icon"><img src="${bonusIconPath(b)}" alt="" onerror="this.style.display='none';this.parentElement.textContent='★';"/></div>
+          <div class="bonus-card-icon"><img src="${bonusIconPath(b)}" alt="" onerror="this.style.display='none';this.parentElement.textContent='★';"/></div>
+          <div class="bonus-card-body">
             <div class="bonus-card-name">${b.name}</div>
+            <div class="bonus-card-desc">${b.bonus||''}</div>
           </div>
-          <div class="bonus-card-desc">${b.bonus||''}</div>
         `;
         card.addEventListener('click', ()=>toggleBonus(b.id));
         card.addEventListener('contextmenu', e=>{ e.preventDefault(); toggleCompleted(b.id); });

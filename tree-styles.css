@@ -479,43 +479,51 @@ body::before {
 
 .bonus-card {
   position: relative;
-  padding: 8px 9px;
+  display: flex;
+  align-items: stretch;
   background: linear-gradient(to bottom, oklch(0.23 0.013 80), oklch(0.19 0.013 80));
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: border-color .15s, background .15s, transform .12s;
   opacity: 0.55;
+  overflow: hidden;
+  min-height: 56px;
 }
 .bonus-card.available { opacity: 1; border-color: var(--gold-deep); }
 .bonus-card.on-path { opacity: 1; background: linear-gradient(to bottom, oklch(0.27 0.05 252), oklch(0.21 0.04 252)); border-color: var(--state-onpath); }
 .bonus-card.completed { opacity: 1; background: linear-gradient(to bottom, oklch(0.28 0.06 148), oklch(0.21 0.05 148)); border-color: var(--state-done); }
 .bonus-card:hover { border-color: var(--gold-soft); transform: translateY(-1px); }
 
-.bonus-card-head {
-  display: flex; align-items: center; gap: 6px;
-  margin-bottom: 2px;
-}
 .bonus-card-icon {
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 25%, oklch(0.30 0.02 80), oklch(0.18 0.01 80));
-  border: 1px solid var(--line-strong);
+  flex-shrink: 0;
+  width: 52px;
+  align-self: stretch;
+  background: oklch(0.16 0.01 80);
+  border-right: 1px solid var(--line);
   display: grid; place-items: center;
   color: var(--gold-soft);
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 700;
-  flex-shrink: 0;
+  overflow: hidden;
 }
-.bonus-card-icon img { width: 18px; height: 18px; }
+.bonus-card-icon img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.bonus-card-body {
+  flex: 1; min-width: 0;
+  padding: 7px 9px;
+  display: flex; flex-direction: column; justify-content: center;
+  gap: 2px;
+}
 .bonus-card-name {
   font-family: var(--font-serif);
   font-weight: 600;
   font-size: 12px;
   line-height: 1.15;
   color: var(--text);
-  flex: 1;
-  min-width: 0;
 }
 .bonus-card-desc {
   font-size: 10px;
