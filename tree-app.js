@@ -293,7 +293,7 @@
       };
       const summary = [
         counts.u && `<span data-kind="unit">U${counts.u > 1 ? counts.u : ''}</span>`,
-        counts.b && `<span data-kind="imp">B${counts.b > 1 ? counts.b : ''}</span>`,
+        counts.b && `<span data-kind="imp">I${counts.b > 1 ? counts.b : ''}</span>`,
         counts.l && `<span data-kind="law">L${counts.l > 1 ? counts.l : ''}</span>`,
         counts.p && `<span data-kind="proj">P${counts.p > 1 ? counts.p : ''}</span>`,
         counts.s && `<span data-kind="bonus">★${counts.s > 1 ? counts.s : ''}</span>`,

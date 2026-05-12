@@ -446,19 +446,7 @@ body::before {
   font-weight: 700;
 }
 
-.tech-node.starting::after {
-  content: "FREE";
-  position: absolute; bottom: 4px; right: 4px;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--state-done);
-  background: oklch(0.20 0.04 148 / .85);
-  border: 1px solid var(--state-done);
-  padding: 1px 5px;
-  border-radius: 4px;
-}
+/* Starting techs share the green "completed" styling — no separate FREE badge needed. */
 
 .tech-node.prereq-preview {
   outline: 2px dashed var(--gold);
