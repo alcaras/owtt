@@ -321,7 +321,7 @@
           <div class="bonus-card-icon"><img src="${bonusIconPath(b)}" alt="" onerror="this.style.display='none';this.parentElement.textContent='★';"/></div>
           <div class="bonus-card-body">
             <div class="bonus-card-name">${b.name}</div>
-            <div class="bonus-card-desc">${b.bonus||''}</div>
+            <div class="bonus-card-desc">${decorateBonusText(b.bonus||'')}</div>
           </div>
         `;
         card.addEventListener('click', ()=>toggleBonus(b.id));
@@ -485,6 +485,64 @@
   }
 
   // -------- tooltip
+  // Icon helpers for tooltip unlocks. Display names map to slugs by lowercasing
+  // and converting non-alphanum to underscore. Laws can be pairs like
+  // "Slavery/Freedom" — we render both halves.
+  function _slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''); }
+  function unlockIconPaths(kind, name){
+    if (kind === 'law'){
+      return name.split('/').map(p => `img/icons/law/law_${_slug(p)}.png`);
+    }
+    const s = _slug(name);
+    if (kind === 'unit') return [`img/icons/unit/unit_${s}.png`];
+    if (kind === 'imp')  return [`img/icons/improvement/improvement_${s}.png`];
+    if (kind === 'proj') return [`img/icons/project/project_${s}_1.png`, `img/icons/project/project_${s}.png`];
+    return [];
+  }
+  function unlockRow(kind, label){
+    const paths = unlockIconPaths(kind, label);
+    const imgs = paths.map(p => `<img class="tt-icon" src="${p}" alt="" onerror="this.style.display='none'" />`).join('');
+    return `<span class="tt-row">${imgs}<span class="tt-row-label">${label}</span></span>`;
+  }
+
+  // Inject inline icons into a bonus-effect string like "+400 Iron, +400 Stone,
+  // +2 Porcelain, +1 Court Scholar". We try yields → resources → units →
+  // specialists/courtiers. Anything that doesn't resolve renders as plain text.
+  const YIELD_ICON_FOR = {
+    'Food':'food','Stone':'stone','Wood':'wood','Iron':'iron','Money':'money',
+    'Civics':'civics','Training':'training','Orders':'orders','Science':'science',
+    'Happiness':'happiness','Discontent':'discontent','Influence':'influence',
+    'Growth':'growth','Culture':'culture','Maintenance':'maintenance',
+    'Border Growth':'culture',
+  };
+  const RESOURCE_ICON_FOR = {
+    'Porcelain':'porcelain','Perfume':'perfume','Exotic Fur':'exotic_fur',
+    'Exotic Furs':'exotic_fur','Silk':'silk','Ebony':'ebony','Lavender':'lavender',
+    'Wine':'wine','Gold':'gold','Silver':'silver','Salt':'salt','Olive':'olive',
+    'Olives':'olive','Spices':'spices','Honey':'honey','Iron':'iron','Stone':'stone',
+    'Pearls':'pearl','Pearl':'pearl','Jade':'jade','Gem':'gem','Gems':'gem',
+    'Dye':'dye','Incense':'incense','Wootz Steel':'wootz_steel',
+  };
+  function iconForLabel(name){
+    if (YIELD_ICON_FOR[name]) return `img/icons/yields/${YIELD_ICON_FOR[name]}.png`;
+    if (RESOURCE_ICON_FOR[name]) return `img/icons/resources/${RESOURCE_ICON_FOR[name]}.png`;
+    return null;
+  }
+  function decorateBonusText(text){
+    if (!text) return '';
+    // Match "+N <Label>" where <Label> is a Capitalized word(s).
+    return text.replace(
+      /\+([\d,]+)\s+([A-Z][A-Za-z]*(?:\s[A-Z][A-Za-z]*)*)\b/g,
+      (m, amt, label) => {
+        const icon = iconForLabel(label);
+        // Also try a unit-bonus icon as a last resort (e.g. "+2 Cimmerian Archer").
+        const fallback = `img/icons/unit/unit_${_slug(label)}.png`;
+        const src = icon || fallback;
+        return `+${amt} <img class="tt-yield-ic" src="${src}" alt="" onerror="this.style.display='none'" />${label}`;
+      }
+    );
+  }
+
   const $tip = document.getElementById('tooltip');
   function showTooltip(e, tech){
     const startingSet = new Set(startingTechsForNation());
@@ -505,15 +563,21 @@
     html += `<div class="tt-meta">${costLine} · ${status}</div>`;
     const u = tech.unlocks;
     const sections = [];
-    if (u.units?.length) sections.push({h:'Units', items:u.units});
-    if (u.improvements?.length) sections.push({h:'Improvements', items:u.improvements.filter(x=>x!=='Kushite Pyramids'||selectedNation==='NATION_KUSH')});
-    if (u.laws?.length) sections.push({h:'Laws', items:u.laws});
-    if (u.projects?.length) sections.push({h:'Projects', items:u.projects});
-    const bs = TD.bonusTechs.filter(b=>b.parent===tech.id && (!b.nation||b.nation===selectedNation));
-    if (bs.length) sections.push({h:'Bonus cards', items:bs.map(b=>b.name+' — '+(b.bonus||''))});
+    if (u.units?.length) sections.push({h:'Units', kind:'unit', items:u.units});
+    if (u.improvements?.length) sections.push({h:'Improvements', kind:'imp', items:u.improvements.filter(x=>x!=='Kushite Pyramids'||selectedNation==='NATION_KUSH')});
+    if (u.laws?.length) sections.push({h:'Laws', kind:'law', items:u.laws});
+    if (u.projects?.length) sections.push({h:'Projects', kind:'proj', items:u.projects});
     sections.forEach(s=>{
-      html += `<div class="tt-section"><h4>${s.h}</h4><div class="tt-list">${s.items.map(i=>`<span>${i}</span>`).join('')}</div></div>`;
+      html += `<div class="tt-section"><h4>${s.h}</h4><div class="tt-list">${
+        s.items.map(label => unlockRow(s.kind, label)).join('')
+      }</div></div>`;
     });
+    const bs = TD.bonusTechs.filter(b=>b.parent===tech.id && (!b.nation||b.nation===selectedNation));
+    if (bs.length){
+      html += `<div class="tt-section"><h4>Bonus cards</h4><div class="tt-list">${
+        bs.map(b => `<span class="tt-bonus-row"><strong>${b.name}</strong> — ${decorateBonusText(b.bonus||'')}</span>`).join('')
+      }</div></div>`;
+    }
     if (tech.prereqs?.length){
       html += `<div class="tt-section"><h4>Requires</h4><div class="tt-list">${tech.prereqs.map(p=>{const t=techById.get(p); return `<span>${t?t.name:p}</span>`;}).join('')}</div></div>`;
     }
@@ -525,7 +589,7 @@
     const html = `
       <h3><img src="${bonusIconPath(b)}" alt=""/>${b.name}</h3>
       <div class="tt-meta">${fmt(b.cost)} science · Bonus card</div>
-      <div class="tt-section"><h4>Effect</h4><div class="tt-list"><span>${b.bonus||''}</span></div></div>
+      <div class="tt-section"><h4>Effect</h4><div class="tt-list"><span>${decorateBonusText(b.bonus||'')}</span></div></div>
       ${b.parent ? `<div class="tt-section"><h4>Drawn from</h4><div class="tt-list"><span>${techById.get(b.parent)?.name||b.parent}</span></div></div>` : ''}
       ${b.nation ? `<div class="tt-section"><h4>Nation</h4><div class="tt-list"><span>${(ND.nationNames.find(n=>n.id===b.nation)||{}).name||b.nation} · ${b.cultureRequired||''}</span></div></div>` : ''}
     `;

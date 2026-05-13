@@ -718,7 +718,26 @@ body.sidebar-collapsed .sidebar {
   margin: 0 0 4px;
   color: var(--text-muted);
 }
-.tooltip .tt-list { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--text-soft); }
+.tooltip .tt-list { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-soft); }
+.tooltip .tt-row { display: inline-flex; align-items: center; gap: 6px; }
+.tooltip .tt-row .tt-icon {
+  width: 22px; height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: oklch(0.16 0.01 80);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.tooltip .tt-row-label { line-height: 1.2; }
+.tooltip .tt-bonus-row { display: block; line-height: 1.35; }
+.tooltip .tt-bonus-row strong { color: var(--gold-soft); font-weight: 600; }
+.tt-yield-ic {
+  display: inline-block;
+  width: 14px; height: 14px;
+  vertical-align: -3px;
+  margin: 0 2px;
+}
+.bonus-card-desc .tt-yield-ic { width: 12px; height: 12px; vertical-align: -2px; }
 
 /* ============== TWEAKS PANEL ============== */
 .tweaks-panel {
