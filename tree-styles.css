@@ -146,25 +146,31 @@ body::before {
   gap: 16px;
 }
 
+/* Topbar items share a 34 px row height — stats, nation dropdown, and action
+   buttons all align center on the same baseline. Labels sit inline before the
+   value rather than stacked above it. */
 .nation-field {
-  display: flex; flex-direction: column; gap: 3px;
+  display: inline-flex; align-items: center; gap: 8px;
 }
 .field-label {
-  font-size: 10px;
+  font-size: 9px;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   color: var(--text-muted);
+  font-weight: 600;
 }
 .nation-select {
   appearance: none;
   background: var(--bg-elev);
   border: 1px solid var(--line);
   color: var(--text);
-  padding: 7px 30px 7px 12px;
+  height: 34px;
+  padding: 0 28px 0 12px;
   font: inherit;
+  font-size: 13px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  min-width: 160px;
+  min-width: 150px;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'><path d='M2 4l3 3 3-3' fill='none' stroke='%23d4b25b' stroke-width='1.5'/></svg>");
   background-repeat: no-repeat;
   background-position: right 10px center;
@@ -176,35 +182,30 @@ body::before {
 
 .totals { display: flex; gap: 8px; }
 .stat {
-  display: flex; flex-direction: column;
-  align-items: flex-start;
-  padding: 7px 40px 7px 14px;
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 34px;
+  padding: 0 12px;
   background: var(--bg-elev);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  position: relative;
-  min-width: 96px;
 }
 .stat-label {
   font-size: 9px;
   text-transform: uppercase;
   letter-spacing: 0.18em;
   color: var(--text-muted);
+  font-weight: 600;
 }
 .stat-value {
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 18px;
+  font-size: 14px;
   color: var(--text);
-  line-height: 1.1;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .stat-icon {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 22px; height: 22px;
+  width: 18px; height: 18px;
   opacity: 0.85;
   color: var(--gold-soft);
 }
@@ -215,7 +216,8 @@ body::before {
 .btn {
   appearance: none;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 8px 14px;
+  height: 34px;
+  padding: 0 14px;
   background: transparent;
   border: 1px solid var(--line);
   color: var(--text-soft);
