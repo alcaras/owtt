@@ -642,7 +642,7 @@ body.sidebar-collapsed .sidebar {
 .order-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .order-item {
   display: grid;
-  grid-template-columns: 22px 1fr auto;
+  grid-template-columns: 22px 24px 1fr auto;
   align-items: center;
   gap: 8px;
   padding: 6px 8px;
@@ -651,6 +651,13 @@ body.sidebar-collapsed .sidebar {
   border-radius: 6px;
   transition: background .12s, border-color .12s;
   cursor: pointer;
+}
+.order-icon {
+  width: 24px; height: 24px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: oklch(0.16 0.01 80);
+  object-fit: cover;
 }
 .order-item:hover { background: oklch(0.24 0.013 80); border-color: var(--line-strong); }
 .order-item.completed { border-left: 3px solid var(--state-done); background: oklch(0.22 0.04 148 / .35); }
@@ -678,25 +685,25 @@ body.sidebar-collapsed .sidebar {
 .order-empty p { font-size: 12px; line-height: 1.4; max-width: 220px; margin: 0 auto; }
 
 .sidebar-danger {
-  padding: 10px 18px 4px;
+  padding: 12px 18px 6px;
   display: flex; justify-content: flex-end;
 }
 .sidebar-clear {
   appearance: none;
-  background: none;
-  border: 1px solid transparent;
-  color: var(--text-dim);
-  font: 500 11px/1.2 var(--font-sans);
+  background: oklch(0.22 0.04 28 / .25);
+  border: 1px solid oklch(0.42 0.08 28);
+  color: oklch(0.78 0.12 28);
+  font: 600 12px/1.2 var(--font-sans);
   letter-spacing: 0.04em;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 5px;
   cursor: pointer;
   transition: color .12s, border-color .12s, background .12s;
 }
 .sidebar-clear:hover {
-  color: oklch(0.74 0.13 28);
-  border-color: oklch(0.42 0.08 28);
-  background: oklch(0.22 0.04 28 / .25);
+  color: oklch(0.86 0.16 28);
+  border-color: oklch(0.60 0.14 28);
+  background: oklch(0.30 0.08 28 / .45);
 }
 
 .sidebar-footer {

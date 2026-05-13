@@ -417,8 +417,15 @@
       li.className = 'order-item';
       if (it.completed) li.classList.add('completed');
       if (it.isBonus) li.classList.add('bonus');
+      const tech = !it.isBonus ? techById.get(it.id) : null;
+      const bonus = it.isBonus ? bonusById.get(it.id) : null;
+      const iconSrc = tech ? techIconPath(tech) : (bonus ? bonusIconPath(bonus) : '');
+      const iconHtml = iconSrc
+        ? `<img class="order-icon" src="${iconSrc}" alt="" onerror="this.style.display='none'" />`
+        : '';
       li.innerHTML = `
         <span class="order-num">${(i+1).toString().padStart(2,'0')}</span>
+        ${iconHtml}
         <span class="order-name">${it.name}</span>
         <span class="order-cost ${it.free?'free':''}">${fmt(it.cost)}</span>
       `;
