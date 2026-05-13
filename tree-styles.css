@@ -642,20 +642,27 @@ body.sidebar-collapsed .sidebar {
 .order-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .order-item {
   display: grid;
-  grid-template-columns: 22px 24px 1fr auto;
-  align-items: center;
+  grid-template-columns: 28px 40px 1fr auto;
+  align-items: stretch; /* let the icon stretch top-to-bottom */
   gap: 8px;
-  padding: 6px 8px;
+  padding: 0 10px 0 0;
+  min-height: 42px;
   background: oklch(0.21 0.012 80);
   border: 1px solid var(--line);
   border-radius: 6px;
+  overflow: hidden;
   transition: background .12s, border-color .12s;
   cursor: pointer;
 }
+.order-num, .order-name, .order-cost { align-self: center; }
+.order-num { padding-left: 10px; }
 .order-icon {
-  width: 24px; height: 24px;
-  border-radius: 4px;
-  border: 1px solid var(--line);
+  align-self: stretch;
+  width: 40px;
+  height: 100%;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
   background: oklch(0.16 0.01 80);
   object-fit: cover;
 }
