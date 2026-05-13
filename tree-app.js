@@ -1021,7 +1021,32 @@
     updateStates();
     updateOrderList();
     updateTotals();
-    requestAnimationFrame(()=>drawConnections());
+    requestAnimationFrame(()=>{
+      fitTechNames();
+      drawConnections();
+    });
+  }
+
+  // After layout, shrink any tech name that would wrap onto a second line so
+  // most names ride the larger default font and only the long single-words
+  // (Land Consolidation, Industrial Progress…) drop to a smaller size.
+  function fitTechNames(){
+    const names = $grid.querySelectorAll('.tech-name');
+    names.forEach(el => el.classList.remove('is-shrunk', 'is-tiny'));
+    names.forEach(el => {
+      const lh = parseFloat(getComputedStyle(el).lineHeight) || 16;
+      if (el.scrollHeight > lh * 1.45){
+        el.classList.add('is-shrunk');
+      }
+    });
+    // Second pass: if the shrunk size still wraps, drop one more notch.
+    names.forEach(el => {
+      if (!el.classList.contains('is-shrunk')) return;
+      const lh = parseFloat(getComputedStyle(el).lineHeight) || 14;
+      if (el.scrollHeight > lh * 1.45){
+        el.classList.replace('is-shrunk', 'is-tiny');
+      }
+    });
   }
 
   // -------- init
@@ -1076,7 +1101,7 @@
     const v = `${game} · ${TD.techs.length} techs · ${TD.bonusTechs.length} bonus cards`;
     document.getElementById('versionLine').textContent = v;
     document.getElementById('sidebarVersion').textContent = v;
-    window.addEventListener('resize', ()=>requestAnimationFrame(drawConnections));
+    window.addEventListener('resize', () => requestAnimationFrame(() => { fitTechNames(); drawConnections(); }));
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

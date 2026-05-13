@@ -281,7 +281,7 @@ body.sidebar-collapsed .sidebar {
 /* ============== COST HEADERS ============== */
 .cost-headers {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(132px, 1fr));
   gap: 6px;
   margin-bottom: 8px;
 }
@@ -314,6 +314,8 @@ body.sidebar-collapsed .sidebar {
 /* ============== TREE GRID ============== */
 .tree-wrap {
   position: relative;
+  overflow-x: auto; /* fall through to horizontal scroll when the column floor
+                       below no longer fits the board width */
 }
 .connections {
   position: absolute;
@@ -325,7 +327,9 @@ body.sidebar-collapsed .sidebar {
 .tech-grid {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  /* Floor of 132 px per column keeps names from crushing into single-letter
+     stacks at narrow viewports. Below that the board scrolls horizontally. */
+  grid-template-columns: repeat(8, minmax(132px, 1fr));
   grid-auto-rows: minmax(46px, auto);
   gap: 6px;
   z-index: 2;
@@ -385,10 +389,10 @@ body.sidebar-collapsed .sidebar {
 .tech-name {
   font-family: var(--font-serif);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 15px;
   letter-spacing: 0.01em;
   color: var(--text);
-  line-height: 1.05;
+  line-height: 1.08;
   flex: 1;
   min-width: 0;
   align-self: center;
@@ -397,6 +401,10 @@ body.sidebar-collapsed .sidebar {
   overflow-wrap: break-word;
   hyphens: none;
 }
+/* JS adds this when the name would otherwise wrap; smaller font claws back
+   some width so it stays on one line. */
+.tech-name.is-shrunk { font-size: 13px; line-height: 1.05; }
+.tech-name.is-tiny   { font-size: 11.5px; line-height: 1.05; }
 
 /* Tech cards intentionally don't show unlock chips inline — the tooltip
    shows full unit/improvement/law/project/bonus detail on hover. */
