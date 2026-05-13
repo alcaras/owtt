@@ -24,6 +24,17 @@ GAME_DATA = (
 OUT_DIR = Path(__file__).parent / "img/icons/bonus"
 
 
+def _trim_transparent(img):
+    """Crop fully-transparent borders so the visible artwork fills the canvas.
+    Falls back to the original image if alpha is missing or fully empty."""
+    if img.mode != "RGBA":
+        img = img.convert("RGBA")
+    bbox = img.getchannel("A").getbbox()
+    if bbox is None:
+        return img
+    return img.crop(bbox)
+
+
 def wanted_icon_names() -> set[str]:
     """Read every non-disabled bonus tech's zIconName from tech.xml."""
     root = ET.parse(Path(__file__).parent / "XML/Infos/tech.xml").getroot()
@@ -64,10 +75,15 @@ def main() -> int:
                 img = d.image
                 if img:
                     out = OUT_DIR / f"{name.lower()}.png"
-                    img.save(out)
+                    # Auto-crop the transparent margins so cards with sparse
+                    # source art (e.g. BOOST_STONE — a tiny block on a
+                    # 250×250 canvas) end up the same visible size as cards
+                    # with full-bleed portraits (BONUS_WORKER).
+                    cropped = _trim_transparent(img)
+                    cropped.save(out)
                     saved += 1
                     missing.discard(name)
-                    del img
+                    del img, cropped
             del d
         except Exception as e:
             print(f"  skip object {i}: {e}", file=sys.stderr)

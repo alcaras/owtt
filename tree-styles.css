@@ -281,7 +281,7 @@ body.sidebar-collapsed .sidebar {
 /* ============== COST HEADERS ============== */
 .cost-headers {
   display: grid;
-  grid-template-columns: repeat(8, minmax(132px, 1fr));
+  grid-template-columns: repeat(8, minmax(152px, 1fr));
   gap: 6px;
   margin-bottom: 8px;
 }
@@ -331,9 +331,10 @@ body.sidebar-collapsed .sidebar {
 .tech-grid {
   position: relative;
   display: grid;
-  /* Floor of 132 px per column keeps names from crushing into single-letter
-     stacks at narrow viewports. Below that the board scrolls horizontally. */
-  grid-template-columns: repeat(8, minmax(132px, 1fr));
+  /* Floor of 152 px per column gives names like "Administration" enough room
+     to fit at the auto-shrunk 13 px size; below that the board scrolls
+     horizontally. */
+  grid-template-columns: repeat(8, minmax(152px, 1fr));
   grid-auto-rows: minmax(46px, auto);
   gap: 6px;
   z-index: 2;
@@ -369,7 +370,7 @@ body.sidebar-collapsed .sidebar {
 
 .tech-icon {
   flex-shrink: 0;
-  width: 44px;
+  width: 40px;
   align-self: stretch;
   background: oklch(0.16 0.01 80);
   border-right: 1px solid var(--line);
