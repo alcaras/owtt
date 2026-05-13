@@ -1,7 +1,7 @@
 // Auto-generated tech data for the redesigned tech tree — do not edit by hand.
 // Regenerate via `python3 generate_tech_tree.py --xml-dir XML/Infos`.
 
-window.gameVersion = "Old World v1.0.83499 (May 06, 2026) | Generated May 12, 2026";
+window.gameVersion = "Old World v1.0.83499 (May 06, 2026) | Generated May 13, 2026";
 
 window.techData = {
   techs: [
@@ -60,7 +60,7 @@ window.techData = {
     { id: "TECH_ADMINISTRATION_BONUS_WORKER", name: "Free Worker", cost: 50, parent: "TECH_ADMINISTRATION", bonus: "+1 Worker", iconName: "BONUS_WORKER" },
     { id: "TECH_HUSBANDRY_BONUS_FOOD", name: "Food Boost", cost: 75, parent: "TECH_HUSBANDRY", bonus: "+200 Food", iconName: "BONUS_FOOD" },
     { id: "TECH_DRAMA_BONUS_SETTLER", name: "Free Settler", cost: 75, parent: "TECH_DRAMA", bonus: "+1 Settler", iconName: "BONUS_SETTLER" },
-    { id: "TECH_ARISTOCRACY_BONUS_BORDERS", name: "Border Boost", cost: 75, parent: "TECH_ARISTOCRACY", bonus: "+6 Border Growth", iconName: "BOOST_BORDER" },
+    { id: "TECH_ARISTOCRACY_BONUS_BORDERS", name: "Border Boost", cost: 75, parent: "TECH_ARISTOCRACY", bonus: "+6 Border Growth / City", iconName: "BOOST_BORDER" },
     { id: "TECH_NAVIGATION_BONUS_BIREME", name: "Free Bireme", cost: 125, parent: "TECH_STEEL", bonus: "+1 Bireme", iconName: "BONUS_BIREME" },
     { id: "TECH_PHALANX_BONUS_ORDERS", name: "Orders Boost", cost: 125, parent: "TECH_PHALANX", bonus: "+20 Orders", iconName: "BOOST_ORDERS" },
     { id: "TECH_SPOKED_WHEEL_BONUS_CHARIOT", name: "Free Chariot", cost: 125, parent: "TECH_SOVEREIGNTY", bonus: "+1 Chariot", iconName: "BONUS_CHARIOT" },
@@ -81,7 +81,7 @@ window.techData = {
     { id: "TECH_BATTLELINE_BONUS_SOLDIER", name: "Free Court Soldier", cost: 350, parent: "TECH_BATTLELINE", bonus: "+1 Court Soldier", iconName: "BONUS_COURTIER" },
     { id: "TECH_HYDRAULICS_BONUS_BALLISTA", name: "Free Ballista", cost: 200, parent: "TECH_COMPOSITE_BOW", bonus: "+1 Ballista", iconName: "BONUS_BALLISTA" },
     { id: "TECH_JURISPRUDENCE_BONUS_MINISTER", name: "Free Court Minister", cost: 550, parent: "TECH_JURISPRUDENCE", bonus: "+1 Court Minister", iconName: "BONUS_COURTIER" },
-    { id: "TECH_VAULTING_BONUS_HAPPINESS", name: "Happiness Boost", cost: 350, parent: "TECH_VAULTING", bonus: "+1 Happiness", iconName: "BOOST_DISCONTENT" },
+    { id: "TECH_VAULTING_BONUS_HAPPINESS", name: "Happiness Boost", cost: 350, parent: "TECH_VAULTING", bonus: "+1 Happiness Level / City", iconName: "BOOST_DISCONTENT" },
     { id: "TECH_BODKIN_ARROW_BONUS_LONGBOWMAN", name: "Free Longbowman", cost: 350, parent: "TECH_BATTLELINE", bonus: "+2 Longbowman", iconName: "BONUS_LONGBOWMAN" },
     { id: "TECH_FISCAL_POLICY_BONUS_MERCHANT", name: "Free Court Merchant", cost: 350, parent: "TECH_MANOR", bonus: "+1 Court Merchant", iconName: "BONUS_COURTIER" },
     { id: "TECH_INFANTRY_SQUARE_BONUS_SOLDIER", name: "Free Court Soldier", cost: 350, parent: "TECH_STIRRUPS", bonus: "+1 Court Soldier", iconName: "BONUS_COURTIER" },

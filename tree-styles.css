@@ -316,6 +316,10 @@ body.sidebar-collapsed .sidebar {
   position: relative;
   overflow-x: auto; /* fall through to horizontal scroll when the column floor
                        below no longer fits the board width */
+  /* hover/lift on the top row pushes a 22px shadow outward — leave room so it
+     isn't clipped by overflow on the y-axis (overflow-x:auto implies y-clip) */
+  padding: 14px 0 8px;
+  margin: -14px 0 -8px;
 }
 .connections {
   position: absolute;
@@ -422,7 +426,11 @@ body.sidebar-collapsed .sidebar {
   padding: 1px 5px;
   border-radius: 4px;
   letter-spacing: 0.02em;
+  /* Off by default — the topbar "Costs" toggle (body.show-costs) reveals it. */
+  display: none;
 }
+body.show-costs .tech-delta { display: block; }
+#costsBtn.is-active { color: var(--gold); border-color: var(--gold-deep); background: oklch(0.22 0.04 80 / .35); }
 
 /* order number badge */
 .tech-order {

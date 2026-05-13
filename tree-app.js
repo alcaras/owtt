@@ -574,9 +574,13 @@
         if (icon){
           return `+${amt} <img class="tt-yield-ic" src="${icon}" alt="${label}" title="${label}" />`;
         }
-        // Non-yield, non-resource label: keep the name, try a unit glyph icon.
+        // No yield/resource match — try a unit silhouette. If it loads we
+        // drop the spelled label (bonus card title already names the unit);
+        // if onerror fires we swap the broken img for the label text so the
+        // user still sees what the bonus is.
         const fallback = `img/icons/unit/unit_${_slug(label)}.png`;
-        return `+${amt} <img class="tt-yield-ic tt-yield-glyph" src="${fallback}" alt="" onerror="this.style.display='none'" />${label}`;
+        const onerr = `this.outerHTML=${JSON.stringify(label)}`;
+        return `+${amt} <img class="tt-yield-ic tt-yield-glyph" src="${fallback}" alt="${label}" title="${label}" onerror="${onerr}" />`;
       }
     );
   }
@@ -1093,6 +1097,25 @@
         document.body.classList.add('sidebar-collapsed');
       }
     } catch(e){}
+
+    // Cost badges on each card. Off by default — they clutter the board until
+    // you're actively planning. Persisted in localStorage.
+    const costsBtn = document.getElementById('costsBtn');
+    function applyCostsPref(){
+      let on = false;
+      try { on = localStorage.getItem('owtt-show-costs') === '1'; } catch(e){}
+      document.body.classList.toggle('show-costs', on);
+      if (costsBtn) costsBtn.classList.toggle('is-active', on);
+    }
+    applyCostsPref();
+    if (costsBtn){
+      costsBtn.addEventListener('click', () => {
+        const on = !document.body.classList.contains('show-costs');
+        document.body.classList.toggle('show-costs', on);
+        costsBtn.classList.toggle('is-active', on);
+        try { localStorage.setItem('owtt-show-costs', on ? '1' : '0'); } catch(e){}
+      });
+    }
 
     // On touch devices the hover tooltip can stick because mouseleave never
     // fires. Dismiss it on any tap outside a tech / bonus card, and on a

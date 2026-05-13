@@ -528,9 +528,9 @@ class OldWorldParser:
             label = label_for(f"TEXT_{rid}", rid.replace("RESOURCE_", ""))
             parts.append(f"+{amount} {label}")
         if data["borderGrowth"]:
-            parts.append(f"+{data['borderGrowth']} Border Growth")
+            parts.append(f"+{data['borderGrowth']} Border Growth / City")
         if data["happinessLevels"]:
-            parts.append(f"+{data['happinessLevels']} Happiness")
+            parts.append(f"+{data['happinessLevels']} Happiness Level / City")
 
         return ", ".join(parts)
     

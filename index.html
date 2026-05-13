@@ -64,6 +64,7 @@
     </div>
 
     <div class="topbar-actions">
+      <button class="btn btn-ghost" id="costsBtn" title="Show per-tech total cost (incl. unmet prereqs)">Costs</button>
       <button class="btn btn-ghost" id="undoBtn" title="Undo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6M3 13a9 9 0 1 0 3-7"/></svg></button>
       <button class="btn btn-ghost" id="redoBtn" title="Redo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6M21 13a9 9 0 1 1-3-7"/></svg></button>
       <button class="btn btn-primary" id="shareBtn">
@@ -93,9 +94,7 @@
     <!-- Bonus cards -->
     <section class="bonus-section">
       <header class="section-header">
-        <div class="section-eyebrow">Bonus</div>
         <h2 class="section-title">Bonus Cards</h2>
-        <p class="section-desc">Drawn during research — group by science cost.</p>
       </header>
       <div class="bonus-grid" id="bonusGrid"></div>
     </section>
@@ -118,7 +117,7 @@
     </div>
 
     <div class="sidebar-list-wrap">
-      <div class="sidebar-section-title">Order <span id="orderCount" class="muted">·  0</span></div>
+      <div class="sidebar-section-title">Plan <span id="orderCount" class="muted">·  0</span></div>
       <ol class="order-list" id="orderList"></ol>
       <div class="order-empty" id="orderEmpty">
         <div class="order-empty-icon" aria-hidden="true">⌖</div>
