@@ -500,6 +500,42 @@
   const IMPROVEMENT_ALIAS = {
     baths: 'warm_baths',
   };
+  // Units whose display name (from text-unit*.xml) doesn't slugify to the same
+  // string as their zType (which is what extract_unlock_icons.py saves under).
+  // Maps "Three Man Chariot" → "hittite_chariot_2" so the icon path resolves.
+  const UNIT_NAME_ALIAS = {
+    'heavy_chariot':        'hittite_chariot_1',
+    'three_man_chariot':    'hittite_chariot_2',
+    'elite_amazon_cavalry': 'amazon_cavalry_2',
+    'elite_clubthrower':    'clubthrower_2',
+    'elite_gaesata':        'gaesata_2',
+    'elite_huscarl':        'huscarl_2',
+    'elite_javelineer':     'javelineer_2',
+    'elite_libyan_cavalry': 'libyan_cavalry_2',
+    'elite_marauder':       'marauder_2',
+    'elite_nomad_marauder': 'nomad_marauder_2',
+    'elite_nomad_skirmisher': 'nomad_skirmisher_2',
+    'elite_nomad_warlord':  'nomad_warlord_2_f',
+    'elite_peltast':        'peltast_2',
+    'elite_skirmisher':     'skirmisher_2',
+    'elite_warlord':        'warlord_2_f',
+    'gaesata':              'gaesata_1',
+    'huscarl':              'huscarl_1',
+    'javelineer':           'javelineer_1',
+    'libyan_cavalry':       'libyan_cavalry_1',
+    'marauder':             'marauder_1',
+    'nomad_marauder':       'nomad_marauder_1',
+    'nomad_skirmisher':     'nomad_skirmisher_1',
+    'nomad_warlord':        'nomad_warlord_1_f',
+    'peltast':              'peltast_1',
+    'skirmisher':           'skirmisher_1',
+    'warlord':              'warlord_1_f',
+    'd_mt_warrior':         'dmt_warrior',
+  };
+  function _unitSlug(label){
+    const s = _slug(label);
+    return UNIT_NAME_ALIAS[s] || s;
+  }
   // Build an <img> that walks a fallback chain via onerror — first path that
   // loads wins; if all fail the img hides itself.
   function fallbackImg(paths, cls){
@@ -522,9 +558,13 @@
     const s = _slug(label);
     let paths = [], cls = 'tt-icon';
     // Units: prefer the white-silhouette glyph (UNIT_<NAME>'s small variant),
-    // fall back to the BONUS_ card art when no glyph exists.
+    // fall back to the BONUS_ card art when no glyph exists. Names like
+    // "Three Man Chariot" don't slugify to their zType; UNIT_NAME_ALIAS
+    // bridges those cases.
     if (kind === 'unit') {
-      paths = [`img/icons/unit/unit_${s}.png`, `img/icons/bonus/bonus_${s}.png`];
+      const us = _unitSlug(label);
+      paths = [`img/icons/unit/unit_${us}.png`, `img/icons/bonus/bonus_${us}.png`];
+      if (us !== s) paths.push(`img/icons/unit/unit_${s}.png`, `img/icons/bonus/bonus_${s}.png`);
       cls = 'tt-icon tt-icon-glyph';
     }
     else if (kind === 'imp')  {
@@ -574,13 +614,15 @@
         if (icon){
           return `+${amt} <img class="tt-yield-ic" src="${icon}" alt="${label}" title="${label}" />`;
         }
-        // No yield/resource match — try a unit silhouette. If it loads we
-        // drop the spelled label (bonus card title already names the unit);
-        // if onerror fires we swap the broken img for the label text so the
-        // user still sees what the bonus is.
-        const fallback = `img/icons/unit/unit_${_slug(label)}.png`;
-        const onerr = `this.outerHTML=${JSON.stringify(label)}`;
-        return `+${amt} <img class="tt-yield-ic tt-yield-glyph" src="${fallback}" alt="${label}" title="${label}" onerror="${onerr}" />`;
+        // No yield/resource match — try a unit silhouette via the alias
+        // table, then the plain slug, then fall back to the label text.
+        const us = _unitSlug(label);
+        const primary = `img/icons/unit/unit_${us}.png`;
+        const secondary = `img/icons/unit/unit_${_slug(label)}.png`;
+        const onerr = us !== _slug(label)
+          ? `this.onerror=function(){this.outerHTML=${JSON.stringify(label)}};this.src=${JSON.stringify(secondary)}`
+          : `this.outerHTML=${JSON.stringify(label)}`;
+        return `+${amt} <img class="tt-yield-ic tt-yield-glyph" src="${primary}" alt="${label}" title="${label}" onerror="${onerr}" />`;
       }
     );
   }
