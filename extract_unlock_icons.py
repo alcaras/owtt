@@ -34,33 +34,40 @@ def main() -> int:
         d.mkdir(parents=True, exist_ok=True)
 
     env = UnityPy.load(str(GAME_DATA / "resources.assets"))
-    saved = {k: 0 for k in PREFIXES}
 
-    for i, obj in enumerate(env.objects):
+    # Old World ships TWO sprites per unit under the same UNIT_<NAME> identifier:
+    # a 128×128 colored portrait (production thumbnail) and a smaller (~58×58)
+    # white silhouette glyph used on map shields. We want the silhouette for our
+    # tooltip art — collect *all* candidates per name then pick the smallest.
+    candidates: dict[tuple[str, str], list] = {}
+    for obj in env.objects:
         if obj.type.name != "Sprite":
             continue
         try:
             d = obj.read()
             name = getattr(d, "m_Name", "") or ""
-            for prefix, dest in PREFIXES.items():
+            for prefix in PREFIXES:
                 if name.startswith(prefix):
-                    out = dest / f"{name.lower()}.png"
-                    if out.exists():
-                        break
                     img = d.image
                     if img:
-                        img.save(out)
-                        saved[prefix] += 1
-                        del img
+                        candidates.setdefault((prefix, name), []).append((img.size[0] * img.size[1], img))
                     break
             del d
         except Exception as e:
-            print(f"  skip {i}: {e}", file=sys.stderr)
-        if i % 500 == 0:
-            gc.collect()
+            print(f"  skip: {e}", file=sys.stderr)
+
+    saved = {p: 0 for p in PREFIXES}
+    for (prefix, name), variants in candidates.items():
+        # Sort by area; smallest wins (the silhouette glyph for units; the only
+        # variant for the other categories).
+        variants.sort(key=lambda v: v[0])
+        img = variants[0][1]
+        out = PREFIXES[prefix] / f"{name.lower()}.png"
+        img.save(out)
+        saved[prefix] += 1
 
     for p, n in saved.items():
-        print(f"  {p:15s} {n} new icons")
+        print(f"  {p:15s} {n} icons")
     return 0
 
 

@@ -732,6 +732,13 @@ body.sidebar-collapsed .sidebar {
   object-fit: cover;
   flex-shrink: 0;
 }
+/* White-silhouette glyphs read better with a slight dark backing and no
+   border-radius cropping that would clip the tips of bows / weapons. */
+.tooltip .tt-row .tt-icon-glyph {
+  background: oklch(0.20 0.013 80);
+  object-fit: contain;
+  padding: 1px;
+}
 .tooltip .tt-row-label { line-height: 1.2; }
 .tooltip .tt-bonus-row { display: block; line-height: 1.35; }
 .tooltip .tt-bonus-row strong { color: var(--gold-soft); font-weight: 600; }

@@ -508,13 +508,16 @@
       return `<span class="tt-row">${icons}<span class="tt-row-label">${label}</span></span>`;
     }
     const s = _slug(label);
-    let paths = [];
-    // Units: prefer the BONUS_ card-style art (more polished), fall back to the
-    // UNIT_ production sprite, then to a tech icon if it exists.
-    if (kind === 'unit') paths = [`img/icons/bonus/bonus_${s}.png`, `img/icons/unit/unit_${s}.png`];
+    let paths = [], cls = 'tt-icon';
+    // Units: prefer the white-silhouette glyph (UNIT_<NAME>'s small variant),
+    // fall back to the BONUS_ card art when no glyph exists.
+    if (kind === 'unit') {
+      paths = [`img/icons/unit/unit_${s}.png`, `img/icons/bonus/bonus_${s}.png`];
+      cls = 'tt-icon tt-icon-glyph';
+    }
     else if (kind === 'imp')  paths = [`img/icons/improvement/improvement_${s}.png`];
     else if (kind === 'proj') paths = [`img/icons/project/project_${s}_1.png`, `img/icons/project/project_${s}.png`];
-    return `<span class="tt-row">${fallbackImg(paths, 'tt-icon')}<span class="tt-row-label">${label}</span></span>`;
+    return `<span class="tt-row">${fallbackImg(paths, cls)}<span class="tt-row-label">${label}</span></span>`;
   }
 
   // Inject inline icons into a bonus-effect string like "+400 Iron, +400 Stone,
