@@ -2,7 +2,7 @@
 // Network-first for the app shell so deploys reach users without a manual cache
 // bump; cache is fallback for offline. tech-data.js is also network-first.
 // CACHE_VERSION is still bumped per deploy to evict stale precaches cleanly.
-const CACHE_VERSION = 'owtt-v4';
+const CACHE_VERSION = 'owtt-v5';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 
@@ -18,6 +18,9 @@ const SHELL_ASSETS = [
   './img/app-icon-192.png',
   './img/app-icon-512.png',
   './img/icons/yields/science.png',
+  './fonts/inter.woff2',
+  './fonts/cormorant-garamond.woff2',
+  './fonts/jetbrains-mono.woff2',
 ];
 
 self.addEventListener('install', e => {

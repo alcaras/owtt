@@ -4,6 +4,32 @@
    data-direction = editorial | atlas | codex
    ============================================================ */
 
+/* Self-hosted fonts — same files Google serves, copied locally so the first
+   paint isn't a FOUT (flash of fallback). font-display: block keeps text
+   invisible for up to ~3s rather than swapping in mid-render; cached on
+   reload via the service worker. */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: block;
+  src: url(fonts/cormorant-garamond.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: block;
+  src: url(fonts/inter.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500 600;
+  font-display: block;
+  src: url(fonts/jetbrains-mono.woff2) format('woff2');
+}
+
 :root {
   /* Core palette (oklch, dark slate w/ warm gold) */
   --bg:           oklch(0.18 0.012 80);

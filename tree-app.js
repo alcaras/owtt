@@ -488,6 +488,11 @@
   // Icon helpers for tooltip unlocks. Display names map to slugs by lowercasing
   // and converting non-alphanum to underscore.
   function _slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''); }
+  // Improvements where the game only ships variant icons (no canonical plain
+  // sprite). Pick a representative variant by hand.
+  const IMPROVEMENT_ALIAS = {
+    baths: 'warm_baths',
+  };
   // Build an <img> that walks a fallback chain via onerror — first path that
   // loads wins; if all fail the img hides itself.
   function fallbackImg(paths, cls){
@@ -515,8 +520,13 @@
       paths = [`img/icons/unit/unit_${s}.png`, `img/icons/bonus/bonus_${s}.png`];
       cls = 'tt-icon tt-icon-glyph';
     }
-    else if (kind === 'imp')  paths = [`img/icons/improvement/improvement_${s}.png`];
-    else if (kind === 'proj') paths = [`img/icons/project/project_${s}_1.png`, `img/icons/project/project_${s}.png`];
+    else if (kind === 'imp')  {
+      // A few improvements ship only as named variants (Baths → warm/cold/heated);
+      // alias them to a canonical variant.
+      const aliased = IMPROVEMENT_ALIAS[s] || s;
+      paths = [`img/icons/improvement/improvement_${aliased}.png`];
+    }
+    else if (kind === 'proj') paths = [`img/icons/project/project_${s}.png`, `img/icons/project/project_${s}_1.png`];
     return `<span class="tt-row">${fallbackImg(paths, cls)}<span class="tt-row-label">${label}</span></span>`;
   }
 
@@ -546,15 +556,20 @@
   }
   function decorateBonusText(text){
     if (!text) return '';
-    // Match "+N <Label>" where <Label> is a Capitalized word(s).
+    // Match "+N <Label>" where <Label> is a Capitalized word(s). When we have
+    // a yield or resource icon, render JUST the icon (no spelled-out label).
+    // For other labels (units, courtiers, …) keep the text and try the unit
+    // silhouette as the icon source.
     return text.replace(
       /\+([\d,]+)\s+([A-Z][A-Za-z]*(?:\s[A-Z][A-Za-z]*)*)\b/g,
       (m, amt, label) => {
         const icon = iconForLabel(label);
-        // Also try a unit-bonus icon as a last resort (e.g. "+2 Cimmerian Archer").
+        if (icon){
+          return `+${amt} <img class="tt-yield-ic" src="${icon}" alt="${label}" title="${label}" />`;
+        }
+        // Non-yield, non-resource label: keep the name, try a unit glyph icon.
         const fallback = `img/icons/unit/unit_${_slug(label)}.png`;
-        const src = icon || fallback;
-        return `+${amt} <img class="tt-yield-ic" src="${src}" alt="" onerror="this.style.display='none'" />${label}`;
+        return `+${amt} <img class="tt-yield-ic tt-yield-glyph" src="${fallback}" alt="" onerror="this.style.display='none'" />${label}`;
       }
     );
   }
@@ -598,7 +613,14 @@
       }</div></div>`;
     }
     if (tech.prereqs?.length){
-      html += `<div class="tt-section"><h4>Requires</h4><div class="tt-list">${tech.prereqs.map(p=>{const t=techById.get(p); return `<span>${t?t.name:p}</span>`;}).join('')}</div></div>`;
+      html += `<div class="tt-section"><h4>Requires</h4><div class="tt-list">${
+        tech.prereqs.map(pid => {
+          const t = techById.get(pid);
+          const nm = t ? t.name : pid;
+          const icon = t ? fallbackImg([techIconPath(t)], 'tt-icon') : '';
+          return `<span class="tt-row">${icon}<span class="tt-row-label">${nm}</span></span>`;
+        }).join('')
+      }</div></div>`;
     }
     $tip.innerHTML = html;
     $tip.classList.add('show');
