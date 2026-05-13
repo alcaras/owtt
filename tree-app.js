@@ -486,23 +486,35 @@
 
   // -------- tooltip
   // Icon helpers for tooltip unlocks. Display names map to slugs by lowercasing
-  // and converting non-alphanum to underscore. Laws can be pairs like
-  // "Slavery/Freedom" — we render both halves.
+  // and converting non-alphanum to underscore.
   function _slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''); }
-  function unlockIconPaths(kind, name){
-    if (kind === 'law'){
-      return name.split('/').map(p => `img/icons/law/law_${_slug(p)}.png`);
-    }
-    const s = _slug(name);
-    if (kind === 'unit') return [`img/icons/unit/unit_${s}.png`];
-    if (kind === 'imp')  return [`img/icons/improvement/improvement_${s}.png`];
-    if (kind === 'proj') return [`img/icons/project/project_${s}_1.png`, `img/icons/project/project_${s}.png`];
-    return [];
+  // Build an <img> that walks a fallback chain via onerror — first path that
+  // loads wins; if all fail the img hides itself.
+  function fallbackImg(paths, cls){
+    if (!paths.length) return '';
+    const escaped = paths.map(p => JSON.stringify(p));
+    const chain = escaped.slice(1).reverse().reduce(
+      (next, p) => `this.onerror=function(){${next}};this.src=${p};`,
+      `this.onerror=null;this.style.display='none';`
+    );
+    return `<img class="${cls}" src=${escaped[0]} alt="" onerror="${chain}" />`;
   }
   function unlockRow(kind, label){
-    const paths = unlockIconPaths(kind, label);
-    const imgs = paths.map(p => `<img class="tt-icon" src="${p}" alt="" onerror="this.style.display='none'" />`).join('');
-    return `<span class="tt-row">${imgs}<span class="tt-row-label">${label}</span></span>`;
+    // For laws, render an icon per half of the "Slavery/Freedom" pair.
+    if (kind === 'law'){
+      const icons = label.split('/').map(p =>
+        fallbackImg([`img/icons/law/law_${_slug(p)}.png`], 'tt-icon')
+      ).join('');
+      return `<span class="tt-row">${icons}<span class="tt-row-label">${label}</span></span>`;
+    }
+    const s = _slug(label);
+    let paths = [];
+    // Units: prefer the BONUS_ card-style art (more polished), fall back to the
+    // UNIT_ production sprite, then to a tech icon if it exists.
+    if (kind === 'unit') paths = [`img/icons/bonus/bonus_${s}.png`, `img/icons/unit/unit_${s}.png`];
+    else if (kind === 'imp')  paths = [`img/icons/improvement/improvement_${s}.png`];
+    else if (kind === 'proj') paths = [`img/icons/project/project_${s}_1.png`, `img/icons/project/project_${s}.png`];
+    return `<span class="tt-row">${fallbackImg(paths, 'tt-icon')}<span class="tt-row-label">${label}</span></span>`;
   }
 
   // Inject inline icons into a bonus-effect string like "+400 Iron, +400 Stone,
@@ -513,7 +525,8 @@
     'Civics':'civics','Training':'training','Orders':'orders','Science':'science',
     'Happiness':'happiness','Discontent':'discontent','Influence':'influence',
     'Growth':'growth','Culture':'culture','Maintenance':'maintenance',
-    'Border Growth':'culture',
+    // Border Growth intentionally not iconified — there's no clean game sprite
+    // for it and the culture icon was a misleading stand-in.
   };
   const RESOURCE_ICON_FOR = {
     'Porcelain':'porcelain','Perfume':'perfume','Exotic Fur':'exotic_fur',
@@ -565,10 +578,13 @@
     const sections = [];
     if (u.units?.length) sections.push({h:'Units', kind:'unit', items:u.units});
     if (u.improvements?.length) sections.push({h:'Improvements', kind:'imp', items:u.improvements.filter(x=>x!=='Kushite Pyramids'||selectedNation==='NATION_KUSH')});
-    if (u.laws?.length) sections.push({h:'Laws', kind:'law', items:u.laws});
+    if (u.laws?.length) sections.push({h:'Laws', kind:'law', headIcon:'img/icons/yields/laws.png', items:u.laws});
     if (u.projects?.length) sections.push({h:'Projects', kind:'proj', items:u.projects});
     sections.forEach(s=>{
-      html += `<div class="tt-section"><h4>${s.h}</h4><div class="tt-list">${
+      const heading = s.headIcon
+        ? `<h4><img class="tt-section-ic" src="${s.headIcon}" alt="" /> ${s.h}</h4>`
+        : `<h4>${s.h}</h4>`;
+      html += `<div class="tt-section">${heading}<div class="tt-list">${
         s.items.map(label => unlockRow(s.kind, label)).join('')
       }</div></div>`;
     });
