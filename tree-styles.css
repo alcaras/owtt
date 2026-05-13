@@ -87,14 +87,16 @@ body {
   overflow-x: hidden;
 }
 
-/* ---------- subtle parchment grid overlay ---------- */
+/* ---------- subtle parchment grid overlay ----------
+   Chromium has a rendering quirk where oklch() at very low alpha picks up
+   a red tint; sRGB rgba() renders neutrally on every engine. */
 body::before {
   content: "";
   position: fixed; inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, oklch(1 0 0 / .013) 1px, transparent 1px),
-    linear-gradient(to bottom, oklch(1 0 0 / .013) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
   background-size: 60px 60px;
   z-index: 0;
 }
@@ -1085,7 +1087,7 @@ body[data-direction="atlas"] {
 }
 body[data-direction="atlas"] .tree-wrap {
   background:
-    repeating-linear-gradient(to right, oklch(1 0 0 / .025) 0 1px, transparent 1px calc(12.5% - 1px), oklch(1 0 0 / 0) calc(12.5% - 1px));
+    repeating-linear-gradient(to right, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px calc(12.5% - 1px), rgba(255, 255, 255, 0) calc(12.5% - 1px));
   padding: 10px 4px;
   border-radius: 12px;
   border: 1px solid var(--line-faint);
