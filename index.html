@@ -64,7 +64,7 @@
     </div>
 
     <div class="topbar-actions">
-      <button class="btn btn-ghost" id="costsBtn" title="Show per-tech total cost (incl. unmet prereqs)">Costs</button>
+      <button class="btn btn-ghost btn-toggle" id="costsBtn" role="switch" aria-pressed="false" title="Show per-tech total cost (incl. unmet prereqs)"><span class="toggle-track"><span class="toggle-thumb"></span></span>Costs</button>
       <button class="btn btn-ghost" id="undoBtn" title="Undo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6M3 13a9 9 0 1 0 3-7"/></svg></button>
       <button class="btn btn-ghost" id="redoBtn" title="Redo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6M21 13a9 9 0 1 1-3-7"/></svg></button>
       <button class="btn btn-primary" id="shareBtn">
@@ -109,13 +109,6 @@
   <aside class="sidebar" id="sidebar">
     <button class="sidebar-close" id="sidebarClose" aria-label="Close plan">×</button>
 
-    <div class="sidebar-actions">
-      <button class="btn btn-block btn-outline" id="simulateBtn">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4zm0 5l9 4 9-4M3 17l9 4 9-4"/></svg>
-        Simulate research
-      </button>
-    </div>
-
     <div class="sidebar-list-wrap">
       <div class="sidebar-section-title">Plan <span id="orderCount" class="muted">·  0</span></div>
       <ol class="order-list" id="orderList"></ol>
@@ -125,8 +118,12 @@
       </div>
     </div>
 
-    <div class="sidebar-danger">
+    <div class="sidebar-foot-actions">
       <button class="sidebar-clear" id="clearBtn" type="button">Clear plan</button>
+      <button class="sidebar-sim" id="simulateBtn" type="button">
+        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-4 9 4-9 4-9-4zm0 5l9 4 9-4M3 17l9 4 9-4"/></svg>
+        Simulate
+      </button>
     </div>
 
     <footer class="sidebar-footer" id="sidebarFooter">

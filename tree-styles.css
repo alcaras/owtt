@@ -431,7 +431,41 @@ body.sidebar-collapsed .sidebar {
   display: none;
 }
 body.show-costs .tech-delta { display: block; }
-#costsBtn.is-active { color: var(--gold); border-color: var(--gold-deep); background: oklch(0.22 0.04 80 / .35); }
+
+/* Inline switch inside a ghost button. Pre-existing button styles handle the
+   pill outline; .toggle-track is the little slider next to the label. */
+.btn-toggle { display: inline-flex; align-items: center; gap: 8px; }
+.btn-toggle .toggle-track {
+  position: relative;
+  display: inline-block;
+  width: 26px; height: 14px;
+  border-radius: 8px;
+  background: oklch(0.18 0.012 80);
+  border: 1px solid var(--line-strong);
+  transition: background .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.btn-toggle .toggle-thumb {
+  position: absolute;
+  top: 1px; left: 1px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform .15s, background .15s;
+}
+.btn-toggle.is-active {
+  color: var(--gold);
+  border-color: var(--gold-deep);
+}
+.btn-toggle.is-active .toggle-track {
+  background: oklch(0.30 0.06 80 / .65);
+  border-color: var(--gold-soft);
+}
+.btn-toggle.is-active .toggle-thumb {
+  transform: translateX(12px);
+  background: var(--gold);
+  box-shadow: 0 0 6px oklch(0.82 0.13 82 / .55);
+}
 
 /* order number badge */
 .tech-order {
@@ -630,7 +664,7 @@ body.show-costs .tech-delta { display: block; }
 }
 .sidebar-close:hover { color: var(--text); background: var(--bg-elev); }
 
-.sidebar-actions { padding: 14px 14px 8px; }
+.sidebar-actions { display: none; } /* legacy slot, content moved to bottom */
 
 .sidebar-list-wrap {
   flex: 1;
@@ -700,26 +734,45 @@ body.show-costs .tech-delta { display: block; }
 }
 .order-empty p { font-size: 12px; line-height: 1.4; max-width: 220px; margin: 0 auto; }
 
-.sidebar-danger {
-  padding: 12px 18px 6px;
-  display: flex; justify-content: flex-end;
+/* Bottom action row: Clear plan (destructive, left) | Simulate (subdued, right).
+   Both rare actions, neither competes with the Plan list above. */
+.sidebar-foot-actions {
+  padding: 10px 14px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
 }
-.sidebar-clear {
+.sidebar-clear,
+.sidebar-sim {
   appearance: none;
-  background: oklch(0.22 0.04 28 / .25);
-  border: 1px solid oklch(0.42 0.08 28);
-  color: oklch(0.78 0.12 28);
   font: 600 12px/1.2 var(--font-sans);
   letter-spacing: 0.04em;
   padding: 6px 12px;
   border-radius: 5px;
   cursor: pointer;
   transition: color .12s, border-color .12s, background .12s;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.sidebar-clear {
+  background: oklch(0.22 0.04 28 / .25);
+  border: 1px solid oklch(0.42 0.08 28);
+  color: oklch(0.78 0.12 28);
 }
 .sidebar-clear:hover {
   color: oklch(0.86 0.16 28);
   border-color: oklch(0.60 0.14 28);
   background: oklch(0.30 0.08 28 / .45);
+}
+.sidebar-sim {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+}
+.sidebar-sim:hover {
+  color: var(--gold);
+  border-color: var(--gold-deep);
+  background: oklch(0.22 0.04 80 / .25);
 }
 
 .sidebar-footer {

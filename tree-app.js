@@ -1105,7 +1105,10 @@
       let on = false;
       try { on = localStorage.getItem('owtt-show-costs') === '1'; } catch(e){}
       document.body.classList.toggle('show-costs', on);
-      if (costsBtn) costsBtn.classList.toggle('is-active', on);
+      if (costsBtn){
+        costsBtn.classList.toggle('is-active', on);
+        costsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      }
     }
     applyCostsPref();
     if (costsBtn){
@@ -1113,6 +1116,7 @@
         const on = !document.body.classList.contains('show-costs');
         document.body.classList.toggle('show-costs', on);
         costsBtn.classList.toggle('is-active', on);
+        costsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
         try { localStorage.setItem('owtt-show-costs', on ? '1' : '0'); } catch(e){}
       });
     }
