@@ -87,19 +87,9 @@ body {
   overflow-x: hidden;
 }
 
-/* ---------- subtle parchment grid overlay ----------
-   Chromium has a rendering quirk where oklch() at very low alpha picks up
-   a red tint; sRGB rgba() renders neutrally on every engine. */
-body::before {
-  content: "";
-  position: fixed; inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-  background-size: 60px 60px;
-  z-index: 0;
-}
+/* (Removed the decorative parchment-grid overlay — it was barely visible
+   on a dark background, carried no information, and hit a Chromium
+   rendering bug that tinted it red.) */
 
 /* ============== TOPBAR ============== */
 .topbar {
@@ -1086,8 +1076,7 @@ body[data-direction="atlas"] {
   --line-faint: oklch(0.30 0.014 70);
 }
 body[data-direction="atlas"] .tree-wrap {
-  background:
-    repeating-linear-gradient(to right, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px calc(12.5% - 1px), rgba(255, 255, 255, 0) calc(12.5% - 1px));
+  background: none;
   padding: 10px 4px;
   border-radius: 12px;
   border: 1px solid var(--line-faint);
