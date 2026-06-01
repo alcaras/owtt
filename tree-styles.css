@@ -713,6 +713,9 @@ body.show-costs .tech-delta { display: block; }
   font-weight: 600;
 }
 .order-name { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.order-law { display: inline-flex; align-items: center; gap: 2px; margin-left: 5px; vertical-align: -2px; }
+.order-law-icon { width: 13px; height: 13px; }
+.order-law-num { font-family: var(--font-mono); font-size: 10px; font-weight: 600; color: var(--gold); }
 .order-cost { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
 .order-cost.free { color: var(--state-done); text-decoration: line-through; }
 
