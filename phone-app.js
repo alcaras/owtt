@@ -431,14 +431,16 @@
       return;
     }
     const frag = document.createDocumentFragment();
+    let orderNum = 0;
     all.forEach((it, i) => {
       const row = document.createElement('div');
       const done = completedTechs.includes(it.id) || it.free;
       row.className = 'ow-sheet-row' + (done ? ' is-completed' : '') + (it.bonus ? ' is-bonus' : '');
       const nameStr = (it.bonus ? '★ ' : '') + it.t.name;
       const costStr = it.free ? 'FREE' : fmt(it.t.cost);
+      const numStr = it.free ? '' : (++orderNum).toString().padStart(2,'0');
       row.innerHTML = `
-        <span class="ow-sheet-num">${(i+1).toString().padStart(2,'0')}</span>
+        <span class="ow-sheet-num">${numStr}</span>
         <span class="ow-sheet-name"></span>
         <span class="ow-sheet-cost ${it.free ? 'is-free' : ''}">${costStr}</span>
       `;

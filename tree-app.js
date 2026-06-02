@@ -413,6 +413,7 @@
     if (!items.length){ $orderEmpty.style.display = ''; return; }
     $orderEmpty.style.display = 'none';
     let lawCount = 0;
+    let orderNum = 0;
     items.forEach((it,i)=>{
       const li = document.createElement('li');
       li.className = 'order-item';
@@ -428,8 +429,9 @@
       const lawHtml = givesLaw
         ? `<span class="order-law"><img class="order-law-icon" src="img/icons/yields/laws.png" alt="law" title="Unlocks a law" /><span class="order-law-num">${++lawCount}</span></span>`
         : '';
+      const numHtml = it.free ? '' : (++orderNum).toString().padStart(2,'0');
       li.innerHTML = `
-        <span class="order-num">${(i+1).toString().padStart(2,'0')}</span>
+        <span class="order-num">${numHtml}</span>
         ${iconHtml}
         <span class="order-name">${it.name}${lawHtml}</span>
         <span class="order-cost ${it.free?'free':''}">${fmt(it.cost)}</span>
