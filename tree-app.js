@@ -1075,7 +1075,13 @@
     });
   }
 
+  function updatePageTitle(){
+    const name = selectedNation ? (ND.nationNames.find(n=>n.id===selectedNation)||{}).name : '';
+    document.title = name ? `${name} - Tech Tree - Old World` : 'Tech Tree - Old World';
+  }
+
   function renderAll(){
+    updatePageTitle();
     applyNationTheme();
     renderTechGrid();
     renderBonus();

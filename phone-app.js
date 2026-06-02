@@ -495,7 +495,13 @@
     $nationCrest.classList.remove('is-empty');
   }
 
+  function updatePageTitle(){
+    const name = selectedNation ? (ND.nationNames.find(n => n.id === selectedNation)||{}).name : '';
+    document.title = name ? `${name} - Tech Tree - Old World` : 'Tech Tree - Old World';
+  }
+
   function render(){
+    updatePageTitle();
     renderNationLabel();
     renderBody();
     renderTotals();
