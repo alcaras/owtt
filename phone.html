@@ -55,6 +55,18 @@
     position: sticky; top: 0;
     z-index: 5;
     backdrop-filter: blur(12px);
+    transition: border-color .25s ease;
+  }
+  /* Slight nation tint — --nation-color/-accent set in phone-app.js once a
+     nation is chosen, mirroring the desktop topbar wash. */
+  .ow-topbar.is-nation {
+    background:
+      linear-gradient(90deg,
+        color-mix(in srgb, var(--nation-color) 22%, transparent),
+        color-mix(in srgb, var(--nation-color) 6%, transparent) 50%,
+        transparent 80%),
+      linear-gradient(to bottom, oklch(0.13 0.013 80), oklch(0.13 0.013 80 / 0));
+    border-bottom: 1px solid color-mix(in srgb, var(--nation-accent) 50%, transparent);
   }
   .ow-title {
     font-family: "Cormorant Garamond", Georgia, serif;
@@ -133,6 +145,14 @@
     background: oklch(0.22 0.013 80);
     color: var(--text-muted);
     border-color: var(--line);
+  }
+  /* Crest image (set via background-image in phone-app.js) replaces the
+     letter placeholder once a real nation crest is available. */
+  .ow-nation-crest.has-img {
+    background: oklch(0.18 0.012 80) center / 88% no-repeat;
+    color: transparent;
+    font-size: 0;
+    border-color: var(--gold-deep);
   }
 
   .ow-body {

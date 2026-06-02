@@ -15,7 +15,7 @@ Both pages read the same `tech-data.js`, which is **generated** by `generate_tec
 
 The parser reads these files from your Old World installation (Steam macOS path: `~/Library/Application Support/Steam/steamapps/common/Old World/Reference/XML/Infos/`):
 
-- `tech.xml`, `text-infos.xml`, `bonus.xml`, `nation.xml`, `text-nation.xml`, `unit.xml`, `improvement.xml`, `law.xml`, `project.xml`, `effectPlayer.xml`, `text-bonus.xml`
+- `tech.xml`, `text-infos.xml`, `bonus.xml`, `nation.xml`, `text-nation.xml`, `unit.xml`, `improvement.xml`, `law.xml`, `project.xml`, `effectPlayer.xml`, `text-bonus.xml`, `color.xml`
 
 Copy them into `XML/Infos/` (gitignored) and run:
 
@@ -31,9 +31,10 @@ The parser:
 4. Skips disabled techs (`bDisable="1"`).
 5. Reads `CultureValid` for nation bonus cards (CULTURE_STRONG / CULTURE_LEGENDARY / CULTURE_DEVELOPING).
 6. Pulls nation starting techs and nation-specific bonus card lists.
-7. Fetches the live game version from `MohawkGames/main_buildnotes` (via `gh api`).
-8. Computes a 4-char version hash and emits `window.versionMaps` so historical URLs migrate.
-9. Writes everything to **`tech-data.js`** at the repo root.
+7. Reads each nation's team color from `color.xml` (`COLOR_NATION_<X>` / `_TEXT`), with a built-in fallback table for nations missing from the dump (the EOTI DLC nations), and emits a `crest` slug per nation matching `img/crests/<slug>.png`.
+8. Fetches the live game version from `MohawkGames/main_buildnotes` (via `gh api`).
+9. Computes a 4-char version hash and emits `window.versionMaps` so historical URLs migrate.
+10. Writes everything to **`tech-data.js`** at the repo root.
 
 ## Generated `tech-data.js` shape
 
@@ -50,6 +51,7 @@ window.nationData = {
   startingTechs: { NATION_…: [techId, …] },
   nationNames: [{ id, name }, …],
   nationSpecificBonuses: { NATION_…: [bonusId, …] },
+  colors: { NATION_…: { bg, accent, crest } },    // team color + crest slug (img/crests/<crest>.png)
 };
 window.currentVersionHash = "03e3";
 window.versionMaps = { "67b2": { techs: [...], bonusTechs: [...] }, … };
@@ -69,6 +71,7 @@ window.versionMaps = { "67b2": { techs: [...], bonusTechs: [...] }, … };
 ├── sw.js                   # Service worker (cache-first shell, network-first data)
 ├── img/
 │   ├── app-icon.svg, app-icon-{192,512}.png       # PWA icons
+│   ├── crests/<nation>.png                         # Nation crest badges (from ../owreference)
 │   └── icons/{techs,yields,specialists,resources} # Tech / yield / specialist / resource PNGs
 ├── generate_tech_tree.py   # XML → tech-data.js parser
 ├── test_parser.py          # unittest suite

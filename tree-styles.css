@@ -103,6 +103,19 @@ body {
   background: linear-gradient(to bottom, oklch(0.16 0.012 80 / .92), oklch(0.16 0.012 80 / .82));
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
+  transition: border-color .25s ease;
+}
+/* Once a nation is picked (applyNationTheme sets --nation-color/-accent and
+   adds .is-nation), wash the bar with a slight left→transparent tint and
+   recolor the bottom edge to the nation's accent. Light text stays readable. */
+.topbar.is-nation {
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--nation-color) 20%, transparent),
+      color-mix(in srgb, var(--nation-color) 6%, transparent) 45%,
+      transparent 75%),
+    linear-gradient(to bottom, oklch(0.16 0.012 80 / .92), oklch(0.16 0.012 80 / .82));
+  border-bottom-color: color-mix(in srgb, var(--nation-accent) 55%, var(--line));
 }
 
 .brand { display: flex; align-items: center; gap: 14px; }
@@ -171,6 +184,19 @@ body {
   border-color: var(--gold-deep);
   outline: none;
 }
+/* Crest badge — shown once a nation is chosen. The src + ring color are set
+   from the nation's team color in tree-app.js (applyNationTheme). */
+.nation-crest {
+  width: 28px; height: 28px;
+  object-fit: contain;
+  border-radius: 50%;
+  padding: 2px;
+  background: oklch(0.22 0.012 78 / .9);
+  border: 1px solid var(--nation-accent, var(--gold-deep));
+  box-shadow: 0 0 0 1px oklch(0 0 0 / .25), var(--shadow-sm);
+  flex-shrink: 0;
+}
+.nation-crest[hidden] { display: none; }
 
 .totals { display: flex; gap: 8px; }
 .stat {

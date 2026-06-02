@@ -1,7 +1,7 @@
 // Auto-generated tech data for the redesigned tech tree — do not edit by hand.
 // Regenerate via `python3 generate_tech_tree.py --xml-dir XML/Infos`.
 
-window.gameVersion = "Old World v1.0.83499 (May 06, 2026) | Generated May 13, 2026";
+window.gameVersion = "Old World v1.0.83499 (May 06, 2026) | Generated Jun 01, 2026";
 
 window.techData = {
   techs: [
@@ -310,6 +310,73 @@ window.nationData = {
     "TECH_TAMIL_JAVELIN_ELEPHANT_BONUS",
     "TECH_TAMIL_ARCHER_ELEPHANT_BONUS"
   ]
+},
+  colors: {
+  "NATION_AKSUM": {
+    "bg": "#f8a3b4",
+    "accent": "#c97889",
+    "crest": "aksum"
+  },
+  "NATION_ASSYRIA": {
+    "bg": "#fadc3b",
+    "accent": "#fadc3b",
+    "crest": "assyria"
+  },
+  "NATION_BABYLONIA": {
+    "bg": "#82c83e",
+    "accent": "#147a18",
+    "crest": "babylonia"
+  },
+  "NATION_CARTHAGE": {
+    "bg": "#f6efe1",
+    "accent": "#f6efe1",
+    "crest": "carthage"
+  },
+  "NATION_EGYPT": {
+    "bg": "#bc6304",
+    "accent": "#f88f1f",
+    "crest": "egypt"
+  },
+  "NATION_GREECE": {
+    "bg": "#2360bc",
+    "accent": "#4b7dc9",
+    "crest": "greece"
+  },
+  "NATION_HITTITE": {
+    "bg": "#80e3e8",
+    "accent": "#80e3e8",
+    "crest": "hittite"
+  },
+  "NATION_KUSH": {
+    "bg": "#ffffb6",
+    "accent": "#e1d96b",
+    "crest": "kush"
+  },
+  "NATION_MAURYA": {
+    "bg": "#a749ff",
+    "accent": "#bf7aff",
+    "crest": "maurya"
+  },
+  "NATION_PERSIA": {
+    "bg": "#c04e4a",
+    "accent": "#c04e4a",
+    "crest": "persia"
+  },
+  "NATION_ROME": {
+    "bg": "#880d56",
+    "accent": "#ac5996",
+    "crest": "rome"
+  },
+  "NATION_TAMIL": {
+    "bg": "#00b281",
+    "accent": "#00b281",
+    "crest": "tamil"
+  },
+  "NATION_YUEZHI": {
+    "bg": "#ad7e00",
+    "accent": "#ad7e00",
+    "crest": "yuezhi"
+  }
 }
 };
 

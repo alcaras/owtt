@@ -1074,6 +1074,7 @@
   }
 
   function renderAll(){
+    applyNationTheme();
     renderTechGrid();
     renderBonus();
     updateStates();
@@ -1083,6 +1084,29 @@
       fitTechNames();
       drawConnections();
     });
+  }
+
+  // Tint the topbar and show the crest for the selected nation. Colors come
+  // from window.nationData.colors (generated from the game's color.xml).
+  function applyNationTheme(){
+    const bar = document.querySelector('.topbar');
+    const crest = document.getElementById('nationCrest');
+    const theme = selectedNation && ND.colors ? ND.colors[selectedNation] : null;
+    const root = document.documentElement.style;
+    if (theme){
+      root.setProperty('--nation-color', theme.bg);
+      root.setProperty('--nation-accent', theme.accent);
+      bar.classList.add('is-nation');
+      crest.src = `img/crests/${theme.crest}.png`;
+      crest.alt = (ND.nationNames.find(n=>n.id===selectedNation)||{}).name || '';
+      crest.hidden = false;
+    } else {
+      root.removeProperty('--nation-color');
+      root.removeProperty('--nation-accent');
+      bar.classList.remove('is-nation');
+      crest.hidden = true;
+      crest.removeAttribute('src');
+    }
   }
 
   // After layout, shrink any tech name that would wrap onto a second line so

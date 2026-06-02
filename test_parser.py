@@ -133,6 +133,22 @@ class TestParserWithLatestGameData(unittest.TestCase):
     def test_has_nation_data(self):
         self.assertGreaterEqual(len(self.data["nationData"]["startingTechs"]), 11)
 
+    def test_nation_colors_present(self):
+        colors = self.data["nationData"]["colors"]
+        # Every nation with starting techs should carry a color + crest slug.
+        for nid in self.data["nationData"]["startingTechs"]:
+            self.assertIn(nid, colors, f"{nid} missing color data")
+            c = colors[nid]
+            self.assertRegex(c["bg"], r"^#[0-9a-f]{6}$")
+            self.assertRegex(c["accent"], r"^#[0-9a-f]{6}$")
+            self.assertEqual(c["crest"], nid.replace("NATION_", "").lower())
+
+    def test_rome_color_matches_game_xml(self):
+        # COLOR_NATION_ROME / _TEXT from color.xml.
+        rome = self.data["nationData"]["colors"]["NATION_ROME"]
+        self.assertEqual(rome["bg"], "#880d56")
+        self.assertEqual(rome["accent"], "#ac5996")
+
     def test_victory_techs_are_main(self):
         main_ids = [t["id"] for t in self.data["techs"]]
         bonus_ids = [t["id"] for t in self.data["bonusTechs"]]
@@ -290,6 +306,17 @@ class TestStaticAssetsPresent(unittest.TestCase):
             "img/app-icon.svg", "img/app-icon-192.png", "img/app-icon-512.png",
         ]:
             self.assertTrue(Path(f).exists(), f"{f} should exist at repo root")
+
+    def test_nation_crests_present(self):
+        # One crest PNG per playable nation, named by lowercased suffix.
+        js = Path("tech-data.js").read_text()
+        block = re.search(r"window\.nationLookup\s*=\s*\[(.*?)\]", js, re.S).group(1)
+        nations = re.findall(r'"(NATION_[A-Z]+)"', block)
+        self.assertGreaterEqual(len(nations), 11)
+        for nid in nations:
+            slug = nid.replace("NATION_", "").lower()
+            self.assertTrue(Path(f"img/crests/{slug}.png").exists(),
+                            f"img/crests/{slug}.png should exist")
 
 
 if __name__ == "__main__":

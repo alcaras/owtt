@@ -451,16 +451,45 @@
     $planList.replaceChildren(frag);
   }
 
+  // Paint a crest element from the nation's color data: a background-image
+  // crest when one exists, falling back to the first-letter placeholder.
+  function paintCrest(el, nationId, name){
+    const theme = nationId && ND.colors ? ND.colors[nationId] : null;
+    if (theme){
+      el.style.backgroundImage = `url("img/crests/${theme.crest}.png")`;
+      el.classList.add('has-img');
+      el.classList.remove('is-empty');
+      el.textContent = '';
+    } else {
+      el.style.backgroundImage = '';
+      el.classList.remove('has-img');
+      el.textContent = name ? name[0] : '?';
+    }
+  }
+
   function renderNationLabel(){
+    const bar = document.querySelector('.ow-topbar');
+    const root = document.documentElement.style;
+    const theme = selectedNation && ND.colors ? ND.colors[selectedNation] : null;
+    if (theme){
+      root.setProperty('--nation-color', theme.bg);
+      root.setProperty('--nation-accent', theme.accent);
+      bar.classList.add('is-nation');
+    } else {
+      root.removeProperty('--nation-color');
+      root.removeProperty('--nation-accent');
+      bar.classList.remove('is-nation');
+    }
     if (!selectedNation){
       $nationLabel.textContent = 'Choose nation';
+      paintCrest($nationCrest, '', null);
       $nationCrest.textContent = '?';
       $nationCrest.classList.remove('is-empty');
       return;
     }
     const n = ND.nationNames.find(x => x.id === selectedNation);
     $nationLabel.textContent = n ? n.name : selectedNation;
-    $nationCrest.textContent = n ? n.name[0] : '?';
+    paintCrest($nationCrest, selectedNation, n ? n.name : selectedNation);
     $nationCrest.classList.remove('is-empty');
   }
 
@@ -516,7 +545,7 @@
         </span>
         ${n.id === selectedNation ? '<span class="ow-nation-check">✓</span>' : ''}
       `;
-      row.querySelector('.ow-nation-crest').textContent = n.name[0];
+      paintCrest(row.querySelector('.ow-nation-crest'), n.id, n.name);
       row.querySelector('.ow-nation-name').textContent = n.name;
       row.addEventListener('click', () => { setNation(n.id); closeNationSheet(); });
       frag.appendChild(row);

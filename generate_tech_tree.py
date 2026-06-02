@@ -44,6 +44,7 @@ class OldWorldParser:
         self.techs = []
         self.bonus_techs = []
         self.nations = {}
+        self.nation_colors = {}
         self.text_data = {}
         self.effect_player_data = {}
         
@@ -63,6 +64,7 @@ class OldWorldParser:
         # Parse main data files
         self.parse_techs()
         self.parse_nations()
+        self.parse_nation_colors()
         self.parse_bonuses()
         
         # Parse what techs unlock
@@ -419,7 +421,73 @@ class OldWorldParser:
                     "name": nation_name,
                     "startingTechs": starting_techs
                 }
-    
+
+    # Canonical game team colors (bg = COLOR_NATION_<X>, accent = _TEXT) used as
+    # a fallback for nations missing from a given install's color.xml — notably
+    # the EOTI DLC nations (Maurya/Tamil/Yuezhi), whose color entries aren't
+    # present in the base color.xml dump. color.xml remains the primary source.
+    FALLBACK_NATION_COLORS = {
+        "NATION_AKSUM":     ("#f8a3b4", "#c97889"),
+        "NATION_ASSYRIA":   ("#fadc3b", "#fadc3b"),
+        "NATION_BABYLONIA": ("#82c83e", "#147a18"),
+        "NATION_CARTHAGE":  ("#f6efe1", "#f6efe1"),
+        "NATION_EGYPT":     ("#bc6304", "#f88f1f"),
+        "NATION_GREECE":    ("#2360bc", "#4b7dc9"),
+        "NATION_HITTITE":   ("#80e3e8", "#80e3e8"),
+        "NATION_KUSH":      ("#ffffb6", "#e1d96b"),
+        "NATION_MAURYA":    ("#a749ff", "#bf7aff"),
+        "NATION_PERSIA":    ("#c04e4a", "#c04e4a"),
+        "NATION_ROME":      ("#880d56", "#ac5996"),
+        "NATION_TAMIL":     ("#00b281", "#00b281"),
+        "NATION_YUEZHI":    ("#ad7e00", "#ad7e00"),
+    }
+
+    def parse_nation_colors(self):
+        """Pull each nation's team color from color.xml.
+
+        The game stores two relevant entries per nation: COLOR_NATION_<X>
+        (the saturated base/banner color) and COLOR_NATION_<X>_TEXT (a lighter,
+        more legible accent). We attach both, plus a crest slug (lowercased
+        suffix, matching the PNGs in img/crests/), to each parsed nation.
+        Nations missing from color.xml fall back to FALLBACK_NATION_COLORS.
+        """
+        raw = {}
+        file_path = self.xml_dir / "color.xml"
+        if not file_path.exists():
+            print(f"Warning: {file_path} not found — falling back to built-in nation colors")
+
+        def norm(hex_value):
+            # color.xml mixes #rrggbb and #rrggbbaa — drop any alpha, lowercase.
+            if not hex_value:
+                return None
+            h = hex_value.strip().lower()
+            if not h.startswith("#"):
+                return None
+            if len(h) == 9:  # #rrggbbaa
+                h = h[:7]
+            return h if len(h) == 7 else None
+
+        if file_path.exists():
+            for entry in ET.parse(file_path).getroot().findall(".//Entry"):
+                ztype = entry.findtext("zType") or ""
+                if ztype.startswith("COLOR_NATION_"):
+                    raw[ztype] = norm(entry.findtext("zHexValue"))
+
+        for nation_id in self.nations:
+            suffix = nation_id.replace("NATION_", "")
+            bg = raw.get(f"COLOR_NATION_{suffix}")
+            accent = raw.get(f"COLOR_NATION_{suffix}_TEXT")
+            if not bg:  # not in this install's color.xml — use the built-in table
+                fb = self.FALLBACK_NATION_COLORS.get(nation_id)
+                if not fb:
+                    continue
+                bg, accent = fb
+            self.nation_colors[nation_id] = {
+                "bg": bg,
+                "accent": accent or bg,
+                "crest": suffix.lower(),
+            }
+
     def parse_bonuses(self):
         """Parse bonus.xml plus DLC bonus-event-*.xml for bonus tech values."""
         candidates = [self.xml_dir / "bonus.xml"]
@@ -829,7 +897,8 @@ class OldWorldParser:
             "nationData": {
                 "startingTechs": nation_starting_techs,
                 "nationNames": nation_names,
-                "nationSpecificBonuses": nation_specific_bonuses
+                "nationSpecificBonuses": nation_specific_bonuses,
+                "colors": self.nation_colors
             }
         }
 
@@ -959,7 +1028,8 @@ def generate_tech_data_js(data: Dict, output_path: str = "tech-data.js"):
         "window.nationData = {\n"
         f"  startingTechs: {json.dumps(data['nationData']['startingTechs'], indent=2)},\n"
         f"  nationNames: {json.dumps(nation_names_list, indent=2)},\n"
-        f"  nationSpecificBonuses: {json.dumps(data['nationData']['nationSpecificBonuses'], indent=2)}\n"
+        f"  nationSpecificBonuses: {json.dumps(data['nationData']['nationSpecificBonuses'], indent=2)},\n"
+        f"  colors: {json.dumps(data['nationData'].get('colors', {}), indent=2)}\n"
         "};\n\n"
         f"window.currentVersionHash = {json.dumps(version_hash)};\n"
         f"window.versionMaps = {json.dumps(VERSION_HISTORY)};\n"
