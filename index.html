@@ -68,6 +68,11 @@
       <button class="btn btn-ghost btn-toggle" id="costsBtn" role="switch" aria-pressed="false" title="Show per-tech total cost (incl. unmet prereqs)"><span class="toggle-track"><span class="toggle-thumb"></span></span>Costs</button>
       <button class="btn btn-ghost" id="undoBtn" title="Undo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6M3 13a9 9 0 1 0 3-7"/></svg></button>
       <button class="btn btn-ghost" id="redoBtn" title="Redo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6M21 13a9 9 0 1 1-3-7"/></svg></button>
+      <button class="btn btn-ghost" id="importBtn" title="Import the tech tree from a completed-game save (.zip)">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8h16v-8M12 16V3m0 13l-4-4m4 4l4-4"/></svg>
+        Import
+      </button>
+      <input type="file" id="importFile" accept=".zip,application/zip" hidden />
       <button class="btn btn-primary" id="shareBtn">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8h16v-8M12 3v13m0-13l-4 4m4-4l4 4"/></svg>
         Share
@@ -156,6 +161,22 @@
       <span><i class="sim-dot" style="background:var(--sim-max)"></i>max</span>
       <span><i class="sim-dot sim-dot-band"></i>±σ band</span>
     </div>
+  </div>
+</div>
+
+<!-- ============== SAVE IMPORT MODAL ============== -->
+<div class="modal" id="importModal" aria-hidden="true">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-panel modal-panel-narrow" role="dialog" aria-modal="true">
+    <header class="modal-header">
+      <div>
+        <div class="modal-eyebrow">Save import</div>
+        <h2 id="importTitle">Choose a player</h2>
+      </div>
+      <button class="modal-close" data-close aria-label="Close">×</button>
+    </header>
+    <p class="modal-desc" id="importDesc"></p>
+    <div id="importBody"></div>
   </div>
 </div>
 

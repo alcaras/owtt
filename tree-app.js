@@ -747,6 +747,186 @@
     }
   }
 
+  // -------- save import (completed-game .zip → plan)
+  // Old World saves are zip archives holding a single XML document. The save
+  // does not record research order, so a tier/cost order is synthesized.
+
+  function readSaveZip(buf){
+    const view = new DataView(buf);
+    // end-of-central-directory record: scan backwards (allows a zip comment)
+    let eocd = -1;
+    const min = Math.max(0, buf.byteLength - 65557);
+    for (let i = buf.byteLength - 22; i >= min; i--){
+      if (view.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error('That file is not a zip archive.');
+    const count = view.getUint16(eocd + 10, true);
+    let off = view.getUint32(eocd + 16, true);
+    const entries = [];
+    for (let i = 0; i < count; i++){
+      if (view.getUint32(off, true) !== 0x02014b50) break;
+      const nameLen = view.getUint16(off + 28, true);
+      entries.push({
+        method: view.getUint16(off + 10, true),
+        csize: view.getUint32(off + 20, true),
+        localOff: view.getUint32(off + 42, true),
+        name: new TextDecoder().decode(new Uint8Array(buf, off + 46, nameLen)),
+      });
+      off += 46 + nameLen + view.getUint16(off + 30, true) + view.getUint16(off + 32, true);
+    }
+    const entry = entries.find(e => /\.xml$/i.test(e.name)) || entries[0];
+    if (!entry) throw new Error('That zip archive is empty.');
+    if (view.getUint32(entry.localOff, true) !== 0x04034b50) throw new Error('Could not read the zip entry.');
+    // sizes come from the central directory — local headers may be zeroed
+    const dataStart = entry.localOff + 30
+      + view.getUint16(entry.localOff + 26, true)
+      + view.getUint16(entry.localOff + 28, true);
+    const blob = new Blob([new Uint8Array(buf, dataStart, entry.csize)]);
+    if (entry.method === 0) return blob.text();
+    if (entry.method !== 8) throw new Error('Unsupported zip compression method.');
+    return new Response(blob.stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+  }
+
+  function parseSave(xmlText){
+    const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+    if (doc.querySelector('parsererror') || doc.documentElement.nodeName !== 'Root'){
+      throw new Error('That zip does not look like an Old World save.');
+    }
+    if (!doc.querySelector('Game > GameOver')){
+      throw new Error('This save isn’t from a completed game. Finish the game (or pick a save from the Completed folder) and try again.');
+    }
+    const humans = new Set([...doc.querySelectorAll('Humans > PlayerHuman')].map(el => el.textContent.trim()));
+    const players = [];
+    for (const p of doc.querySelectorAll(':root > Player')){
+      const nation = p.getAttribute('Nation');
+      if (!nation || nation === 'NONE') continue;
+      const tc = p.querySelector(':scope > TechCount');
+      if (!tc) continue;
+      const techIds = [...tc.children].filter(el => parseInt(el.textContent) > 0).map(el => el.tagName);
+      if (!techIds.length) continue;
+      players.push({
+        name: (p.getAttribute('Name') || '').trim(),
+        nation,
+        nationName: (ND.nationNames.find(n => n.id === nation) || {}).name || nation.replace('NATION_', ''),
+        human: humans.has(p.getAttribute('ID')),
+        techIds,
+      });
+    }
+    if (!players.length) throw new Error('No players with researched techs found in this save.');
+    return { gameName: doc.documentElement.getAttribute('GameName') || '', players };
+  }
+
+  function buildPlanFromTechs(nation, techIds){
+    const starting = new Set(ND.startingTechs[nation] || []);
+    const mains = [], bonuses = [];
+    for (const id of techIds){
+      if (techById.has(id)){ if (!starting.has(id)) mains.push(techById.get(id)); }
+      else if (bonusById.has(id)) bonuses.push(bonusById.get(id));
+      // anything else: tech from another game version — drop it
+    }
+    // prereqs always sit in earlier columns, so tier order is a valid progression
+    mains.sort((a, b) => (a.column - b.column) || (a.cost - b.cost) || (a.row - b.row));
+    const bonusFor = parent => bonuses.filter(b => b.parent === parent).map(b => b.id);
+    const order = [];
+    for (const sid of starting) order.push(...bonusFor(sid));
+    for (const t of mains){ order.push(t.id, ...bonusFor(t.id)); }
+    const placed = new Set(order);
+    for (const b of bonuses) if (!placed.has(b.id)) order.push(b.id);
+    return {
+      researchedTechs: mains.map(t => t.id),
+      researchedBonusTechs: bonuses.map(b => b.id),
+      researchOrder: order,
+    };
+  }
+
+  function applyImport(player){
+    recordUndo();
+    selectedNation = NL.includes(player.nation) ? player.nation : '';
+    document.getElementById('nationSelect').value = selectedNation;
+    const plan = buildPlanFromTechs(selectedNation, player.techIds);
+    researchedTechs = plan.researchedTechs;
+    researchedBonusTechs = plan.researchedBonusTechs;
+    researchOrder = plan.researchOrder;
+    completedTechs = [];
+    saveState();
+    renderAll();
+    closeImportModal();
+  }
+
+  function openImportModal(){
+    const m = document.getElementById('importModal');
+    m.classList.add('open'); m.setAttribute('aria-hidden', 'false');
+  }
+  function closeImportModal(){
+    const m = document.getElementById('importModal');
+    m.classList.remove('open'); m.setAttribute('aria-hidden', 'true');
+  }
+
+  function showImportError(msg){
+    document.getElementById('importTitle').textContent = 'Import failed';
+    document.getElementById('importDesc').textContent = '';
+    const body = document.getElementById('importBody');
+    body.innerHTML = '';
+    const err = document.createElement('div');
+    err.className = 'import-error';
+    err.textContent = msg;
+    body.appendChild(err);
+    openImportModal();
+  }
+
+  function showImportPicker(save){
+    document.getElementById('importTitle').textContent = 'Choose a player';
+    document.getElementById('importDesc').textContent =
+      (save.gameName ? `Completed game “${save.gameName}”. ` : '') +
+      'Pick whose tech tree to load — it replaces your current plan (undoable).';
+    const body = document.getElementById('importBody');
+    body.innerHTML = '';
+    const list = document.createElement('div');
+    list.className = 'player-list';
+    for (const pl of save.players){
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'player-row';
+      const colors = ND.colors && ND.colors[pl.nation];
+      if (colors){
+        const img = document.createElement('img');
+        img.className = 'player-crest';
+        img.src = `img/crests/${colors.crest}.png`;
+        img.alt = '';
+        row.appendChild(img);
+      }
+      const info = document.createElement('span');
+      info.className = 'player-info';
+      const nm = document.createElement('span');
+      nm.className = 'player-name';
+      nm.textContent = pl.name || pl.nationName;
+      const meta = document.createElement('span');
+      meta.className = 'player-meta';
+      meta.textContent = `${pl.nationName} · ${pl.techIds.length} techs`;
+      info.append(nm, meta);
+      row.appendChild(info);
+      const badge = document.createElement('span');
+      badge.className = 'player-badge' + (pl.human ? ' is-human' : '');
+      badge.textContent = pl.human ? 'Human' : 'AI';
+      row.appendChild(badge);
+      row.addEventListener('click', () => applyImport(pl));
+      list.appendChild(row);
+    }
+    body.appendChild(list);
+    openImportModal();
+  }
+
+  async function handleImportFile(file){
+    try {
+      const xml = await readSaveZip(await file.arrayBuffer());
+      const save = parseSave(xml);
+      if (save.players.length === 1) applyImport(save.players[0]);
+      else showImportPicker(save);
+    } catch (err){
+      showImportError((err && err.message) || 'Could not read that file.');
+    }
+  }
+
   // -------- simulate modal (real Monte-Carlo, ported from legacy template.html)
   let simRunning = false;
   function openSimModal(){
@@ -1152,7 +1332,19 @@
     document.getElementById('undoBtn').addEventListener('click', undo);
     document.getElementById('redoBtn').addEventListener('click', redo);
     document.getElementById('simulateBtn').addEventListener('click', openSimModal);
-    document.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click', closeSimModal));
+    document.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click', ()=>{
+      const modal = el.closest('.modal');
+      if (!modal) return;
+      if (modal.id === 'simModal') closeSimModal();
+      else { modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }
+    }));
+    const importFile = document.getElementById('importFile');
+    document.getElementById('importBtn').addEventListener('click', ()=>importFile.click());
+    importFile.addEventListener('change', ()=>{
+      const f = importFile.files && importFile.files[0];
+      importFile.value = ''; // allow re-selecting the same file
+      if (f) handleImportFile(f);
+    });
     // Sidebar toggle. On mobile (sidebar is a bottom sheet) we use the
     // `.open` class; on desktop the same button collapses/expands the
     // right-hand panel via a class on <body>.
