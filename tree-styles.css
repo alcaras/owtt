@@ -900,7 +900,7 @@ body.show-branches .tech-branch { display: block; }
 }
 .tooltip .tt-row-label { line-height: 1.2; }
 .tooltip .tt-cond { color: var(--text-muted); font-style: italic; }
-.tooltip .tt-bonus-row { display: block; line-height: 1.35; }
+.tooltip .tt-bonus-row { line-height: 1.35; }
 .tooltip .tt-bonus-row strong { color: var(--gold-soft); font-weight: 600; }
 .tt-yield-ic {
   display: inline-block;
