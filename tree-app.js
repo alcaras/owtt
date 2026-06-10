@@ -682,7 +682,13 @@
         costLine = `${fmt(tech.cost)} own · ${fmt(total)} total with prereqs`;
       }
     }
-    html += `<div class="tt-meta">${costLine} · ${status}</div>`;
+    // Branch factor — same counting as the Branches badge: child techs plus
+    // this tech's bonus cards (nation cards only for the selected nation).
+    const kids = TD.techs.filter(t => (t.prereqs||[]).includes(tech.id));
+    const deckCards = TD.bonusTechs.filter(b =>
+      b.parent === tech.id && !b.cultureRequired && (!b.nation || b.nation === selectedNation)).length;
+    const branchTotal = kids.length + deckCards;
+    html += `<div class="tt-meta">${costLine} · ${status} · adds ${branchTotal} card${branchTotal===1?'':'s'} to deck</div>`;
     const u = tech.unlocks;
     const sections = [];
     if (u.units?.length) sections.push({h:'Units', kind:'unit', items:u.units});
@@ -701,6 +707,17 @@
     if (bs.length){
       html += `<div class="tt-section"><h4>Bonus cards</h4><div class="tt-list">${
         bs.map(b => `<span class="tt-bonus-row"><strong>${b.name}</strong> — ${decorateBonusText(b.bonus||'')}</span>`).join('')
+      }</div></div>`;
+    }
+    if (kids.length){
+      // Children of this tech; a child gated on more than one prereq notes
+      // which other tech it also needs.
+      html += `<div class="tt-section"><h4>Leads to</h4><div class="tt-list">${
+        kids.map(k => {
+          const others = (k.prereqs||[]).filter(p => p !== tech.id).map(p => techById.get(p)?.name || p);
+          const cond = others.length ? ` <span class="tt-cond">with ${others.join(' + ')}</span>` : '';
+          return `<span class="tt-row">${fallbackImg([techIconPath(k)], 'tt-icon')}<span class="tt-row-label">${k.name}${cond}</span></span>`;
+        }).join('')
       }</div></div>`;
     }
     if (tech.prereqs?.length){
