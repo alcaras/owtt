@@ -706,7 +706,7 @@
     const bs = TD.bonusTechs.filter(b=>b.parent===tech.id && (!b.nation||b.nation===selectedNation));
     if (bs.length){
       html += `<div class="tt-section"><h4>Bonus cards</h4><div class="tt-list">${
-        bs.map(b => `<span class="tt-bonus-row"><strong>${b.name}</strong> — ${decorateBonusText(b.bonus||'')}</span>`).join('')
+        bs.map(b => `<span class="tt-row tt-bonus-row">${fallbackImg([bonusIconPath(b)], 'tt-icon')}<span class="tt-row-label"><strong>${b.name}</strong> — ${decorateBonusText(b.bonus||'')}</span></span>`).join('')
       }</div></div>`;
     }
     if (kids.length){
