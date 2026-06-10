@@ -2,7 +2,7 @@
 // Network-first for the app shell so deploys reach users without a manual cache
 // bump; cache is fallback for offline. tech-data.js is also network-first.
 // CACHE_VERSION is still bumped per deploy to evict stale precaches cleanly.
-const CACHE_VERSION = 'owtt-v9';
+const CACHE_VERSION = 'owtt-v10';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 

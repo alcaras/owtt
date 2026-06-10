@@ -52,6 +52,10 @@
     return ND.startingTechs[selectedNation] || [];
   }
 
+  // children per tech — used by the "Branches" badge (deck pollution)
+  const childTechCount = new Map();
+  TD.techs.forEach(t => (t.prereqs||[]).forEach(p => childTechCount.set(p, (childTechCount.get(p)||0)+1)));
+
   function isStarting(techId){ return startingTechsForNation().includes(techId); }
 
   // Total science needed to reach `techId`: own cost + every unmet prereq.
@@ -341,11 +345,21 @@
     const orderIndexById = {};
     researchOrder.forEach((id,i)=>orderIndexById[id] = i+1);
 
+    // bonus cards a tech feeds into the deck — nation cards only count when
+    // playing that nation; culture-gated cards enter via culture, not research
+    const bonusCardCount = new Map();
+    TD.bonusTechs.forEach(b=>{
+      if (!b.parent || b.cultureRequired) return;
+      if (b.nation && b.nation !== selectedNation) return;
+      bonusCardCount.set(b.parent, (bonusCardCount.get(b.parent)||0)+1);
+    });
+
     TD.techs.forEach(tech=>{
       const node = document.getElementById(tech.id); if (!node) return;
       node.classList.remove('available','on-path','completed','starting','prereq-preview');
       const existingOrder = node.querySelector('.tech-order'); if (existingOrder) existingOrder.remove();
       const existingDelta = node.querySelector('.tech-delta'); if (existingDelta) existingDelta.remove();
+      const existingBranch = node.querySelector('.tech-branch'); if (existingBranch) existingBranch.remove();
 
       const prereqsMet = (tech.prereqs||[]).every(p=>researchedTechs.includes(p) || startingSet.has(p)) || (tech.prereqs||[]).length===0;
 
@@ -378,6 +392,16 @@
         if (totalCost > tech.cost) delta.title = `${fmt(tech.cost)} own · ${fmt(totalCost - tech.cost)} prereqs`;
         node.appendChild(delta);
       }
+      // Branches chip: how many cards researching this tech adds to the deck.
+      const kids = childTechCount.get(tech.id) || 0;
+      const cards = bonusCardCount.get(tech.id) || 0;
+      const branch = document.createElement('div');
+      branch.className = 'tech-branch';
+      branch.textContent = kids + cards;
+      branch.title = `Adds ${kids} tech${kids===1?'':'s'}`
+        + (cards ? ` + ${cards} bonus card${cards===1?'':'s'}` : '')
+        + ' to the deck';
+      node.appendChild(branch);
     });
     // bonus state
     TD.bonusTechs.forEach(b=>{
@@ -804,46 +828,62 @@
       if (!tc) continue;
       const techIds = [...tc.children].filter(el => parseInt(el.textContent) > 0).map(el => el.tagName);
       if (!techIds.length) continue;
+      // The permanent log records every research in chronological order
+      // (TechCount alone is written in tech.xml definition order).
+      const researchLog = [...p.querySelectorAll(':scope > PermanentLogList > LogData')]
+        .filter(ld => [...ld.children].some(c => c.tagName === 'Type' && c.textContent === 'TECH_DISCOVERED'))
+        .map(ld => ([...ld.children].find(c => c.tagName === 'Data1') || {}).textContent || '')
+        .map(s => s.trim()).filter(Boolean);
       players.push({
         name: (p.getAttribute('Name') || '').trim(),
         nation,
         nationName: (ND.nationNames.find(n => n.id === nation) || {}).name || nation.replace('NATION_', ''),
         human: humans.has(p.getAttribute('ID')),
         techIds,
+        researchLog,
       });
     }
     if (!players.length) throw new Error('No players with researched techs found in this save.');
     return { gameName: doc.documentElement.getAttribute('GameName') || '', players };
   }
 
-  function buildPlanFromTechs(nation, techIds){
+  function buildPlanFromTechs(nation, techIds, researchLog){
     const starting = new Set(ND.startingTechs[nation] || []);
-    const mains = [], bonuses = [];
-    for (const id of techIds){
-      if (techById.has(id)){ if (!starting.has(id)) mains.push(techById.get(id)); }
-      else if (bonusById.has(id)) bonuses.push(bonusById.get(id));
+    const inSave = new Set(techIds);
+    let ordered;
+    if (researchLog && researchLog.length){
+      // chronological order straight from the save's permanent log
+      ordered = researchLog.filter(id => inSave.has(id));
+      const seen = new Set(ordered);
+      for (const id of techIds) if (!seen.has(id)) ordered.push(id);
+    } else {
+      // no log — synthesize: tier/cost order with bonus cards after their
+      // parent (prereqs always sit in earlier columns)
+      const mains = techIds.filter(id => techById.has(id) && !starting.has(id)).map(id => techById.get(id));
+      mains.sort((a, b) => (a.column - b.column) || (a.cost - b.cost) || (a.row - b.row));
+      const bonuses = techIds.filter(id => bonusById.has(id)).map(id => bonusById.get(id));
+      const bonusFor = parent => bonuses.filter(b => b.parent === parent).map(b => b.id);
+      ordered = [];
+      for (const sid of starting) ordered.push(...bonusFor(sid));
+      for (const t of mains){ ordered.push(t.id, ...bonusFor(t.id)); }
+      const placed = new Set(ordered);
+      for (const b of bonuses) if (!placed.has(b.id)) ordered.push(b.id);
+    }
+    const researchedTechs = [], researchedBonusTechs = [], order = [];
+    for (const id of ordered){
+      if (starting.has(id)) continue; // the planner grants these for free
+      if (techById.has(id)){ researchedTechs.push(id); order.push(id); }
+      else if (bonusById.has(id)){ researchedBonusTechs.push(id); order.push(id); }
       // anything else: tech from another game version — drop it
     }
-    // prereqs always sit in earlier columns, so tier order is a valid progression
-    mains.sort((a, b) => (a.column - b.column) || (a.cost - b.cost) || (a.row - b.row));
-    const bonusFor = parent => bonuses.filter(b => b.parent === parent).map(b => b.id);
-    const order = [];
-    for (const sid of starting) order.push(...bonusFor(sid));
-    for (const t of mains){ order.push(t.id, ...bonusFor(t.id)); }
-    const placed = new Set(order);
-    for (const b of bonuses) if (!placed.has(b.id)) order.push(b.id);
-    return {
-      researchedTechs: mains.map(t => t.id),
-      researchedBonusTechs: bonuses.map(b => b.id),
-      researchOrder: order,
-    };
+    return { researchedTechs, researchedBonusTechs, researchOrder: order };
   }
 
   function applyImport(player){
     recordUndo();
     selectedNation = NL.includes(player.nation) ? player.nation : '';
     document.getElementById('nationSelect').value = selectedNation;
-    const plan = buildPlanFromTechs(selectedNation, player.techIds);
+    const plan = buildPlanFromTechs(selectedNation, player.techIds, player.researchLog);
     researchedTechs = plan.researchedTechs;
     researchedBonusTechs = plan.researchedBonusTechs;
     researchOrder = plan.researchOrder;
@@ -1369,26 +1409,28 @@
       }
     } catch(e){}
 
-    // Cost badges on each card. Off by default — they clutter the board until
-    // you're actively planning. Persisted in localStorage.
-    const costsBtn = document.getElementById('costsBtn');
-    function applyCostsPref(){
-      let on = false;
-      try { on = localStorage.getItem('owtt-show-costs') === '1'; } catch(e){}
-      document.body.classList.toggle('show-costs', on);
-      if (costsBtn){
-        costsBtn.classList.toggle('is-active', on);
-        costsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      }
+    // Per-card badges: costs (total science incl. unmet prereqs) or branches
+    // (cards added to the deck). Off by default — they clutter the board until
+    // you're actively planning. Persisted; migrates the old boolean costs pref.
+    const badgeSelect = document.getElementById('badgeMode');
+    function badgeModePref(){
+      let m = null;
+      try {
+        m = localStorage.getItem('owtt-badge-mode');
+        if (!m && localStorage.getItem('owtt-show-costs') === '1') m = 'costs';
+      } catch(e){}
+      return (m === 'costs' || m === 'branches') ? m : 'none';
     }
-    applyCostsPref();
-    if (costsBtn){
-      costsBtn.addEventListener('click', () => {
-        const on = !document.body.classList.contains('show-costs');
-        document.body.classList.toggle('show-costs', on);
-        costsBtn.classList.toggle('is-active', on);
-        costsBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-        try { localStorage.setItem('owtt-show-costs', on ? '1' : '0'); } catch(e){}
+    function applyBadgeMode(mode){
+      document.body.classList.toggle('show-costs', mode === 'costs');
+      document.body.classList.toggle('show-branches', mode === 'branches');
+      if (badgeSelect) badgeSelect.value = mode;
+    }
+    applyBadgeMode(badgeModePref());
+    if (badgeSelect){
+      badgeSelect.addEventListener('change', () => {
+        applyBadgeMode(badgeSelect.value);
+        try { localStorage.setItem('owtt-badge-mode', badgeSelect.value); } catch(e){}
       });
     }
 

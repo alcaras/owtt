@@ -65,7 +65,11 @@
     </div>
 
     <div class="topbar-actions">
-      <button class="btn btn-ghost btn-toggle" id="costsBtn" role="switch" aria-pressed="false" title="Show per-tech total cost (incl. unmet prereqs)"><span class="toggle-track"><span class="toggle-thumb"></span></span>Costs</button>
+      <select id="badgeMode" class="nation-select badge-select" aria-label="Per-tech badges" title="Per-tech badges: total science cost (incl. unmet prereqs), or how many cards researching it adds to the deck">
+        <option value="none">Badges: None</option>
+        <option value="costs">Badges: Costs</option>
+        <option value="branches">Badges: Branches</option>
+      </select>
       <button class="btn btn-ghost" id="undoBtn" title="Undo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6M3 13a9 9 0 1 0 3-7"/></svg></button>
       <button class="btn btn-ghost" id="redoBtn" title="Redo"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6M21 13a9 9 0 1 1-3-7"/></svg></button>
       <button class="btn btn-ghost" id="importBtn" title="Import the tech tree from a completed-game save (.zip)">

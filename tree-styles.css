@@ -452,6 +452,26 @@ body.sidebar-collapsed .sidebar {
 }
 body.show-costs .tech-delta { display: block; }
 
+/* corner branches badge — how many cards (child techs + bonus cards)
+   researching this tech adds to the deck */
+.tech-branch {
+  position: absolute;
+  bottom: 4px; right: 4px;
+  background: oklch(0.20 0.02 80 / .92);
+  border: 1px solid var(--line-strong);
+  color: var(--text-soft);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+  display: none;
+}
+body.show-branches .tech-branch { display: block; }
+
+/* badge-mode dropdown rides in the topbar action row */
+.badge-select { min-width: 0; height: 32px; font-size: 12px; padding: 0 26px 0 10px; }
+
 /* Inline switch inside a ghost button. Pre-existing button styles handle the
    pill outline; .toggle-track is the little slider next to the label. */
 .btn-toggle { display: inline-flex; align-items: center; gap: 8px; }
@@ -1200,6 +1220,7 @@ body[data-direction="codex"] .unlock-chip { font-size: 9px; padding: 0 4px; }
 body[data-direction="codex"] .unlock-chip .glyph { display: none; }
 body[data-direction="codex"] .tech-order { width: 18px; height: 18px; font-size: 10px; top: -6px; left: -6px; }
 body[data-direction="codex"] .tech-delta { font-size: 9px; padding: 0 3px; }
+body[data-direction="codex"] .tech-branch { font-size: 9px; padding: 0 3px; }
 
 /* --- DENSITY --- */
 body[data-density="spacious"] .tech-grid { gap: 14px; grid-auto-rows: minmax(108px, auto); }
