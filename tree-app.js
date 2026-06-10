@@ -393,10 +393,11 @@
         node.appendChild(delta);
       }
       // Branches chip: how many cards researching this tech adds to the deck.
+      // Color-coded — green (clean) through red (heavy deck pollution).
       const kids = childTechCount.get(tech.id) || 0;
       const cards = bonusCardCount.get(tech.id) || 0;
       const branch = document.createElement('div');
-      branch.className = 'tech-branch';
+      branch.className = 'tech-branch tech-branch-' + Math.min(kids + cards, 4);
       branch.textContent = kids + cards;
       branch.title = `Adds ${kids} tech${kids===1?'':'s'}`
         + (cards ? ` + ${cards} bonus card${cards===1?'':'s'}` : '')
@@ -567,11 +568,17 @@
     const s = _slug(label);
     return UNIT_NAME_ALIAS[s] || s;
   }
+  // Serialize a string as a single-quoted JS literal that can sit inside a
+  // double-quoted HTML event attribute (JSON.stringify's double quotes would
+  // terminate the attribute and truncate the handler).
+  function jsAttrStr(s){
+    return "'" + String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;') + "'";
+  }
   // Build an <img> that walks a fallback chain via onerror — first path that
   // loads wins; if all fail the img hides itself.
   function fallbackImg(paths, cls){
     if (!paths.length) return '';
-    const escaped = paths.map(p => JSON.stringify(p));
+    const escaped = paths.map(jsAttrStr);
     const chain = escaped.slice(1).reverse().reduce(
       (next, p) => `this.onerror=function(){${next}};this.src=${p};`,
       `this.onerror=null;this.style.display='none';`
@@ -651,8 +658,8 @@
         const primary = `img/icons/unit/unit_${us}.png`;
         const secondary = `img/icons/unit/unit_${_slug(label)}.png`;
         const onerr = us !== _slug(label)
-          ? `this.onerror=function(){this.outerHTML=${JSON.stringify(label)}};this.src=${JSON.stringify(secondary)}`
-          : `this.outerHTML=${JSON.stringify(label)}`;
+          ? `this.onerror=function(){this.outerHTML=${jsAttrStr(label)}};this.src=${jsAttrStr(secondary)}`
+          : `this.outerHTML=${jsAttrStr(label)}`;
         return `+${amt} <img class="tt-yield-ic tt-yield-glyph" src="${primary}" alt="${label}" title="${label}" onerror="${onerr}" />`;
       }
     );
