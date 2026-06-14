@@ -472,6 +472,12 @@
   function updateTotals(){
     let cost = 0, laws = 0;
     const startingSet = new Set(startingTechsForNation());
+    // Free starting techs are excluded from researchedTechs, but their unlocked
+    // laws still count toward the law total (matching the plan list).
+    startingSet.forEach(id=>{
+      const t = techById.get(id); if (!t) return;
+      laws += (t.unlocks?.laws?.length||0);
+    });
     researchedTechs.forEach(id=>{
       const t = techById.get(id); if (!t) return;
       if (!startingSet.has(id)) cost += t.cost;
